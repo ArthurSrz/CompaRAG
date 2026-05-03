@@ -11,7 +11,43 @@ from typing import Literal
 import cyclopts
 from fastapi.encoders import jsonable_encoder
 
+import os
+import time
+import traceback
 from utils.storage.redis import REDIS_RANKING_KEY, REDIS_TOOL_RANKING_KEY, get_redis_client
+
+CRON_DIAG_KEY = "ranking_cron:last_run_diag"
+_diag_steps: list[dict] = []
+
+
+def _diag(step: str, **kwargs) -> None:
+    """Append a diagnostic step to in-memory log; persisted to Redis at end of run.
+
+    Visible from outside the cron container by reading CRON_DIAG_KEY via the
+    Redis public proxy. Used to debug silent failures since Railway logs are
+    not reliably surfaceable for cron services.
+    """
+    _diag_steps.append({"t": time.time(), "step": step, **kwargs})
+    print(f"[CRON_DIAG] {step}: {kwargs}", flush=True)
+
+
+def _flush_diag() -> None:
+    try:
+        client = get_redis_client()
+        client.setex(
+            CRON_DIAG_KEY,
+            time=3600 * 24,
+            value=json.dumps({
+                "started_at": _diag_steps[0]["t"] if _diag_steps else None,
+                "ended_at": time.time(),
+                "hf_token_present": bool(os.environ.get("HF_TOKEN")),
+                "db_uri_host": (os.environ.get("COMPARIA_DB_URI", "").split("@")[-1].split("/")[0]
+                                if "@" in os.environ.get("COMPARIA_DB_URI", "") else None),
+                "steps": _diag_steps,
+            }),
+        )
+    except Exception:
+        print(f"[CRON_DIAG] flush failed: {traceback.format_exc()}", flush=True)
 from utils.utils import (
     LLMS_GENERATED_DATA_FILE,
     configure_logger,
@@ -58,13 +94,32 @@ def main(mode: Literal["all", "redis", "json"] = "redis") -> None:
     Tool ranking + HF export run unconditionally; they are isolated from the LLM
     ranking path (see tool_compute.py header) and must not be gated by LLM data.
     """
-    compute_and_store_tool_rankings()
-    export_tool_votes_to_hf()
+    _diag("main:start", mode=mode)
+    try:
+        _diag("tool_rankings:start")
+        compute_and_store_tool_rankings()
+        _diag("tool_rankings:done")
+    except Exception as e:
+        _diag("tool_rankings:exception", error=repr(e), tb=traceback.format_exc())
 
-    data = compute_all_rankings()
+    try:
+        _diag("hf_export:start")
+        export_tool_votes_to_hf()
+        _diag("hf_export:done")
+    except Exception as e:
+        _diag("hf_export:exception", error=repr(e), tb=traceback.format_exc()[-2000:])
+
+    try:
+        _diag("compute_all_rankings:start")
+        data = compute_all_rankings()
+        _diag("compute_all_rankings:done", n_groups=len(data) if data else 0)
+    except Exception as e:
+        _diag("compute_all_rankings:exception", error=repr(e), tb=traceback.format_exc()[-2000:])
+        data = {}
 
     if not data:
         logger.info("[Ranking] No LLM ranking data to store, skipping LLM-side outputs.")
+        _flush_diag()
         return
 
     if mode in ("all", "json"):
@@ -77,6 +132,7 @@ def main(mode: Literal["all", "redis", "json"] = "redis") -> None:
 
     llms = read_json(LLMS_GENERATED_DATA_FILE)["models"]
     monitor(llms, data["all"])
+    _flush_diag()
 
 
 def compute_and_store_tool_rankings() -> None:
