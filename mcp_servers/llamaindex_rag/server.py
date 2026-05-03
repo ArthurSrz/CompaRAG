@@ -66,8 +66,33 @@ async def health_check(request: Request) -> PlainTextResponse:
     return PlainTextResponse("OK")
 
 
+async def search_documents(query: str) -> str:
+    """Useful for answering natural language questions over the static corpus.
+
+    Tutorial-shape helper: delegates to the LlamaIndex query engine via aquery.
+    """
+    if query_engine is None:
+        return "Index not ready yet, please retry in a moment."
+    response = await query_engine.aquery(query)
+    return str(response)
+
+
+def build_agent(llm=None):
+    """Build a FunctionAgent exposing only the search_documents tool."""
+    from llama_index.core.agent.workflow import FunctionAgent
+
+    return FunctionAgent(
+        tools=[search_documents],
+        llm=llm if llm is not None else Settings.llm,
+        system_prompt=(
+            "Résumez le document ou contenu suivant de manière claire et "
+            "concise, en capturant les points clés."
+        ),
+    )
+
+
 @mcp.tool()
-def rag_query(task: str, goal: str, document_content: str = "") -> str:
+async def rag_query(task: str, goal: str, document_content: str = "") -> str:
     """Answer a question using RAG over a document or the static corpus, synthesized by Mistral Small.
 
     If document_content is provided, builds an ephemeral in-memory index from it.
@@ -147,7 +172,7 @@ def rag_query(task: str, goal: str, document_content: str = "") -> str:
         )
 
         t0 = time.time()
-        response = query_engine.query(query)
+        response = await query_engine.aquery(query)
         duration_ms = int((time.time() - t0) * 1000)
 
         sources = set(
@@ -156,7 +181,7 @@ def rag_query(task: str, goal: str, document_content: str = "") -> str:
             if n.metadata.get("file_name")
         )
         source_str = f"Sources: {', '.join(sources)}\n\n" if sources else ""
-        text = response.response or ""
+        text = str(response) if response.response is None else response.response
 
         log.info(
             "rag_query.response %s",
