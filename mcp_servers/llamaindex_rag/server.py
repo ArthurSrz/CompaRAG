@@ -66,28 +66,62 @@ async def health_check(request: Request) -> PlainTextResponse:
     return PlainTextResponse("OK")
 
 
+AGENT_SYSTEM_PROMPT = (
+    "Résumez le document ou contenu suivant de manière claire et "
+    "concise, en capturant les points clés."
+)
+
+
 async def search_documents(query: str) -> str:
     """Useful for answering natural language questions over the static corpus.
 
     Tutorial-shape helper: delegates to the LlamaIndex query engine via aquery.
     """
     if query_engine is None:
+        log.info("search_documents.skip %s", json.dumps({"reason": "engine_not_ready"}))
         return "Index not ready yet, please retry in a moment."
+
+    log.info(
+        "search_documents.request %s",
+        json.dumps({
+            "engine_method": "aquery",
+            "query_chars": len(query),
+            "query_preview": query[:200],
+        }),
+    )
+    t0 = time.time()
     response = await query_engine.aquery(query)
-    return str(response)
+    duration_ms = int((time.time() - t0) * 1000)
+    text = str(response)
+    log.info(
+        "search_documents.response %s",
+        json.dumps({
+            "engine_method": "aquery",
+            "answer_chars": len(text),
+            "duration_ms": duration_ms,
+            "retrieved_chunks": len(getattr(response, "source_nodes", []) or []),
+        }),
+    )
+    return text
 
 
 def build_agent(llm=None):
     """Build a FunctionAgent exposing only the search_documents tool."""
     from llama_index.core.agent.workflow import FunctionAgent
 
+    log.info(
+        "build_agent %s",
+        json.dumps({
+            "tools": ["search_documents"],
+            "system_prompt_chars": len(AGENT_SYSTEM_PROMPT),
+            "system_prompt_preview": AGENT_SYSTEM_PROMPT[:120],
+            "llm": getattr(llm or Settings.llm, "model", None),
+        }),
+    )
     return FunctionAgent(
         tools=[search_documents],
         llm=llm if llm is not None else Settings.llm,
-        system_prompt=(
-            "Résumez le document ou contenu suivant de manière claire et "
-            "concise, en capturant les points clés."
-        ),
+        system_prompt=AGENT_SYSTEM_PROMPT,
     )
 
 
@@ -168,6 +202,8 @@ async def rag_query(task: str, goal: str, document_content: str = "") -> str:
                 "document_chars": 0,
                 "query": query[:200],
                 "llm": llm_metadata,
+                "engine_method": "aquery",
+                "agent_system_prompt_chars": len(AGENT_SYSTEM_PROMPT),
             }),
         )
 
