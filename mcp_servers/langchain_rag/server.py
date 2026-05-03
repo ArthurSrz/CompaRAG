@@ -19,22 +19,14 @@ CORPUS_DIR = Path(__file__).parent.parent / "corpus"
 OPENROUTER_API_KEY = os.environ["OPENROUTER_API_KEY"]
 
 llm = ChatOpenAI(
-    model="mistralai/mistral-small-3.1-24b-instruct",
+    # mistral-small-3.1-24b-instruct is served ONLY by Cloudflare on
+    # OpenRouter, which silently caps output at ~113 tokens regardless of
+    # max_tokens. mistral-medium-3.1 is served by Mistral's official
+    # endpoint, which honors max_tokens correctly.
+    model="mistralai/mistral-medium-3.1",
     base_url="https://openrouter.ai/api/v1",
     api_key=OPENROUTER_API_KEY,
-    # Forward max_tokens via the raw API request body (extra_body) so it
-    # bypasses LangChain's parameter translation. Newer langchain-openai
-    # versions translate `max_tokens` → `max_completion_tokens`, which
-    # OpenRouter does NOT recognize for Mistral Small, and the request
-    # falls back to the provider default (~100 tokens). Sending the raw
-    # `max_tokens` field via extra_body forces it through.
-    # Cloudflare (OpenRouter's cheapest Mistral provider) silently caps
-    # output at ~113 tokens regardless of max_tokens. Force OpenRouter to
-    # route to providers with proper max_tokens honoring.
-    extra_body={
-        "max_tokens": 4096,
-        "provider": {"order": ["mistral", "together", "deepinfra"], "allow_fallbacks": True},
-    },
+    extra_body={"max_tokens": 4096},
 )
 
 embeddings = OpenAIEmbeddings(

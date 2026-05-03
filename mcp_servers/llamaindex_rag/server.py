@@ -22,22 +22,16 @@ Settings.embed_model = OpenAIEmbedding(
     api_key=OPENROUTER_API_KEY,
 )
 Settings.llm = OpenAILike(
-    model="mistralai/mistral-small-3.1-24b-instruct",
+    # mistral-small-3.1-24b-instruct is served ONLY by Cloudflare on
+    # OpenRouter, which silently caps output at ~143 tokens regardless
+    # of max_tokens. mistral-medium-3.1 is served by Mistral's official
+    # endpoint, which honors max_tokens correctly.
+    model="mistralai/mistral-medium-3.1",
     api_base="https://openrouter.ai/api/v1",
     api_key=OPENROUTER_API_KEY,
     is_chat_model=True,
     max_tokens=4096,
     context_window=128000,
-    # Mirror the langchain fix: forward max_tokens via the raw API body
-    # so OpenRouter receives it. LlamaIndex's OpenAILike sometimes maps
-    # max_tokens differently when is_chat_model=True; additional_kwargs
-    # is forwarded verbatim into the chat completions request.
-    # Cloudflare (OpenRouter's cheapest Mistral provider) silently caps
-    # output at ~143 tokens regardless of max_tokens. Route around it.
-    additional_kwargs={
-        "max_tokens": 4096,
-        "provider": {"order": ["mistral", "together", "deepinfra"], "allow_fallbacks": True},
-    },
 )
 
 # Set after lifespan build
