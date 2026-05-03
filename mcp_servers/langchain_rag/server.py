@@ -19,7 +19,7 @@ CORPUS_DIR = Path(__file__).parent.parent / "corpus"
 OPENROUTER_API_KEY = os.environ["OPENROUTER_API_KEY"]
 
 llm = ChatOpenAI(
-    model="mistralai/mistral-small",
+    model="mistralai/mistral-small-3.1-24b-instruct",
     base_url="https://openrouter.ai/api/v1",
     api_key=OPENROUTER_API_KEY,
 )

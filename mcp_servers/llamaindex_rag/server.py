@@ -22,7 +22,7 @@ Settings.embed_model = OpenAIEmbedding(
     api_key=OPENROUTER_API_KEY,
 )
 Settings.llm = OpenAILike(
-    model="mistralai/mistral-small",
+    model="mistralai/mistral-small-3.1-24b-instruct",
     api_base="https://openrouter.ai/api/v1",
     api_key=OPENROUTER_API_KEY,
     is_chat_model=True,
