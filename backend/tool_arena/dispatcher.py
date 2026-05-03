@@ -134,8 +134,13 @@ class MCPDispatcher:
             else:
                 raw_text, duration_ms = result
                 envelope = normalize_output(raw_text, duration_ms)
-                envelope = sanitize_envelope(envelope, servers)
-                sanitized = sanitize_output(envelope.answer, servers)
+                # Sanitize against ALL registered servers' patterns, not just
+                # the two racing this round — blind-comparison invariant: tool
+                # identities (URLs, brand names) must be redacted regardless
+                # of which two happen to race. A user document mentioning a
+                # registered-but-not-racing tool would otherwise leak its name.
+                envelope = sanitize_envelope(envelope, all_servers)
+                sanitized = sanitize_output(envelope.answer, all_servers)
                 tool_calls.append(
                     MCPToolCall(
                         session_id=session_id,
