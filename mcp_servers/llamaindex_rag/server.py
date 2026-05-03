@@ -78,21 +78,33 @@ def rag_query(task: str, goal: str, document_content: str = "") -> str:
     query = f"{task} {goal}"
 
     if document_content.strip():
-        doc = LIDocument(text=document_content, metadata={"file_name": "uploaded"})
-        ephemeral_engine = VectorStoreIndex.from_documents([doc]).as_query_engine(similarity_top_k=3)
-        response = ephemeral_engine.query(query)
+        # User-uploaded doc: bypass vector retrieval and call the LLM directly
+        # with the full document. Chunking a short user doc into k=3 chunks
+        # returns sparse context and frequently produces "Empty Response".
+        # The full doc fits in Mistral's 128k context window.
+        prompt = (
+            "You are a thorough technical writer. Provide a detailed, well-structured "
+            "answer to the user's question using ONLY the document below. "
+            "Use markdown formatting: headings, bullet points, sub-bullets, and code blocks where relevant. "
+            "Include direct quotes or specific details from the document. "
+            "Aim for a comprehensive answer (multiple paragraphs or bullet sections) when the document supports it.\n\n"
+            f"Document:\n{document_content}\n\n"
+            f"Question: {query}\n\n"
+            "Detailed Answer:"
+        )
+        text = str(Settings.llm.complete(prompt))
+        return f"Sources: uploaded\n\n{text}"
     else:
         if query_engine is None:
             return "Index not ready yet, please retry in a moment."
         response = query_engine.query(query)
-
-    sources = set(
-        Path(n.metadata.get("file_name", "unknown")).stem
-        for n in response.source_nodes
-        if n.metadata.get("file_name")
-    )
-    source_str = f"Sources: {', '.join(sources)}\n\n" if sources else ""
-    return f"{source_str}{response.response}"
+        sources = set(
+            Path(n.metadata.get("file_name", "unknown")).stem
+            for n in response.source_nodes
+            if n.metadata.get("file_name")
+        )
+        source_str = f"Sources: {', '.join(sources)}\n\n" if sources else ""
+        return f"{source_str}{response.response}"
 
 
 if __name__ == "__main__":

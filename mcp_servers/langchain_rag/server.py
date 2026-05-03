@@ -46,11 +46,15 @@ embeddings = OpenAIEmbeddings(
 splitter = RecursiveCharacterTextSplitter(chunk_size=500, chunk_overlap=50)
 
 _PROMPT = ChatPromptTemplate.from_template(
-    "You are a helpful assistant. Answer the question using ONLY the context below. "
-    "If the context does not contain enough information, say so.\n\n"
+    "You are a thorough technical writer. Provide a detailed, well-structured answer "
+    "to the user's question using ONLY the context below. "
+    "Use markdown formatting: headings, bullet points, sub-bullets, and code blocks where relevant. "
+    "Include direct quotes or specific details from the context. "
+    "Aim for a comprehensive answer (multiple paragraphs or bullet sections) when the context supports it. "
+    "If the context truly does not contain enough information, say so explicitly.\n\n"
     "Context:\n{context}\n\n"
     "Question: {query}\n\n"
-    "Answer:"
+    "Detailed Answer:"
 )
 
 # Set after lifespan build
@@ -93,22 +97,20 @@ def rag_query(task: str, goal: str, document_content: str = "") -> str:
     query = f"{task} {goal}"
 
     if document_content.strip():
-        doc = LCDocument(page_content=document_content, metadata={"source": "uploaded"})
-        doc_chunks = splitter.split_documents([doc])
-        if not doc_chunks:
-            return "Document could not be split into chunks."
-        ephemeral_store = FAISS.from_documents(doc_chunks, embeddings)
-        results = ephemeral_store.as_retriever(search_kwargs={"k": 3}).invoke(query)
+        # User-uploaded doc: bypass FAISS retrieval and pass the FULL doc to
+        # the LLM. Chunking + k=3 retrieval over a short user doc returns
+        # sparse context and triggers "context not enough" refusals. The
+        # whole doc fits comfortably in Mistral's 128k context window.
+        context = document_content
+        sources = {"uploaded"}
     else:
         if retriever is None:
             return "Index not ready yet, please retry in a moment."
         results = retriever.invoke(query)
-
-    if not results:
-        return "No relevant documents found for this query."
-
-    context = "\n\n---\n\n".join(doc.page_content for doc in results)
-    sources = set(Path(doc.metadata.get("source", "unknown")).stem for doc in results)
+        if not results:
+            return "No relevant documents found for this query."
+        context = "\n\n---\n\n".join(doc.page_content for doc in results)
+        sources = set(Path(doc.metadata.get("source", "unknown")).stem for doc in results)
 
     messages = _PROMPT.format_messages(context=context, query=query)
     answer = llm.invoke(messages)
