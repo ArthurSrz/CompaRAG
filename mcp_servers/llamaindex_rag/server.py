@@ -27,6 +27,7 @@ Settings.llm = OpenAILike(
     api_key=OPENROUTER_API_KEY,
     is_chat_model=True,
     max_tokens=2048,
+    context_window=128000,
 )
 
 # Set after lifespan build
