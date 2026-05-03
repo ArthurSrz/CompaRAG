@@ -4,11 +4,16 @@
 #   2. Connect same repo
 #   3. Set Config File Path = railway.cron.toml
 #   4. Set the cron schedule in Service Settings → Cron Schedule: 0 * * * *
+#
+# Uses a dedicated Dockerfile (docker/Dockerfile.cron) whose CMD points
+# directly at the ranking script. The backend Dockerfile ends with a uvicorn
+# CMD; reusing it caused the cron service to silently run the web server
+# instead of the ranking script (Railway's startCommand override does not
+# reliably replace ["sh","-c","..."] form CMDs).
 
 [build]
 builder = "DOCKERFILE"
-dockerfilePath = "docker/Dockerfile"
+dockerfilePath = "docker/Dockerfile.cron"
 
 [deploy]
-startCommand = "uv run python -m utils.ranking.run"
 restartPolicyType = "NEVER"
