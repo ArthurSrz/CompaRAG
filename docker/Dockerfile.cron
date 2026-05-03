@@ -42,4 +42,7 @@ ARG GIT_COMMIT
 ENV GIT_COMMIT=$GIT_COMMIT
 
 # THE entire reason for this file: a direct CMD that Railway runs verbatim.
-CMD ["uv", "run", "python", "-m", "utils.ranking.run"]
+# Invoke the venv's Python directly — bypassing `uv run` removes one
+# possible source of silent startup misbehavior (re-sync attempts,
+# lock file checks) and makes the entrypoint trivially auditable.
+CMD ["/app/.venv/bin/python", "-m", "utils.ranking.run"]
