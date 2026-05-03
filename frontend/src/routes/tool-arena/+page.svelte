@@ -101,7 +101,10 @@
     }
   }
 
-  async function handleVote(chosen: 'a' | 'b' | 'tie') {
+  async function handleVote(
+    chosen: 'a' | 'b' | 'tie',
+    preferences: Record<string, boolean>
+  ) {
     if (voting) return
     voting = true
     voteError = null
@@ -112,7 +115,7 @@
           'Content-Type': 'application/json',
           'X-Session-Hash': sessionHash!
         },
-        body: JSON.stringify({ chosen })
+        body: JSON.stringify({ chosen, preferences })
       })
       revealData = data
       phase = 'revealed'

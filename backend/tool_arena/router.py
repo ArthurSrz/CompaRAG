@@ -172,8 +172,31 @@ class CompareResponse(BaseModel):
     error_b: str | None
 
 
+class ToolPreferencesPayload(BaseModel):
+    """Per-side preference flags supplied by the user at vote time.
+
+    Field names mirror tool_votes columns (vote_<pref>_<side>) so the payload
+    maps 1:1 onto ToolVoteRecord without translation.
+    """
+    vote_useful_a: bool = False
+    vote_useful_b: bool = False
+    vote_complete_a: bool = False
+    vote_complete_b: bool = False
+    vote_creative_a: bool = False
+    vote_creative_b: bool = False
+    vote_clear_formatting_a: bool = False
+    vote_clear_formatting_b: bool = False
+    vote_incorrect_a: bool = False
+    vote_incorrect_b: bool = False
+    vote_superficial_a: bool = False
+    vote_superficial_b: bool = False
+    vote_instructions_not_followed_a: bool = False
+    vote_instructions_not_followed_b: bool = False
+
+
 class ToolVoteBody(BaseModel):
     chosen: Literal["a", "b", "tie"]
+    preferences: ToolPreferencesPayload | None = None
 
 
 class ToolRevealInfo(BaseModel):
@@ -507,6 +530,7 @@ async def vote(
     # we control). For per-tool granularity, query tool_calls.llm_id instead.
     tool_a = session["tool_a"]
     tool_b = session["tool_b"]
+    prefs_dump = body.preferences.model_dump() if body.preferences else {}
     vote_record = ToolVoteRecord(
         session_hash=session_hash,
         tool_a_id=tool_a["tool_id"],
@@ -516,6 +540,7 @@ async def vote(
         task=session["task"],
         goal=session["goal"],
         timestamp=datetime.now().isoformat(),
+        **prefs_dump,
     )
     try:
         save_tool_vote_to_db(vote_record.model_dump(mode="json"))

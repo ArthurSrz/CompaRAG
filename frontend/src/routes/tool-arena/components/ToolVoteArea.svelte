@@ -1,16 +1,40 @@
 <script lang="ts">
   import { m } from '$lib/i18n/messages'
   import { Button } from '$components/dsfr'
+  import ToolPreferencesPanel, { type ToolPrefKey } from './ToolPreferencesPanel.svelte'
+
+  export type ToolVotePreferences = Record<`vote_${ToolPrefKey}_${'a' | 'b'}`, boolean>
 
   let {
     onvote,
     disabled = false
   }: {
-    onvote: (chosen: 'a' | 'b' | 'tie') => void
+    onvote: (chosen: 'a' | 'b' | 'tie', preferences: ToolVotePreferences) => void
     disabled?: boolean
   } = $props()
 
   let chosen = $state<'a' | 'b' | 'tie' | null>(null)
+  let prefsA = $state<ToolPrefKey[]>([])
+  let prefsB = $state<ToolPrefKey[]>([])
+
+  const ALL_PREF_KEYS: ToolPrefKey[] = [
+    'useful',
+    'complete',
+    'creative',
+    'clear_formatting',
+    'incorrect',
+    'superficial',
+    'instructions_not_followed'
+  ]
+
+  function buildPayload(): ToolVotePreferences {
+    const out = {} as ToolVotePreferences
+    for (const k of ALL_PREF_KEYS) {
+      out[`vote_${k}_a`] = prefsA.includes(k)
+      out[`vote_${k}_b`] = prefsB.includes(k)
+    }
+    return out
+  }
 
   const choices = [
     { value: 'a' as const, label: m['toolArena.anonymousToolA']() },
@@ -68,9 +92,14 @@
     </div>
   </fieldset>
 
+  <div class="mt-6 grid gap-4 md:grid-cols-2">
+    <ToolPreferencesPanel side="a" bind:selected={prefsA} {disabled} />
+    <ToolPreferencesPanel side="b" bind:selected={prefsB} {disabled} />
+  </div>
+
   <div class="text-center mt-6">
     <Button
-      onclick={() => { if (chosen !== null) onvote(chosen) }}
+      onclick={() => { if (chosen !== null) onvote(chosen, buildPayload()) }}
       disabled={disabled || chosen === null}
     >
       {m['toolArena.revealButton']()}

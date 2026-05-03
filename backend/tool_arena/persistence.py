@@ -28,6 +28,23 @@ class ToolVoteRecord(BaseModel):
     timestamp: str       # ISO format
     competitor_type: str = "tool"
 
+    # Per-side preference flags (mirror LLM `votes` table). Default False so
+    # callers that don't supply prefs continue to work unchanged.
+    vote_useful_a: bool = False
+    vote_useful_b: bool = False
+    vote_complete_a: bool = False
+    vote_complete_b: bool = False
+    vote_creative_a: bool = False
+    vote_creative_b: bool = False
+    vote_clear_formatting_a: bool = False
+    vote_clear_formatting_b: bool = False
+    vote_incorrect_a: bool = False
+    vote_incorrect_b: bool = False
+    vote_superficial_a: bool = False
+    vote_superficial_b: bool = False
+    vote_instructions_not_followed_a: bool = False
+    vote_instructions_not_followed_b: bool = False
+
 
 def save_tool_vote_to_db(data: dict) -> dict:
     """
