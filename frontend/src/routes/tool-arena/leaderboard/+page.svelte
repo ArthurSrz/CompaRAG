@@ -5,14 +5,31 @@
   import SeoHead from '$components/SEOHead.svelte'
   import { m } from '$lib/i18n/messages'
 
+  type ToolPrefs = {
+    positive_prefs_ratio: number
+    total_prefs: number
+    useful: number
+    complete: number
+    creative: number
+    clear_formatting: number
+    incorrect: number
+    superficial: number
+    instructions_not_followed: number
+  }
+
   type ToolRanking = {
     tool_id: string
     elo: number
     score_p2_5: number
     score_p97_5: number
+    rank: number
+    rank_p2_5: number
+    rank_p97_5: number
     n_match: number
+    mean_win_prob: number
     win_rate: number
     provisional: boolean
+    prefs: ToolPrefs | null
   }
 
   let tools = $state<ToolRanking[]>([])
@@ -22,7 +39,9 @@
   onMount(async () => {
     try {
       const data = await api.request<{ data_timestamp: number | null; tools: ToolRanking[] }>('/tool-arena/leaderboard')
-      tools = [...data.tools].sort((a, b) => b.elo - a.elo)
+      tools = [...data.tools].sort(
+        (a, b) => (a.rank ?? Number.POSITIVE_INFINITY) - (b.rank ?? Number.POSITIVE_INFINITY) || b.elo - a.elo
+      )
     } catch (err) {
       error = (err as Error).message || m['toolArena.errorFallback']()
     } finally {
@@ -69,14 +88,23 @@
               <th class="text-left px-4 py-3 font-semibold text-dark-grey">{m['toolArena.leaderboard.toolName']()}</th>
               <th class="text-right px-4 py-3 font-semibold text-dark-grey">{m['toolArena.leaderboard.eloScore']()}</th>
               <th class="text-right px-4 py-3 font-semibold text-dark-grey hidden md:table-cell">{m['toolArena.leaderboard.confidenceInterval']()}</th>
+              <th class="text-right px-4 py-3 font-semibold text-dark-grey hidden lg:table-cell">Win prob</th>
               <th class="text-right px-4 py-3 font-semibold text-dark-grey">{m['toolArena.leaderboard.matches']()}</th>
               <th class="text-right px-4 py-3 font-semibold text-dark-grey hidden sm:table-cell">{m['toolArena.leaderboard.winRate']()}</th>
+              <th class="text-right px-4 py-3 font-semibold text-dark-grey hidden lg:table-cell">Quality</th>
             </tr>
           </thead>
           <tbody>
             {#each tools as tool, i}
               <tr class="border-b border-grey-100 last:border-0 hover:bg-very-light-grey transition-colors">
-                <td class="px-4 py-3 font-semibold text-grey">{i + 1}</td>
+                <td class="px-4 py-3 font-semibold text-grey">
+                  {tool.rank ?? i + 1}
+                  {#if tool.rank_p2_5 !== undefined && tool.rank_p97_5 !== undefined && tool.rank_p2_5 !== tool.rank_p97_5}
+                    <span class="fr-text--xs text-grey font-normal">
+                      ({tool.rank_p2_5}–{tool.rank_p97_5})
+                    </span>
+                  {/if}
+                </td>
                 <td class="px-4 py-3">
                   <div class="flex items-center gap-2 flex-wrap">
                     <span class="font-medium">{tool.tool_id}</span>
@@ -96,9 +124,24 @@
                 <td class="px-4 py-3 text-right text-grey hidden md:table-cell font-mono fr-text--sm">
                   {tool.score_p2_5.toFixed(1)} – {tool.score_p97_5.toFixed(1)}
                 </td>
+                <td class="px-4 py-3 text-right text-grey hidden lg:table-cell font-mono fr-text--sm">
+                  {tool.mean_win_prob !== undefined ? `${(tool.mean_win_prob * 100).toFixed(1)}%` : '—'}
+                </td>
                 <td class="px-4 py-3 text-right text-grey">{tool.n_match}</td>
                 <td class="px-4 py-3 text-right text-grey hidden sm:table-cell">
                   {(tool.win_rate * 100).toFixed(1)}%
+                </td>
+                <td class="px-4 py-3 text-right text-grey hidden lg:table-cell">
+                  {#if tool.prefs && tool.prefs.total_prefs > 0 && tool.prefs.positive_prefs_ratio >= 0}
+                    <span class="fr-text--sm font-mono">
+                      {(tool.prefs.positive_prefs_ratio * 100).toFixed(0)}%
+                    </span>
+                    <span class="fr-text--xs text-grey block">
+                      n={tool.prefs.total_prefs}
+                    </span>
+                  {:else}
+                    <span class="fr-text--xs text-grey">—</span>
+                  {/if}
                 </td>
               </tr>
             {/each}
