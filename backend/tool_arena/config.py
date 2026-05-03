@@ -101,6 +101,10 @@ class MCPServerConfig(BaseModel):
     # only carries the model name through to MCPToolCall.llm_id for analytics.
     # None or "" for servers whose LLM is not under our control (e.g. Clarifeye).
     llm_id: str | None = None
+    # Selection weight for the dispatcher's weighted sampling within a
+    # task_type group. Default 1.0 = uniform with peers; set >1.0 to
+    # over-sample (e.g. to collect more votes for a new contestant).
+    weight: float = Field(default=1.0, gt=0)
 
 
 def load_mcp_servers(path: Path | None = None) -> list[MCPServerConfig]:
