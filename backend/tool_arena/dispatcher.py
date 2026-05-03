@@ -133,8 +133,16 @@ class MCPDispatcher:
         if len(pool) == 2:
             server_a, server_b = pool[0], pool[1]
         else:
-            picked_indices = sorted(random.sample(range(len(pool)), 2))
-            server_a, server_b = pool[picked_indices[0]], pool[picked_indices[1]]
+            # Weighted sampling without replacement: pick the first slot with
+            # per-server weights, then the second from the remainder using its
+            # renormalized weights. Collapses to uniform when weights are equal.
+            weights = [s.weight for s in pool]
+            first_idx = random.choices(range(len(pool)), weights=weights, k=1)[0]
+            remaining = [i for i in range(len(pool)) if i != first_idx]
+            rem_w = [weights[i] for i in remaining]
+            second_idx = random.choices(remaining, weights=rem_w, k=1)[0]
+            a, b = sorted([first_idx, second_idx])
+            server_a, server_b = pool[a], pool[b]
         servers = [server_a, server_b]
 
         raw_results = await asyncio.gather(
