@@ -266,7 +266,9 @@ async def get_tool_leaderboard():
     """
     Return current tool rankings from Redis.
 
-    Response shape: {data_timestamp: float|null, tools: [{tool_id, elo, ...}, ...]}
+    Response shape: {data_timestamp: float|null, tools: [{tool_id, elo, ..., prefs: {...}|null}, ...]}
+    Each tool entry merges the ranking row with its preferences block (or null
+    if no prefs aggregated yet — mirrors LLM /models endpoint shape).
     Returns empty tools list if Redis is unavailable or no data exists yet.
     """
     try:
@@ -278,9 +280,14 @@ async def get_tool_leaderboard():
         return {"data_timestamp": None, "tools": []}
     data = json.loads(raw)
     rankings = data.get("rankings", {})
+    preferences = data.get("preferences", {})
+    tools = [
+        {**entry, "prefs": preferences.get(tool_id)}
+        for tool_id, entry in rankings.items()
+    ]
     return {
         "data_timestamp": data.get("timestamp"),
-        "tools": list(rankings.values()),
+        "tools": tools,
     }
 
 

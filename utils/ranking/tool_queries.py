@@ -21,11 +21,19 @@ def fetch_tool_votes() -> list[dict]:
 
     Returns:
         List of dicts with keys: tool_a_id, tool_b_id, chosen,
-        session_hash, task, goal, timestamp.
+        session_hash, task, goal, timestamp, plus 14 vote_<pref>_<side>
+        BOOLEANs (7 prefs × 2 sides).
     """
     with db_cursor("get tool votes", logger, cursor_factory=RealDictCursor) as cursor:
         cursor.execute(
-            "SELECT tool_a_id, tool_b_id, chosen, session_hash, task, goal, timestamp"
+            "SELECT tool_a_id, tool_b_id, chosen, session_hash, task, goal, timestamp,"
+            " vote_useful_a, vote_useful_b,"
+            " vote_complete_a, vote_complete_b,"
+            " vote_creative_a, vote_creative_b,"
+            " vote_clear_formatting_a, vote_clear_formatting_b,"
+            " vote_incorrect_a, vote_incorrect_b,"
+            " vote_superficial_a, vote_superficial_b,"
+            " vote_instructions_not_followed_a, vote_instructions_not_followed_b"
             " FROM tool_votes"
         )
         return [dict(row) for row in cursor.fetchall()]

@@ -54,11 +54,17 @@ def store_to_redis(group: DataGroup, data: RankingResult) -> None:
 def main(mode: Literal["all", "redis", "json"] = "redis") -> None:
     """
     Compute per group (portals + "all") `RankingResult` in redis/as file depending on mode.
+
+    Tool ranking + HF export run unconditionally; they are isolated from the LLM
+    ranking path (see tool_compute.py header) and must not be gated by LLM data.
     """
+    compute_and_store_tool_rankings()
+    export_tool_votes_to_hf()
+
     data = compute_all_rankings()
 
     if not data:
-        logger.info("[Ranking] No data to store, skipping.")
+        logger.info("[Ranking] No LLM ranking data to store, skipping LLM-side outputs.")
         return
 
     if mode in ("all", "json"):
@@ -71,9 +77,6 @@ def main(mode: Literal["all", "redis", "json"] = "redis") -> None:
 
     llms = read_json(LLMS_GENERATED_DATA_FILE)["models"]
     monitor(llms, data["all"])
-
-    compute_and_store_tool_rankings()
-    export_tool_votes_to_hf()
 
 
 def compute_and_store_tool_rankings() -> None:
