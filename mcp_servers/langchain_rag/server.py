@@ -28,7 +28,13 @@ llm = ChatOpenAI(
     # OpenRouter does NOT recognize for Mistral Small, and the request
     # falls back to the provider default (~100 tokens). Sending the raw
     # `max_tokens` field via extra_body forces it through.
-    extra_body={"max_tokens": 4096},
+    # Cloudflare (OpenRouter's cheapest Mistral provider) silently caps
+    # output at ~113 tokens regardless of max_tokens. Force OpenRouter to
+    # route to providers with proper max_tokens honoring.
+    extra_body={
+        "max_tokens": 4096,
+        "provider": {"order": ["mistral", "together", "deepinfra"], "allow_fallbacks": True},
+    },
 )
 
 embeddings = OpenAIEmbeddings(

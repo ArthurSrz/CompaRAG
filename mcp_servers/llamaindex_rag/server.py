@@ -32,7 +32,12 @@ Settings.llm = OpenAILike(
     # so OpenRouter receives it. LlamaIndex's OpenAILike sometimes maps
     # max_tokens differently when is_chat_model=True; additional_kwargs
     # is forwarded verbatim into the chat completions request.
-    additional_kwargs={"max_tokens": 4096},
+    # Cloudflare (OpenRouter's cheapest Mistral provider) silently caps
+    # output at ~143 tokens regardless of max_tokens. Route around it.
+    additional_kwargs={
+        "max_tokens": 4096,
+        "provider": {"order": ["mistral", "together", "deepinfra"], "allow_fallbacks": True},
+    },
 )
 
 # Set after lifespan build
