@@ -28,6 +28,11 @@ Settings.llm = OpenAILike(
     is_chat_model=True,
     max_tokens=4096,
     context_window=128000,
+    # Mirror the langchain fix: forward max_tokens via the raw API body
+    # so OpenRouter receives it. LlamaIndex's OpenAILike sometimes maps
+    # max_tokens differently when is_chat_model=True; additional_kwargs
+    # is forwarded verbatim into the chat completions request.
+    additional_kwargs={"max_tokens": 4096},
 )
 
 # Set after lifespan build
