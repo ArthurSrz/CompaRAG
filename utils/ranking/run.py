@@ -3,6 +3,33 @@ Script computing ranking/preferences and stores results in redis or as json file
 Ran at interval by a cronjob.
 """
 
+# --- Module-load sentinel: proves the script was actually invoked. ----------
+# Written before ANY other import that could fail. If this row never appears in
+# cron_sentinel, then `uv run python -m utils.ranking.run` is not being executed
+# at all — the issue is upstream (start command, build, etc.), not the code.
+import os as _sentinel_os
+import sys as _sentinel_sys
+import traceback as _sentinel_tb
+import datetime as _sentinel_dt
+
+try:
+    import psycopg2 as _sentinel_pg
+    _db = _sentinel_os.environ.get("COMPARIA_DB_URI")
+    if _db:
+        _conn = _sentinel_pg.connect(_db)
+        _conn.autocommit = True
+        _cur = _conn.cursor()
+        _cur.execute("CREATE TABLE IF NOT EXISTS cron_sentinel (id SERIAL PRIMARY KEY, ts TIMESTAMPTZ DEFAULT NOW(), msg TEXT)")
+        _cur.execute(
+            "INSERT INTO cron_sentinel (msg) VALUES (%s)",
+            (f"module-load@{_sentinel_dt.datetime.utcnow().isoformat()}Z argv={_sentinel_sys.argv}",),
+        )
+        _conn.close()
+        print("[CRON_SENTINEL] module-load wrote to cron_sentinel", flush=True)
+except Exception:
+    print(f"[CRON_SENTINEL] module-load failed: {_sentinel_tb.format_exc()[-500:]}", flush=True)
+# ---------------------------------------------------------------------------
+
 import json
 import logging
 from pathlib import Path
