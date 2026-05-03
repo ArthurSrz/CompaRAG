@@ -237,4 +237,92 @@ make dev                   # Start backend + frontend
 
 For the full setup guide (Docker, manual setup, testing, database, models, i18n, architecture), see **[CONTRIBUTING.md](CONTRIBUTING.md)**.
 
+---
+
+## Tool Arena: how the RAG servers work
+
+The **Tool Arena** extension compares two MCP servers blindly on the same RAG task. Two RAG implementations ship in `mcp_servers/` — both expose a single `rag_query(task, goal, document_content)` MCP tool. They listen on `:8010` (LangChain) and `:8011` (LlamaIndex) locally, or on `$PORT` when deployed to Railway.
+
+### Shared setup
+
+Both servers use:
+- **Transport**: FastMCP `streamable-http` on `/mcp`
+- **LLM**: `mistralai/mistral-medium-3.1` via OpenRouter
+- **Embeddings**: `text-embedding-3-small` via OpenRouter
+- **Static corpus**: `mcp_servers/corpus/*.md` (Python tutorials), loaded into a vector index at server startup (lifespan)
+- **Health**: `GET /health` returns `OK`
+
+### Two query paths
+
+Both servers branch on whether the user uploaded a document:
+
+```mermaid
+flowchart LR
+    Q["rag_query(task, goal, document_content)"] --> B{document_content<br/>provided?}
+    B -- "yes" --> D["Skip retrieval<br/>Pass FULL doc<br/>to LLM"]
+    B -- "no (corpus mode)" --> R["Retrieve top-3 chunks<br/>from static corpus"]
+    D --> P["Prompt:<br/>'Detailed answer<br/>from this document'"]
+    R --> P2["Prompt:<br/>'Answer using<br/>retrieved chunks'"]
+    P --> L["LLM (mistral-medium-3.1<br/>via OpenRouter)"]
+    P2 --> L
+    L --> A["Return: 'Sources: ...<br/><br/>{answer}'"]
+```
+
+**Why bypass retrieval for user-uploaded docs?** Chunking a short uploaded document into k=3 chunks of ~500 chars left the LLM with sparse context, which produced "context not enough" refusals (LangChain) or "Empty Response" (LlamaIndex). Passing the full doc directly works because Mistral Medium 3.1 has a 128k token context window — any reasonable upload fits.
+
+### LangChain RAG (`mcp_servers/langchain_rag/server.py`)
+
+| Component | Choice | Notes |
+|---|---|---|
+| Document loader | `DirectoryLoader` + `TextLoader` | Loads `*.md` from corpus dir |
+| Splitter | `RecursiveCharacterTextSplitter(chunk_size=500, chunk_overlap=50)` | Used for the static corpus only |
+| Vector store | `FAISS` (in-memory) | Built once during lifespan startup |
+| Retriever | `vectorstore.as_retriever(k=3)` | Static corpus only |
+| LLM client | `langchain_openai.ChatOpenAI` | `extra_body={"max_tokens": 4096}` forces param through to OpenRouter |
+| Synthesis | `_PROMPT.format_messages()` → `llm.invoke()` | Single-shot, non-streaming |
+
+### LlamaIndex RAG (`mcp_servers/llamaindex_rag/server.py`)
+
+| Component | Choice | Notes |
+|---|---|---|
+| Document loader | `SimpleDirectoryReader` | Auto-detects file types |
+| Splitter | LlamaIndex default node parser | (sentence splitter, ~1024 tokens) |
+| Vector index | `VectorStoreIndex.from_documents` | Built once during lifespan startup |
+| Query engine | `index.as_query_engine(similarity_top_k=3)` | Static corpus only |
+| LLM client | `llama_index.llms.openai_like.OpenAILike` | `max_tokens=4096`, `context_window=128000` |
+| Synthesis (corpus) | `query_engine.query()` | Built-in retrieve+synthesize |
+| Synthesis (uploaded) | `Settings.llm.complete()` | Direct LLM call, bypassing the index |
+
+### Why `mistralai/mistral-medium-3.1` and not `mistral-small-3.1-24b-instruct`?
+
+Earlier versions used `mistral-small-3.1-24b-instruct`. On OpenRouter, that specific model is served by **only one provider — Cloudflare Workers AI** — which silently caps output at ~113-143 tokens regardless of the `max_tokens` value sent. There is no provider routing fix for this because there is no alternative provider for that model on OpenRouter.
+
+`mistralai/mistral-medium-3.1` is served by Mistral's official endpoint (not Cloudflare) and honors `max_tokens` correctly. To verify which providers serve a given model:
+
+```bash
+curl https://openrouter.ai/api/v1/models/{vendor}/{model}/endpoints \
+  | jq '.data.endpoints[] | .provider_name'
+```
+
+If the only provider listed is `Cloudflare`, the response will be capped to ~128 output tokens.
+
+### Required env vars
+
+| Service | Var | Purpose |
+|---|---|---|
+| Both MCP servers | `OPENROUTER_API_KEY` | OpenRouter creds for LLM + embeddings |
+| Both MCP servers | `PORT` | Set by Railway; defaults to 8010 / 8011 locally |
+| Both MCP servers | `RAILWAY_DOCKERFILE_PATH=mcp_servers/{langchain,llamaindex}_rag/Dockerfile` | Forces Railway to build the right image |
+| CompaRAG backend | `MCP_LANGCHAIN_RAG_URL=http://langchain-rag.railway.internal:8010/mcp` | Internal Railway DNS |
+| CompaRAG backend | `MCP_LLAMAINDEX_RAG_URL=http://llamaindex-rag.railway.internal:8011/mcp` | Internal Railway DNS |
+
+### Running locally
+
+```bash
+OPENROUTER_API_KEY=sk-or-... mcp_servers/start_servers.sh
+# Backends boot on :8010 (LangChain) and :8011 (LlamaIndex)
+```
+
+The CompaRAG backend's `mcp_servers.json` registers them under `langchain_rag` and `llamaindex_rag` IDs.
+
 <a href="https://digitalpublicgoods.net/r/comparia" target="_blank" rel="noopener noreferrer"><img src="https://github.com/DPGAlliance/dpg-resources/blob/main/docs/assets/dpg-badge.png?raw=true" width="100" alt="Digital Public Goods Badge"></a>
