@@ -6,22 +6,45 @@
     onsubmit,
     disabled = false
   }: {
-    onsubmit: (task: string, goal: string, documentContent: string) => void
+    onsubmit: (task: string, goal: string, documentContent: string, taskType: TaskType) => void
     disabled?: boolean
   } = $props()
 
-  const taskTypes = [
-    { value: 'summarize', label: m['toolArena.form.taskTypes.summarize.label'](), prompt: m['toolArena.form.taskTypes.summarize.prompt'](), goalText: m['toolArena.form.taskTypes.summarize.goal']() }
+  // 1-1 with backend Literal["summary","qa","extraction"] in
+  // backend/tool_arena/router.py::CompareRequest.task_type
+  type TaskType = 'summary' | 'qa' | 'extraction'
+
+  const taskTypes: { value: TaskType; label: string; prompt: string; goalText: string }[] = [
+    {
+      value: 'summary',
+      label: m['toolArena.form.taskTypes.summary.label'](),
+      prompt: m['toolArena.form.taskTypes.summary.prompt'](),
+      goalText: m['toolArena.form.taskTypes.summary.goal']()
+    },
+    {
+      value: 'qa',
+      label: m['toolArena.form.taskTypes.qa.label'](),
+      prompt: m['toolArena.form.taskTypes.qa.prompt'](),
+      goalText: m['toolArena.form.taskTypes.qa.goal']()
+    },
+    {
+      value: 'extraction',
+      label: m['toolArena.form.taskTypes.extraction.label'](),
+      prompt: m['toolArena.form.taskTypes.extraction.prompt'](),
+      goalText: m['toolArena.form.taskTypes.extraction.goal']()
+    }
   ]
 
-  let selectedTaskType = $state(taskTypes[0].value)
+  let selectedTaskType = $state<TaskType>(taskTypes[0].value)
   let task = $state(taskTypes[0].prompt)
   let goal = $state(taskTypes[0].goalText)
   let documentContent = $state('')
   let fileName = $state('')
   let fileError = $state('')
 
-  const requiresDocument = $derived(selectedTaskType === 'summarize')
+  // Summary and extraction operate on a user-provided document; QA can run
+  // against the static corpus, so it doesn't require an upload.
+  const requiresDocument = $derived(selectedTaskType !== 'qa')
 
   const canSubmit = $derived(
     task.trim().length > 0 &&
@@ -33,7 +56,7 @@
   function handleSubmit(e: SubmitEvent) {
     e.preventDefault()
     if (canSubmit) {
-      onsubmit(task.trim(), goal.trim(), documentContent)
+      onsubmit(task.trim(), goal.trim(), documentContent, selectedTaskType)
     }
   }
 

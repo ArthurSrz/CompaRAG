@@ -64,6 +64,7 @@ class MCPDispatcher:
         goal: str,
         session_id: str,
         document_content: str = "",
+        task_type: str | None = None,
     ) -> tuple[MCPToolCall, MCPToolCall]:
         """Run full comparison pipeline: pick servers, call MCP, sanitize, return.
 
@@ -104,15 +105,30 @@ class MCPDispatcher:
         groups: dict[str | None, list[MCPServerConfig]] = defaultdict(list)
         for srv in ready:
             groups[srv.task_type].append(srv)
-        eligible_groups = [g for g in groups.values() if len(g) >= 2]
-        if not eligible_groups:
-            snapshot = [r.to_dict() for r in readiness.snapshot()]
-            logger.warning(
-                "dispatcher: no task_type group has >=2 READY servers. groups=%s",
-                {k: [s.id for s in v] for k, v in groups.items()},
-            )
-            raise InsufficientReadyServersError(len(ready), snapshot)
-        pool = random.choice(eligible_groups)
+
+        # Honor the user's task_type selection (UI "Type de tâche") strictly.
+        # If the caller asked for "summary", we must not silently fall back to
+        # qa or to legacy entries — that would break the 1-1 contract.
+        if task_type is not None:
+            requested_pool = groups.get(task_type, [])
+            if len(requested_pool) < 2:
+                snapshot = [r.to_dict() for r in readiness.snapshot()]
+                logger.warning(
+                    "dispatcher: requested task_type=%s has only %d READY servers",
+                    task_type, len(requested_pool),
+                )
+                raise InsufficientReadyServersError(len(requested_pool), snapshot)
+            pool = requested_pool
+        else:
+            eligible_groups = [g for g in groups.values() if len(g) >= 2]
+            if not eligible_groups:
+                snapshot = [r.to_dict() for r in readiness.snapshot()]
+                logger.warning(
+                    "dispatcher: no task_type group has >=2 READY servers. groups=%s",
+                    {k: [s.id for s in v] for k, v in groups.items()},
+                )
+                raise InsufficientReadyServersError(len(ready), snapshot)
+            pool = random.choice(eligible_groups)
 
         if len(pool) == 2:
             server_a, server_b = pool[0], pool[1]

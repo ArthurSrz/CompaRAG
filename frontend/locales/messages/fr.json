@@ -2143,10 +2143,20 @@
       "taskPlaceholder": "Décrivez la tâche à accomplir...",
       "goalPlaceholder": "Objectif : à quoi ressemble un bon résultat ?",
       "taskTypes": {
-        "summarize": {
+        "summary": {
           "label": "Résumé",
           "prompt": "Résumez le document ou contenu suivant de manière claire et concise, en capturant les points clés.",
           "goal": "Un résumé concis et précis qui capture tous les points clés"
+        },
+        "qa": {
+          "label": "Question-réponse",
+          "prompt": "Répondez à la question suivante en vous appuyant uniquement sur le contexte fourni.",
+          "goal": "Une réponse précise, citée et étayée par le contexte"
+        },
+        "extraction": {
+          "label": "Extraction",
+          "prompt": "Extrayez les informations structurées demandées du document fourni.",
+          "goal": "Des champs structurés conformes au schéma cible"
         }
       },
       "suggestions": {

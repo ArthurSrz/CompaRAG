@@ -46,7 +46,12 @@
 
   const bothFailed = $derived(!!errorA && !!errorB && !resultA && !resultB)
 
-  async function handleCompare(task: string, goal: string, documentContent: string = '') {
+  async function handleCompare(
+    task: string,
+    goal: string,
+    documentContent: string = '',
+    taskType: 'summary' | 'qa' | 'extraction' | null = null
+  ) {
     phase = 'loading'
     compareError = null
 
@@ -66,7 +71,7 @@
       const response = await fetch(url, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ task, goal, document_content: documentContent })
+        body: JSON.stringify({ task, goal, document_content: documentContent, task_type: taskType })
       })
 
       if (response.status === 503) {

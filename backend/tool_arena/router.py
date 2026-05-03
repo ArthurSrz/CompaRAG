@@ -152,6 +152,11 @@ class CompareRequest(BaseModel):
     task: str
     goal: str
     document_content: str = ""
+    # Optional task taxonomy from the UI's "Type de tâche" picker. When set,
+    # the dispatcher restricts pairing to entries whose task_type matches —
+    # equifinality fairness invariant. Legacy clients (no task_type) get the
+    # current behavior: random pick from any group with >=2 READY servers.
+    task_type: Literal["summary", "qa", "extraction"] | None = None
 
 
 class CompareResponse(BaseModel):
@@ -399,6 +404,7 @@ async def compare(body: CompareRequest):
             goal=body.goal,
             session_id=session_hash,
             document_content=body.document_content,
+            task_type=body.task_type,
         )
     except InsufficientReadyServersError as exc:
         # Surface as 503 with a structured body so the frontend can pattern-

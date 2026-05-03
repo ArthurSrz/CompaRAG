@@ -105,6 +105,73 @@ async def test_dispatcher_raises_when_no_group_has_two_ready():
             await MCPDispatcher().dispatch(task="t", goal="g", session_id="s")
 
 
+async def test_dispatcher_honors_explicit_task_type_param():
+    """When the caller passes task_type, the dispatcher must pair within that
+    group only — even if another group has more contestants."""
+    from backend.tool_arena.dispatcher import MCPDispatcher
+
+    s_sum_a = _srv("sum_a", "summary")
+    s_sum_b = _srv("sum_b", "summary")
+    s_sum_c = _srv("sum_c", "summary")
+    s_qa_a = _srv("qa_a", "qa")
+    s_qa_b = _srv("qa_b", "qa")
+
+    mock_registry = MagicMock()
+    _wire(mock_registry, s_sum_a, s_sum_b, s_sum_c, s_qa_a, s_qa_b)
+    reg = get_readiness_registry()
+    for s in (s_sum_a, s_sum_b, s_sum_c, s_qa_a, s_qa_b):
+        reg.set_ready(s.id)
+
+    with (
+        patch("backend.tool_arena.dispatcher.registry", mock_registry),
+        patch(
+            "backend.tool_arena.dispatcher.single_mcp_call",
+            new_callable=AsyncMock,
+            return_value=("ok", 10),
+        ),
+        patch(
+            "backend.tool_arena.dispatcher.sanitize_output",
+            side_effect=lambda text, servers: text,
+        ),
+    ):
+        a, b = await MCPDispatcher().dispatch(
+            task="t", goal="g", session_id="s", task_type="qa"
+        )
+
+    assert {a.tool_id, b.tool_id} == {"qa_a", "qa_b"}
+
+
+async def test_dispatcher_raises_when_explicit_task_type_has_no_pair():
+    """Requesting task_type=extraction when no extraction servers exist must
+    raise rather than silently fall back to a different group."""
+    from backend.tool_arena.dispatcher import (
+        InsufficientReadyServersError,
+        MCPDispatcher,
+    )
+
+    s_sum_a = _srv("sum_a", "summary")
+    s_sum_b = _srv("sum_b", "summary")
+
+    mock_registry = MagicMock()
+    _wire(mock_registry, s_sum_a, s_sum_b)
+    reg = get_readiness_registry()
+    reg.set_ready(s_sum_a.id)
+    reg.set_ready(s_sum_b.id)
+
+    with (
+        patch("backend.tool_arena.dispatcher.registry", mock_registry),
+        patch(
+            "backend.tool_arena.dispatcher.single_mcp_call",
+            new_callable=AsyncMock,
+            return_value=("ok", 10),
+        ),
+    ):
+        with pytest.raises(InsufficientReadyServersError):
+            await MCPDispatcher().dispatch(
+                task="t", goal="g", session_id="s", task_type="extraction"
+            )
+
+
 async def test_legacy_servers_form_their_own_group():
     """Servers without task_type (None) are paired together — backward compat."""
     from backend.tool_arena.dispatcher import MCPDispatcher
