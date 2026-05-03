@@ -26,12 +26,15 @@ def export_tool_votes_to_hf() -> None:
         logger.warning("[HF Export] HF_TOKEN not set, skipping.")
         return
 
+    logger.info("[HF Export] Starting export_tool_votes_to_hf")
     try:
         from huggingface_hub import HfApi
 
+        logger.info("[HF Export] Connecting to Postgres")
         conn = psycopg2.connect(db_uri)
         df = pd.read_sql("SELECT * FROM tool_votes ORDER BY timestamp DESC", conn)
         conn.close()
+        logger.info(f"[HF Export] Fetched {len(df)} rows, columns={list(df.columns)}")
 
         if df.empty:
             logger.info("[HF Export] No tool_votes rows, skipping.")
@@ -40,8 +43,10 @@ def export_tool_votes_to_hf() -> None:
         with tempfile.NamedTemporaryFile(suffix=".parquet", delete=False) as f:
             df.to_parquet(f.name, index=False)
             tmp_path = f.name
+        logger.info(f"[HF Export] Wrote parquet to {tmp_path}")
 
         api = HfApi(token=hf_token)
+        logger.info(f"[HF Export] Uploading to {HF_REPO_ID}")
         api.upload_file(
             path_or_fileobj=tmp_path,
             path_in_repo="tool_votes.parquet",
@@ -51,5 +56,6 @@ def export_tool_votes_to_hf() -> None:
         )
         logger.info(f"[HF Export] Pushed {len(df)} rows to {HF_REPO_ID}")
 
-    except Exception as e:
-        logger.error(f"[HF Export] Failed: {e}")
+    except Exception:
+        logger.exception("[HF Export] Failed")
+        raise
