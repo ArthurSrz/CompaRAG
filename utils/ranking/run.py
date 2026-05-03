@@ -32,22 +32,44 @@ def _diag(step: str, **kwargs) -> None:
 
 
 def _flush_diag() -> None:
+    payload = json.dumps({
+        "started_at": _diag_steps[0]["t"] if _diag_steps else None,
+        "ended_at": time.time(),
+        "hf_token_present": bool(os.environ.get("HF_TOKEN")),
+        "redis_host": os.environ.get("COMPARIA_REDIS_HOST", ""),
+        "db_uri_host": (os.environ.get("COMPARIA_DB_URI", "").split("@")[-1].split("/")[0]
+                        if "@" in os.environ.get("COMPARIA_DB_URI", "") else None),
+        "steps": _diag_steps,
+    })
+    print(f"[CRON_DIAG] payload size={len(payload)}", flush=True)
+
+    # Try Redis (preferred — fast, structured). Catch all so a Redis outage
+    # doesn't block the Postgres fallback below.
     try:
         client = get_redis_client()
-        client.setex(
-            CRON_DIAG_KEY,
-            time=3600 * 24,
-            value=json.dumps({
-                "started_at": _diag_steps[0]["t"] if _diag_steps else None,
-                "ended_at": time.time(),
-                "hf_token_present": bool(os.environ.get("HF_TOKEN")),
-                "db_uri_host": (os.environ.get("COMPARIA_DB_URI", "").split("@")[-1].split("/")[0]
-                                if "@" in os.environ.get("COMPARIA_DB_URI", "") else None),
-                "steps": _diag_steps,
-            }),
-        )
+        client.setex(CRON_DIAG_KEY, time=3600 * 24, value=payload)
+        print("[CRON_DIAG] redis_write: ok", flush=True)
     except Exception:
-        print(f"[CRON_DIAG] flush failed: {traceback.format_exc()}", flush=True)
+        print(f"[CRON_DIAG] redis_write: FAILED {traceback.format_exc()[-1000:]}", flush=True)
+
+    # Also write to Postgres (independent infrastructure — survives Redis outage).
+    try:
+        import psycopg2
+        conn = psycopg2.connect(os.environ["COMPARIA_DB_URI"])
+        conn.autocommit = True
+        cur = conn.cursor()
+        cur.execute("""
+            CREATE TABLE IF NOT EXISTS cron_diagnostics (
+                id SERIAL PRIMARY KEY,
+                ts TIMESTAMPTZ DEFAULT NOW(),
+                payload JSONB
+            )
+        """)
+        cur.execute("INSERT INTO cron_diagnostics (payload) VALUES (%s::jsonb)", (payload,))
+        conn.close()
+        print("[CRON_DIAG] postgres_write: ok", flush=True)
+    except Exception:
+        print(f"[CRON_DIAG] postgres_write: FAILED {traceback.format_exc()[-1000:]}", flush=True)
 from utils.utils import (
     LLMS_GENERATED_DATA_FILE,
     configure_logger,
