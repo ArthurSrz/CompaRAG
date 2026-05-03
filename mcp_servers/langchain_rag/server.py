@@ -1,9 +1,15 @@
 """LangChain RAG MCP Server — FastMCP on port 8010 (or $PORT)."""
 
 import asyncio
+import json
+import logging
 import os
+import time
 from contextlib import asynccontextmanager
 from pathlib import Path
+
+logging.basicConfig(level=logging.INFO, format="%(asctime)s [langchain-rag] %(message)s")
+log = logging.getLogger("langchain_rag")
 
 from fastmcp import FastMCP
 from starlette.requests import Request
@@ -87,6 +93,7 @@ def rag_query(task: str, goal: str, document_content: str = "") -> str:
     from langchain_core.documents import Document as LCDocument
 
     query = f"{task} {goal}"
+    mode = "uploaded" if document_content.strip() else "corpus"
 
     if document_content.strip():
         # User-uploaded doc: bypass FAISS retrieval and pass the FULL doc to
@@ -105,7 +112,45 @@ def rag_query(task: str, goal: str, document_content: str = "") -> str:
         sources = set(Path(doc.metadata.get("source", "unknown")).stem for doc in results)
 
     messages = _PROMPT.format_messages(context=context, query=query)
+    prompt_text = "\n".join(m.content for m in messages)
+
+    log.info(
+        "rag_query.request %s",
+        json.dumps({
+            "mode": mode,
+            "task_chars": len(task),
+            "goal_chars": len(goal),
+            "document_chars": len(document_content),
+            "context_chars": len(context),
+            "prompt_chars": len(prompt_text),
+            "sources": sorted(sources),
+            "llm": {
+                "model": llm.model_name,
+                "base_url": str(llm.openai_api_base),
+                "extra_body": getattr(llm, "extra_body", None),
+            },
+        }),
+    )
+
+    t0 = time.time()
     answer = llm.invoke(messages)
+    duration_ms = int((time.time() - t0) * 1000)
+
+    finish = None
+    response_meta = getattr(answer, "response_metadata", {}) or {}
+    finish = response_meta.get("finish_reason")
+    usage = response_meta.get("token_usage") or response_meta.get("usage") or {}
+
+    log.info(
+        "rag_query.response %s",
+        json.dumps({
+            "mode": mode,
+            "answer_chars": len(answer.content or ""),
+            "duration_ms": duration_ms,
+            "finish_reason": finish,
+            "usage": usage,
+        }),
+    )
 
     return f"Sources: {', '.join(sources)}\n\n{answer.content}"
 

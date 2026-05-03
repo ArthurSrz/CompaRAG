@@ -1,9 +1,15 @@
 """LlamaIndex RAG MCP Server — FastMCP on port 8011 (or $PORT)."""
 
 import asyncio
+import json
+import logging
 import os
+import time
 from contextlib import asynccontextmanager
 from pathlib import Path
+
+logging.basicConfig(level=logging.INFO, format="%(asctime)s [llamaindex-rag] %(message)s")
+log = logging.getLogger("llamaindex_rag")
 
 from fastmcp import FastMCP
 from llama_index.core import VectorStoreIndex, SimpleDirectoryReader, Settings
@@ -70,6 +76,14 @@ def rag_query(task: str, goal: str, document_content: str = "") -> str:
     from llama_index.core import Document as LIDocument
 
     query = f"{task} {goal}"
+    mode = "uploaded" if document_content.strip() else "corpus"
+
+    llm_metadata = {
+        "model": getattr(Settings.llm, "model", None),
+        "max_tokens": getattr(Settings.llm, "max_tokens", None),
+        "context_window": getattr(Settings.llm, "context_window", None),
+        "api_base": getattr(Settings.llm, "api_base", None),
+    }
 
     if document_content.strip():
         # User-uploaded doc: bypass vector retrieval and call the LLM directly
@@ -86,19 +100,76 @@ def rag_query(task: str, goal: str, document_content: str = "") -> str:
             f"Question: {query}\n\n"
             "Detailed Answer:"
         )
-        text = str(Settings.llm.complete(prompt))
+
+        log.info(
+            "rag_query.request %s",
+            json.dumps({
+                "mode": mode,
+                "task_chars": len(task),
+                "goal_chars": len(goal),
+                "document_chars": len(document_content),
+                "prompt_chars": len(prompt),
+                "sources": ["uploaded"],
+                "llm": llm_metadata,
+            }),
+        )
+
+        t0 = time.time()
+        completion = Settings.llm.complete(prompt)
+        duration_ms = int((time.time() - t0) * 1000)
+        text = str(completion)
+
+        log.info(
+            "rag_query.response %s",
+            json.dumps({
+                "mode": mode,
+                "answer_chars": len(text),
+                "duration_ms": duration_ms,
+                "raw_metadata": getattr(completion, "additional_kwargs", None),
+            }),
+        )
+
         return f"Sources: uploaded\n\n{text}"
     else:
         if query_engine is None:
             return "Index not ready yet, please retry in a moment."
+
+        log.info(
+            "rag_query.request %s",
+            json.dumps({
+                "mode": mode,
+                "task_chars": len(task),
+                "goal_chars": len(goal),
+                "document_chars": 0,
+                "query": query[:200],
+                "llm": llm_metadata,
+            }),
+        )
+
+        t0 = time.time()
         response = query_engine.query(query)
+        duration_ms = int((time.time() - t0) * 1000)
+
         sources = set(
             Path(n.metadata.get("file_name", "unknown")).stem
             for n in response.source_nodes
             if n.metadata.get("file_name")
         )
         source_str = f"Sources: {', '.join(sources)}\n\n" if sources else ""
-        return f"{source_str}{response.response}"
+        text = response.response or ""
+
+        log.info(
+            "rag_query.response %s",
+            json.dumps({
+                "mode": mode,
+                "answer_chars": len(text),
+                "duration_ms": duration_ms,
+                "retrieved_chunks": len(response.source_nodes),
+                "sources": sorted(sources),
+            }),
+        )
+
+        return f"{source_str}{text}"
 
 
 if __name__ == "__main__":
