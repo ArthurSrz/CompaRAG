@@ -152,6 +152,8 @@ def rag_query(task: str, goal: str, document_content: str = "") -> str:
         }),
     )
 
+    if sources == {"uploaded"}:
+        return answer.content
     return f"Sources: {', '.join(sources)}\n\n{answer.content}"
 
 

@@ -188,7 +188,7 @@ async def rag_query(task: str, goal: str, document_content: str = "") -> str:
             }),
         )
 
-        return f"Sources: uploaded\n\n{text}"
+        return text
     else:
         if query_engine is None:
             return "Index not ready yet, please retry in a moment."
