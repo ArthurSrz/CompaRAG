@@ -1,98 +1,152 @@
 [
   {
     "id": "summary_default__langchain",
-    "name": "Default · LangChain",
+    "name": "LangChain",
     "description": "Paragraphe, compression 20%, LangChain + FAISS",
     "endpoint": "http://localhost:8012/mcp",
     "transport": "streamablehttp",
-    "tools": ["rag_pill_query"],
-    "tool_args": {"pill_id": "summary_default", "engine_id": "langchain"},
+    "tools": [
+      "rag_pill_query"
+    ],
+    "tool_args": {
+      "pill_id": "summary_default",
+      "engine_id": "langchain"
+    },
     "task_type": "summary",
     "llm_id": "openrouter/mistralai/mistral-medium-3.1",
     "sanitize": {
       "url_patterns": [],
       "metadata_keys": [],
-      "extra_terms": ["LangChain", "langchain", "FAISS"]
+      "extra_terms": [
+        "LangChain",
+        "langchain",
+        "FAISS"
+      ]
     }
   },
   {
     "id": "summary_default__llamaindex",
-    "name": "Default · LlamaIndex",
+    "name": "LlamaIndex",
     "description": "Paragraphe, compression 20%, LlamaIndex + VectorStoreIndex",
     "endpoint": "http://localhost:8012/mcp",
     "transport": "streamablehttp",
-    "tools": ["rag_pill_query"],
-    "tool_args": {"pill_id": "summary_default", "engine_id": "llamaindex"},
+    "tools": [
+      "rag_pill_query"
+    ],
+    "tool_args": {
+      "pill_id": "summary_default",
+      "engine_id": "llamaindex"
+    },
     "task_type": "summary",
     "llm_id": "openrouter/mistralai/mistral-medium-3.1",
     "sanitize": {
       "url_patterns": [],
       "metadata_keys": [],
-      "extra_terms": ["LlamaIndex", "llama-index", "llama_index"]
+      "extra_terms": [
+        "LlamaIndex",
+        "llama-index",
+        "llama_index"
+      ]
     }
   },
   {
     "id": "summary_bullets__langchain",
-    "name": "Puces · LangChain",
+    "name": "LangChain",
     "description": "Liste à puces, compression 15%, LangChain + FAISS",
     "endpoint": "http://localhost:8012/mcp",
     "transport": "streamablehttp",
-    "tools": ["rag_pill_query"],
-    "tool_args": {"pill_id": "summary_bullets", "engine_id": "langchain"},
+    "tools": [
+      "rag_pill_query"
+    ],
+    "tool_args": {
+      "pill_id": "summary_bullets",
+      "engine_id": "langchain"
+    },
     "task_type": "summary",
     "llm_id": "openrouter/mistralai/mistral-medium-3.1",
     "sanitize": {
       "url_patterns": [],
       "metadata_keys": [],
-      "extra_terms": ["LangChain", "langchain", "FAISS"]
+      "extra_terms": [
+        "LangChain",
+        "langchain",
+        "FAISS"
+      ]
     }
   },
   {
     "id": "summary_bullets__llamaindex",
-    "name": "Puces · LlamaIndex",
+    "name": "LlamaIndex",
     "description": "Liste à puces, compression 15%, LlamaIndex + VectorStoreIndex",
     "endpoint": "http://localhost:8012/mcp",
     "transport": "streamablehttp",
-    "tools": ["rag_pill_query"],
-    "tool_args": {"pill_id": "summary_bullets", "engine_id": "llamaindex"},
+    "tools": [
+      "rag_pill_query"
+    ],
+    "tool_args": {
+      "pill_id": "summary_bullets",
+      "engine_id": "llamaindex"
+    },
     "task_type": "summary",
     "llm_id": "openrouter/mistralai/mistral-medium-3.1",
     "sanitize": {
       "url_patterns": [],
       "metadata_keys": [],
-      "extra_terms": ["LlamaIndex", "llama-index", "llama_index"]
+      "extra_terms": [
+        "LlamaIndex",
+        "llama-index",
+        "llama_index"
+      ]
     }
   },
   {
     "id": "qa_precise__langchain",
-    "name": "Précis · LangChain",
+    "name": "LangChain",
     "description": "Avec citations, top_k=3, temperature=0, LangChain + FAISS",
     "endpoint": "http://localhost:8012/mcp",
     "transport": "streamablehttp",
-    "tools": ["rag_pill_query"],
-    "tool_args": {"pill_id": "qa_precise", "engine_id": "langchain"},
+    "tools": [
+      "rag_pill_query"
+    ],
+    "tool_args": {
+      "pill_id": "qa_precise",
+      "engine_id": "langchain"
+    },
     "task_type": "qa",
     "llm_id": "openrouter/mistralai/mistral-medium-3.1",
     "sanitize": {
       "url_patterns": [],
       "metadata_keys": [],
-      "extra_terms": ["LangChain", "langchain", "FAISS"]
+      "extra_terms": [
+        "LangChain",
+        "langchain",
+        "FAISS"
+      ]
     }
   },
   {
     "id": "qa_precise__llamaindex",
-    "name": "Précis · LlamaIndex",
+    "name": "LlamaIndex",
     "description": "Avec citations, top_k=3, temperature=0, LlamaIndex + VectorStoreIndex",
     "endpoint": "http://localhost:8012/mcp",
     "transport": "streamablehttp",
-    "tools": ["rag_pill_query"],
-    "tool_args": {"pill_id": "qa_precise", "engine_id": "llamaindex"},
+    "tools": [
+      "rag_pill_query"
+    ],
+    "tool_args": {
+      "pill_id": "qa_precise",
+      "engine_id": "llamaindex"
+    },
     "task_type": "qa",
     "llm_id": "openrouter/mistralai/mistral-medium-3.1",
     "sanitize": {
       "url_patterns": [],
       "metadata_keys": [],
-      "extra_terms": ["LlamaIndex", "llama-index", "llama_index"]
+      "extra_terms": [
+        "LlamaIndex",
+        "llama-index",
+        "llama_index"
+      ]
     }
   },
   {
@@ -108,11 +162,19 @@
       "token_url": "https://env-3256.gcp.clarifeye.io/o/token/"
     },
     "sanitize": {
-      "url_patterns": ["clarifeye\\.io", "gcp\\.clarifeye"],
+      "url_patterns": [
+        "clarifeye\\.io",
+        "gcp\\.clarifeye"
+      ],
       "metadata_keys": [],
-      "extra_terms": ["clarifeye", "Clarifeye"]
+      "extra_terms": [
+        "clarifeye",
+        "Clarifeye"
+      ]
     },
-    "tools": ["call_agent"],
+    "tools": [
+      "call_agent"
+    ],
     "tool_args": {
       "project_id": "086b054d-dd72-42e1-8827-2d1b1c8e2b4a",
       "agent_settings_id": "c0d46bd1-574c-4679-8bfb-15bc6a09db16"
