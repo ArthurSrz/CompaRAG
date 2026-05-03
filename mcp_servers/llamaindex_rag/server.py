@@ -26,7 +26,7 @@ Settings.llm = OpenAILike(
     api_base="https://openrouter.ai/api/v1",
     api_key=OPENROUTER_API_KEY,
     is_chat_model=True,
-    max_tokens=2048,
+    max_tokens=4096,
     context_window=128000,
 )
 

@@ -22,7 +22,7 @@ llm = ChatOpenAI(
     model="mistralai/mistral-small-3.1-24b-instruct",
     base_url="https://openrouter.ai/api/v1",
     api_key=OPENROUTER_API_KEY,
-    max_tokens=2048,
+    max_tokens=4096,
 )
 
 embeddings = OpenAIEmbeddings(
