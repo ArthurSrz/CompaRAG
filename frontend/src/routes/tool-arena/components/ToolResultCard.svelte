@@ -1,6 +1,5 @@
 <script lang="ts">
-  import { create_marked, sanitize, copy } from '$lib/components/markdown/utils'
-  import 'prismjs/themes/prism.css'
+  import MarkdownCode from '$lib/components/markdown/MarkdownCode.svelte'
 
   let {
     label,
@@ -13,17 +12,6 @@
     error: string | null
     loading?: boolean
   } = $props()
-
-  // Reuse the project's existing markdown pipeline (marked + prism highlighting,
-  // then amuchina sanitization). Disable header anchors here — the cards are
-  // ephemeral comparison views, not navigable docs.
-  const marked = create_marked({ header_links: false, line_breaks: true })
-
-  const rendered_html = $derived.by(() => {
-    if (!result) return ''
-    const raw_html = marked.parse(result, { async: false }) as string
-    return sanitize(raw_html)
-  })
 </script>
 
 <div class="cg-border gap-4 rounded-lg! bg-white p-4 md:rounded-lg md:px-6 md:py-8 flex w-full flex-col">
@@ -41,9 +29,8 @@
       <p class="fr-text--sm text-grey italic mb-0!">Tool encountered an error</p>
     </div>
   {:else if result}
-    <div class="fr-text--sm text-dark-grey markdown-body" use:copy>
-      <!-- eslint-disable-next-line svelte/no-at-html-tags -->
-      {@html rendered_html}
+    <div class="fr-text--sm text-dark-grey tool-arena-md">
+      <MarkdownCode message={result} kind="bot" line_breaks={true} />
     </div>
   {:else}
     <div class="py-6">
@@ -53,80 +40,29 @@
 </div>
 
 <style>
-  .markdown-body :global(h1),
-  .markdown-body :global(h2),
-  .markdown-body :global(h3) {
-    font-weight: 700;
-    margin-top: 1rem;
-    margin-bottom: 0.5rem;
-  }
-  .markdown-body :global(h1) { font-size: 1.25rem; }
-  .markdown-body :global(h2) { font-size: 1.125rem; }
-  .markdown-body :global(h3) { font-size: 1rem; }
-  .markdown-body :global(p) { margin-bottom: 0.5rem; line-height: 1.5; }
-  .markdown-body :global(ul),
-  .markdown-body :global(ol) {
-    padding-left: 1.5rem;
-    margin-bottom: 0.5rem;
-  }
-  .markdown-body :global(ul) { list-style-type: disc; }
-  .markdown-body :global(ol) { list-style-type: decimal; }
-  .markdown-body :global(li) { margin-bottom: 0.25rem; }
-  .markdown-body :global(li > ul),
-  .markdown-body :global(li > ol) { margin-top: 0.25rem; margin-bottom: 0; }
-  .markdown-body :global(code) {
-    background: #f4f4f4;
-    padding: 0.125rem 0.25rem;
-    border-radius: 0.25rem;
-    font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
-    font-size: 0.875em;
-  }
-  .markdown-body :global(pre) {
-    background: #f4f4f4;
-    padding: 0.75rem;
-    border-radius: 0.375rem;
-    overflow-x: auto;
-    margin-bottom: 0.5rem;
-  }
-  .markdown-body :global(pre code) {
-    background: transparent;
-    padding: 0;
-  }
-  .markdown-body :global(strong) { font-weight: 700; }
-  .markdown-body :global(em) { font-style: italic; }
-  .markdown-body :global(a) {
-    color: #3558a2;
-    text-decoration: underline;
-  }
-  .markdown-body :global(blockquote) {
-    border-left: 3px solid #ddd;
-    padding-left: 0.75rem;
-    color: #555;
-    margin: 0.5rem 0;
-  }
-  .markdown-body :global(table) {
-    border-collapse: collapse;
-    margin: 0.5rem 0 1rem 0;
-    width: auto;
-    max-width: 100%;
-    font-size: 0.875rem;
+  /* Constrain wide tables to the card width with horizontal scroll. */
+  .tool-arena-md :global(table) {
     display: block;
     overflow-x: auto;
+    max-width: 100%;
   }
-  .markdown-body :global(thead) {
+  .tool-arena-md :global(thead) {
     background: #f4f4f4;
   }
-  .markdown-body :global(th),
-  .markdown-body :global(td) {
-    border: 1px solid #ddd;
+  .tool-arena-md :global(tr:nth-child(even) td) {
+    background: #fafafa;
+  }
+  .tool-arena-md :global(th),
+  .tool-arena-md :global(td) {
     padding: 0.4rem 0.6rem;
     text-align: left;
     vertical-align: top;
   }
-  .markdown-body :global(th) {
-    font-weight: 700;
+  .tool-arena-md :global(ul),
+  .tool-arena-md :global(ol) {
+    padding-left: 1.5rem;
+    margin-bottom: 0.5rem;
   }
-  .markdown-body :global(tr:nth-child(even)) {
-    background: #fafafa;
-  }
+  .tool-arena-md :global(ul) { list-style-type: disc; }
+  .tool-arena-md :global(ol) { list-style-type: decimal; }
 </style>
