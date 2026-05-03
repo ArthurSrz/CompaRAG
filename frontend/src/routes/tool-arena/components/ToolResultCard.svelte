@@ -104,4 +104,29 @@
     color: #555;
     margin: 0.5rem 0;
   }
+  .markdown-body :global(table) {
+    border-collapse: collapse;
+    margin: 0.5rem 0 1rem 0;
+    width: auto;
+    max-width: 100%;
+    font-size: 0.875rem;
+    display: block;
+    overflow-x: auto;
+  }
+  .markdown-body :global(thead) {
+    background: #f4f4f4;
+  }
+  .markdown-body :global(th),
+  .markdown-body :global(td) {
+    border: 1px solid #ddd;
+    padding: 0.4rem 0.6rem;
+    text-align: left;
+    vertical-align: top;
+  }
+  .markdown-body :global(th) {
+    font-weight: 700;
+  }
+  .markdown-body :global(tr:nth-child(even)) {
+    background: #fafafa;
+  }
 </style>
