@@ -54,10 +54,10 @@ def server_no_auth() -> MCPServerConfig:
 # --------------------------------------------------------------------------- #
 
 def test_sanitize_replaces_server_id(server_a, server_b):
-    """Test 1: sanitize_output replaces server id 'global_summarizer' with '[REDACTED]'."""
+    """Test 1: sanitize_output replaces server id 'global_summarizer' with '⟨redacted⟩'."""
     text = "The server global_summarizer returned this response."
     result = sanitize_output(text, [server_a, server_b])
-    assert "[REDACTED]" in result
+    assert "⟨redacted⟩" in result
     assert "global_summarizer" not in result
 
 
@@ -65,16 +65,16 @@ def test_sanitize_replaces_server_name_case_insensitive(server_a, server_b):
     """Test 2: sanitize_output replaces server name case-insensitively."""
     text = "Response from Global Summarizer AI about something."
     result = sanitize_output(text, [server_a, server_b])
-    assert "[REDACTED]" in result
+    assert "⟨redacted⟩" in result
     assert "Global Summarizer AI" not in result
     assert "global summarizer ai" not in result.lower()
 
 
 def test_sanitize_replaces_endpoint_url(server_a, server_b):
-    """Test 3: sanitize_output replaces server endpoint URL with '[REDACTED]'."""
+    """Test 3: sanitize_output replaces server endpoint URL with '⟨redacted⟩'."""
     text = "Connecting to https://example.com/mcp/global-summarizer for the task."
     result = sanitize_output(text, [server_a, server_b])
-    assert "[REDACTED]" in result
+    assert "⟨redacted⟩" in result
     assert "https://example.com/mcp/global-summarizer" not in result
 
 
@@ -93,7 +93,7 @@ def test_sanitize_both_servers(server_a, server_b):
     assert "clarifeye_memos" not in result
     assert "Clarifeye Memos" not in result
     assert "https://example.com/mcp/clarifeye-memos" not in result
-    assert result.count("[REDACTED]") >= 6
+    assert result.count("⟨redacted⟩") >= 6
 
 
 def test_sanitize_no_match_returns_original(server_a, server_b):
@@ -121,7 +121,7 @@ def test_sanitize_server_with_no_auth(server_no_auth):
     text = "Connecting to open_server at https://example.com/mcp/open."
     result = sanitize_output(text, [server_no_auth])
     assert "open_server" not in result
-    assert "[REDACTED]" in result
+    assert "⟨redacted⟩" in result
 
 
 # --------------------------------------------------------------------------- #
@@ -168,7 +168,7 @@ def test_sanitize_envelope_applies_extra_terms(server_with_sanitize):
     result = sanitize_envelope(envelope, [server_with_sanitize])
     assert "Clarifeye" not in result.answer
     assert "clarifeye" not in result.answer
-    assert "[REDACTED]" in result.answer
+    assert "⟨redacted⟩" in result.answer
 
 
 def test_sanitize_envelope_applies_url_patterns(server_with_sanitize):
@@ -181,7 +181,7 @@ def test_sanitize_envelope_applies_url_patterns(server_with_sanitize):
     )
     result = sanitize_envelope(envelope, [server_with_sanitize])
     assert "https://clarifeye.com/doc/42" not in result.answer
-    assert "[REDACTED]" in result.answer
+    assert "⟨redacted⟩" in result.answer
 
 
 def test_sanitize_envelope_backward_compat_plain_text(server_a, server_b):

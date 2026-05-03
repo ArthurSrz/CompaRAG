@@ -43,7 +43,7 @@ def sanitize_output(text: str, servers: list[MCPServerConfig]) -> str:
         return text
 
     combined = "|".join(patterns)
-    return re.sub(combined, "[REDACTED]", text, flags=re.IGNORECASE)
+    return re.sub(combined, "⟨redacted⟩", text, flags=re.IGNORECASE)
 
 
 def sanitize_envelope(envelope, servers: list[MCPServerConfig]):
@@ -87,7 +87,7 @@ def sanitize_envelope(envelope, servers: list[MCPServerConfig]):
 
     if answer_patterns:
         combined = "|".join(answer_patterns)
-        answer = re.sub(combined, "[REDACTED]", answer, flags=re.IGNORECASE)
+        answer = re.sub(combined, "⟨redacted⟩", answer, flags=re.IGNORECASE)
 
     return envelope.model_copy(update={
         "sources": sanitized_sources,
