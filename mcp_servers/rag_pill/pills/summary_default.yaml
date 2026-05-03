@@ -1,0 +1,10 @@
+name: summary_default
+task_type: summary
+llm: mistralai/mistral-medium-3.1
+embedder: openai/text-embedding-3-small
+chunk_size: 500
+chunk_overlap: 50
+temperature: 0.2
+compression_ratio: 0.2
+style: paragraph
+max_output_tokens: 1024

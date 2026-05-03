@@ -93,13 +93,32 @@ class MCPDispatcher:
         # two distinct READY servers at random, preserving their relative
         # order in the ready list (so callers and tests see a stable A/B
         # mapping when the pool is exactly 2).
+        #
+        # Pill-based fairness: if any READY server declares a task_type, group
+        # the pool by task_type and only pair within a group. Legacy entries
+        # (task_type=None) form their own group. This preserves the equifinality
+        # invariant — Task is constant, Tool is the variant.
         import random
+        from collections import defaultdict
 
-        if len(ready) == 2:
-            server_a, server_b = ready[0], ready[1]
+        groups: dict[str | None, list[MCPServerConfig]] = defaultdict(list)
+        for srv in ready:
+            groups[srv.task_type].append(srv)
+        eligible_groups = [g for g in groups.values() if len(g) >= 2]
+        if not eligible_groups:
+            snapshot = [r.to_dict() for r in readiness.snapshot()]
+            logger.warning(
+                "dispatcher: no task_type group has >=2 READY servers. groups=%s",
+                {k: [s.id for s in v] for k, v in groups.items()},
+            )
+            raise InsufficientReadyServersError(len(ready), snapshot)
+        pool = random.choice(eligible_groups)
+
+        if len(pool) == 2:
+            server_a, server_b = pool[0], pool[1]
         else:
-            picked_indices = sorted(random.sample(range(len(ready)), 2))
-            server_a, server_b = ready[picked_indices[0]], ready[picked_indices[1]]
+            picked_indices = sorted(random.sample(range(len(pool)), 2))
+            server_a, server_b = pool[picked_indices[0]], pool[picked_indices[1]]
         servers = [server_a, server_b]
 
         raw_results = await asyncio.gather(

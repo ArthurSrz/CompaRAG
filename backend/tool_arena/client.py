@@ -99,7 +99,12 @@ async def single_mcp_call(
                 arguments = {"message": message, **server.tool_args}
             else:
                 task_prompt = _build_task_prompt(task, document_content)
-                arguments = {"task": task_prompt, "goal": goal, "document_content": document_content}
+                arguments = {
+                    "task": task_prompt,
+                    "goal": goal,
+                    "document_content": document_content,
+                    **server.tool_args,
+                }
             result = await session.call_tool(tool_name, arguments=arguments)
 
             raw_text = "\n".join(

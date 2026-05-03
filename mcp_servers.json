@@ -1,21 +1,99 @@
 [
   {
-    "id": "langchain_rag",
-    "name": "LangChain RAG",
-    "description": "RAG pipeline using LangChain with FAISS and RecursiveCharacterTextSplitter",
-    "endpoint": "http://localhost:8010/mcp",
+    "id": "summary_default__langchain",
+    "name": "Summary · Default · LangChain",
+    "description": "Paragraph summary, 20% compression, LangChain + FAISS",
+    "endpoint": "http://localhost:8012/mcp",
     "transport": "streamablehttp",
-    "tools": ["*"],
-    "llm_id": "openrouter/mistralai/mistral-small-3.1-24b-instruct"
+    "tools": ["rag_pill_query"],
+    "tool_args": {"pill_id": "summary_default", "engine_id": "langchain"},
+    "task_type": "summary",
+    "llm_id": "openrouter/mistralai/mistral-medium-3.1",
+    "sanitize": {
+      "url_patterns": [],
+      "metadata_keys": [],
+      "extra_terms": ["LangChain", "langchain", "FAISS"]
+    }
   },
   {
-    "id": "llamaindex_rag",
-    "name": "LlamaIndex RAG",
-    "description": "RAG pipeline using LlamaIndex with VectorStoreIndex and SimpleDirectoryReader",
-    "endpoint": "http://localhost:8011/mcp",
+    "id": "summary_default__llamaindex",
+    "name": "Summary · Default · LlamaIndex",
+    "description": "Paragraph summary, 20% compression, LlamaIndex + VectorStoreIndex",
+    "endpoint": "http://localhost:8012/mcp",
     "transport": "streamablehttp",
-    "tools": ["*"],
-    "llm_id": "openrouter/mistralai/mistral-small-3.1-24b-instruct"
+    "tools": ["rag_pill_query"],
+    "tool_args": {"pill_id": "summary_default", "engine_id": "llamaindex"},
+    "task_type": "summary",
+    "llm_id": "openrouter/mistralai/mistral-medium-3.1",
+    "sanitize": {
+      "url_patterns": [],
+      "metadata_keys": [],
+      "extra_terms": ["LlamaIndex", "llama-index", "llama_index"]
+    }
+  },
+  {
+    "id": "summary_bullets__langchain",
+    "name": "Summary · Bullets · LangChain",
+    "description": "Bullet summary, 15% compression, LangChain + FAISS",
+    "endpoint": "http://localhost:8012/mcp",
+    "transport": "streamablehttp",
+    "tools": ["rag_pill_query"],
+    "tool_args": {"pill_id": "summary_bullets", "engine_id": "langchain"},
+    "task_type": "summary",
+    "llm_id": "openrouter/mistralai/mistral-medium-3.1",
+    "sanitize": {
+      "url_patterns": [],
+      "metadata_keys": [],
+      "extra_terms": ["LangChain", "langchain", "FAISS"]
+    }
+  },
+  {
+    "id": "summary_bullets__llamaindex",
+    "name": "Summary · Bullets · LlamaIndex",
+    "description": "Bullet summary, 15% compression, LlamaIndex + VectorStoreIndex",
+    "endpoint": "http://localhost:8012/mcp",
+    "transport": "streamablehttp",
+    "tools": ["rag_pill_query"],
+    "tool_args": {"pill_id": "summary_bullets", "engine_id": "llamaindex"},
+    "task_type": "summary",
+    "llm_id": "openrouter/mistralai/mistral-medium-3.1",
+    "sanitize": {
+      "url_patterns": [],
+      "metadata_keys": [],
+      "extra_terms": ["LlamaIndex", "llama-index", "llama_index"]
+    }
+  },
+  {
+    "id": "qa_precise__langchain",
+    "name": "QA · Precise · LangChain",
+    "description": "Cited Q&A, top_k=3, temperature=0, LangChain + FAISS",
+    "endpoint": "http://localhost:8012/mcp",
+    "transport": "streamablehttp",
+    "tools": ["rag_pill_query"],
+    "tool_args": {"pill_id": "qa_precise", "engine_id": "langchain"},
+    "task_type": "qa",
+    "llm_id": "openrouter/mistralai/mistral-medium-3.1",
+    "sanitize": {
+      "url_patterns": [],
+      "metadata_keys": [],
+      "extra_terms": ["LangChain", "langchain", "FAISS"]
+    }
+  },
+  {
+    "id": "qa_precise__llamaindex",
+    "name": "QA · Precise · LlamaIndex",
+    "description": "Cited Q&A, top_k=3, temperature=0, LlamaIndex + VectorStoreIndex",
+    "endpoint": "http://localhost:8012/mcp",
+    "transport": "streamablehttp",
+    "tools": ["rag_pill_query"],
+    "tool_args": {"pill_id": "qa_precise", "engine_id": "llamaindex"},
+    "task_type": "qa",
+    "llm_id": "openrouter/mistralai/mistral-medium-3.1",
+    "sanitize": {
+      "url_patterns": [],
+      "metadata_keys": [],
+      "extra_terms": ["LlamaIndex", "llama-index", "llama_index"]
+    }
   },
   {
     "id": "clarifeye",

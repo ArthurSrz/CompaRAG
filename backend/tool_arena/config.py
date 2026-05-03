@@ -92,6 +92,10 @@ class MCPServerConfig(BaseModel):
     tools: list[str] = ["*"]  # which MCP tools to call; ["*"] means all
     tool_args: dict[str, str] = {}  # extra static args merged into every tool call
     timeout_seconds: float | None = None  # per-server override; falls back to MCP_CALL_TIMEOUT
+    # Task taxonomy for pill-based contestants. When set, the dispatcher will
+    # only pair entries that share the same task_type (fairness invariant from
+    # equifinality framework). None = legacy entry, eligible for any pairing.
+    task_type: Literal["summary", "qa", "extraction"] | None = None
     # Identifier of the LLM used by this server to generate the answer.
     # Each MCP server is responsible for its own RAG generation; this field
     # only carries the model name through to MCPToolCall.llm_id for analytics.
