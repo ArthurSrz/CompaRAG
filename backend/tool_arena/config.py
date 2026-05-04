@@ -105,6 +105,17 @@ class MCPServerConfig(BaseModel):
     # task_type group. Default 1.0 = uniform with peers; set >1.0 to
     # over-sample (e.g. to collect more votes for a new contestant).
     weight: float = Field(default=1.0, gt=0)
+    # Shared auth-state key. When two entries point at the same upstream OAuth
+    # client (e.g. one Clarifeye OAuth registration exposed as both a summary
+    # and a qa contestant), they MUST share token storage — otherwise each
+    # entry refreshes independently and the upstream's refresh_token rotation
+    # invalidates the other copy. Defaults to ``id`` when None.
+    auth_key: str | None = None
+
+    @property
+    def auth_id(self) -> str:
+        """Effective key for OAuth storage, caches, and refresh locks."""
+        return self.auth_key or self.id
 
 
 def load_mcp_servers(path: Path | None = None) -> list[MCPServerConfig]:

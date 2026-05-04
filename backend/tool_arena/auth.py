@@ -317,7 +317,12 @@ def build_oauth_provider(server: MCPServerConfig) -> CompaRAGOAuthProvider:
     auth: OAuth2Auth = server.auth  # type: ignore[assignment]
     client_secret = os.environ.get(auth.client_secret_env, "")
 
-    storage = _get_storage(server.id)
+    # OAuth state (tokens, client_info, refresh lock, provider cache) is keyed
+    # by server.auth_id rather than server.id so multiple registry entries that
+    # share an upstream OAuth client (e.g. summary_clarifeye + qa_clarifeye)
+    # share one refresh_token rotation cycle.
+    auth_id = server.auth_id
+    storage = _get_storage(auth_id)
 
     client_metadata = OAuthClientMetadata(
         redirect_uris=["http://localhost:9876/callback"],
@@ -340,7 +345,7 @@ def build_oauth_provider(server: MCPServerConfig) -> CompaRAGOAuthProvider:
             p.write_text(client_info.model_dump_json(indent=2))
         elif isinstance(storage, RedisTokenStorage):
             storage._redis.set(
-                REDIS_CLIENT_INFO_KEY.format(server_id=server.id),
+                REDIS_CLIENT_INFO_KEY.format(server_id=auth_id),
                 client_info.model_dump_json(),
             )
     else:
@@ -348,7 +353,7 @@ def build_oauth_provider(server: MCPServerConfig) -> CompaRAGOAuthProvider:
         # If nothing is stored either, the SDK will see no client_info and the
         # call will fail with a clear OAuthTokenError rather than silently
         # using a None-secret provider.
-        existing = _read_stored_client_info(storage, server.id)
+        existing = _read_stored_client_info(storage, auth_id)
         if existing is None:
             logger.error(
                 "OAuth misconfiguration for %s: env var %s is unset and no "
@@ -367,7 +372,7 @@ def build_oauth_provider(server: MCPServerConfig) -> CompaRAGOAuthProvider:
 
     return CompaRAGOAuthProvider(
         token_url=auth.token_url,
-        server_id=server.id,
+        server_id=auth_id,
         server_url=str(server.endpoint),
         client_metadata=client_metadata,
         storage=storage,
@@ -380,10 +385,16 @@ _provider_cache: dict[str, CompaRAGOAuthProvider] = {}
 
 
 def get_oauth_provider(server: MCPServerConfig) -> CompaRAGOAuthProvider:
-    """Get or create a cached CompaRAGOAuthProvider for the server."""
-    if server.id not in _provider_cache:
-        _provider_cache[server.id] = build_oauth_provider(server)
-    return _provider_cache[server.id]
+    """Get or create a cached CompaRAGOAuthProvider for the server.
+
+    Cache key is ``server.auth_id`` so registry entries that share an OAuth
+    client share one provider instance — and therefore one in-memory
+    ``current_tokens`` view of the upstream's rotated refresh_token.
+    """
+    key = server.auth_id
+    if key not in _provider_cache:
+        _provider_cache[key] = build_oauth_provider(server)
+    return _provider_cache[key]
 
 
 def _clear_token_cache() -> None:
@@ -409,9 +420,10 @@ async def seed_tokens(
     """Write a freshly-minted refresh_token (+ optional access_token) to storage.
 
     Used by the admin re-key endpoint. If ``access_token`` is None we write a
-    sentinel + 1s expiry so the SDK refreshes on first use.
+    sentinel + 1s expiry so the SDK refreshes on first use. Storage is keyed by
+    ``server.auth_id`` so co-tenant entries see the seeded token.
     """
-    storage = _get_storage(server.id)
+    storage = _get_storage(server.auth_id)
     token = OAuthToken(
         access_token=access_token or "bootstrap-pending-refresh",
         token_type="Bearer",

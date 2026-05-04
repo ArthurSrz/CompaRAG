@@ -131,9 +131,11 @@ async def admin_oauth_seed(
         access_token=body.access_token,
         expires_in=body.expires_in,
     )
-    _auth_module._invalidate_cache(body.server_id)
+    # OAuth provider is keyed by auth_id (so sibling entries that share an
+    # upstream client share storage); invalidate by that key, not by server_id.
+    _auth_module._invalidate_cache(server.auth_id)
     _cred_invalidate(body.server_id)
-    logger.info("OAuth seed accepted for %s", body.server_id)
+    logger.info("OAuth seed accepted for %s (auth_id=%s)", body.server_id, server.auth_id)
 
     readiness = await probe_server(server, get_readiness_registry())
     return {
