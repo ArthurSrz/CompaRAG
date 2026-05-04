@@ -4,19 +4,19 @@
   import { getLocale } from '$lib/i18n/runtime'
 
   const locale = getLocale()
-  // Navigation links for both desktop and mobile menus
+  // Navigation links for both desktop and mobile menus.
+  // "Classement" points at the Tool Arena leaderboard since CompaRAG is the
+  // RAG-tool comparator; the legacy /ranking route still exists but renders
+  // the LLM ranking which has no data on this deployment.
   const navLinks = [
     { href: '/', label: m['seo.titles.home']() },
     { href: '/product', label: m['seo.titles.product']() },
-    { href: '/ranking', label: m['seo.titles.ranking']() },
+    { href: '/tool-arena/leaderboard', label: m['seo.titles.ranking']() },
     { href: '/tool-arena', label: m['seo.titles.tool-arena']() },
     { href: '/datasets', label: m['seo.titles.datasets']() },
     { href: '/news', label: m['seo.titles.news']() }
   ].filter((link) => {
-    if (
-      (link.href === '/ranking' || link.href.includes('/news')) &&
-      !['fr', 'en'].includes(locale)
-    ) {
+    if (link.href.includes('/news') && !['fr', 'en'].includes(locale)) {
       return false
     }
     return true
