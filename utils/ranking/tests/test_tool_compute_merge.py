@@ -21,6 +21,7 @@ import pytest
 
 from utils.ranking.tool_compute import (
     _aggregate_tool_preferences,
+    _resolve_engine,
     _tool_votes_to_battles,
     compute_tool_rankings,
 )
@@ -71,6 +72,7 @@ NAME_OF = {
     "summary_clarifeye": "Clarifeye",
     "qa_clarifeye": "Clarifeye",
 }
+KNOWN = {"LangChain", "LlamaIndex", "Clarifeye"}
 
 
 def test_battles_reid_to_engine_name():
@@ -78,7 +80,7 @@ def test_battles_reid_to_engine_name():
         _vote("summary_default__langchain", "summary_default__llamaindex", "a"),
         _vote("qa_precise__langchain", "qa_precise__llamaindex", "b"),
     ]
-    battles = _tool_votes_to_battles(votes, NAME_OF)
+    battles = _tool_votes_to_battles(votes, NAME_OF, KNOWN)
     assert battles == [
         ("LangChain", "LlamaIndex", "LangChain"),
         ("LangChain", "LlamaIndex", "LlamaIndex"),
@@ -94,7 +96,7 @@ def test_intra_engine_battles_are_dropped():
         # one valid inter-engine battle so we can confirm the rest survives
         _vote("summary_clarifeye", "summary_default__langchain", "a"),
     ]
-    battles = _tool_votes_to_battles(votes, NAME_OF)
+    battles = _tool_votes_to_battles(votes, NAME_OF, KNOWN)
     assert battles == [("Clarifeye", "LangChain", "Clarifeye")]
 
 
@@ -102,14 +104,45 @@ def test_ties_stay_dropped():
     votes = [
         _vote("summary_default__langchain", "summary_default__llamaindex", "tie"),
     ]
-    assert _tool_votes_to_battles(votes, NAME_OF) == []
+    assert _tool_votes_to_battles(votes, NAME_OF, KNOWN) == []
 
 
-def test_unknown_tool_id_falls_through():
-    """Legacy votes for retired registry entries must not vanish."""
+def test_truly_unknown_tool_id_falls_through_raw():
+    """An id that doesn't match the registry AND has no known-engine substring
+    keeps its raw form — visible signal that something is misconfigured."""
     votes = [_vote("retired_tool_xyz", "summary_default__langchain", "a")]
-    battles = _tool_votes_to_battles(votes, NAME_OF)
+    battles = _tool_votes_to_battles(votes, NAME_OF, KNOWN)
     assert battles == [("retired_tool_xyz", "LangChain", "retired_tool_xyz")]
+
+
+@pytest.mark.parametrize(
+    "legacy_id, expected_engine",
+    [
+        ("langchain_rag", "LangChain"),
+        ("llamaindex_rag", "LlamaIndex"),
+        ("clarifeye", "Clarifeye"),                       # pre-OAuth-split id
+        ("summary_bullets__langchain", "LangChain"),      # retired pill variant
+        ("summary_bullets__llamaindex", "LlamaIndex"),
+        ("LANGCHAIN_LEGACY", "LangChain"),                # case-insensitive
+        ("ClarifEye-experimental", "Clarifeye"),          # separator-insensitive
+    ],
+)
+def test_legacy_ids_resolve_via_substring(legacy_id, expected_engine):
+    """Retired tool_ids absent from the live registry must still fold into
+    their engine via substring matching, otherwise they show up as duplicate
+    rows on the leaderboard."""
+    assert _resolve_engine(legacy_id, {}, KNOWN) == expected_engine
+
+
+def test_registry_match_takes_precedence_over_substring():
+    """When a tool_id IS in the registry, its declared name wins — even if a
+    substring match would resolve it to a different engine. (Defensive: if
+    someone ever names a registry entry 'fake_langchain_inside' but maps it to
+    a separate engine, the JSON wins.)"""
+    name_of = {"weird_id": "Custom"}
+    known = {"Custom", "LangChain"}
+    # weird_id resolves via the registry (Custom), not via substring (LangChain)
+    assert _resolve_engine("weird_id", name_of, known) == "Custom"
 
 
 def test_preferences_aggregate_by_engine():
@@ -123,7 +156,7 @@ def test_preferences_aggregate_by_engine():
             useful_b=True, incorrect_a=True,
         ),
     ]
-    prefs = _aggregate_tool_preferences(votes, NAME_OF)
+    prefs = _aggregate_tool_preferences(votes, NAME_OF, KNOWN)
     assert set(prefs.keys()) == {"LangChain", "LlamaIndex"}
     # LangChain: 2 votes total, 1 useful, 1 incorrect → ratio = 1/2 = 0.5
     assert prefs["LangChain"].total_prefs == 2
@@ -150,7 +183,7 @@ def test_preferences_skip_intra_engine_rows():
             useful_a=True,
         ),
     ]
-    prefs = _aggregate_tool_preferences(votes, NAME_OF)
+    prefs = _aggregate_tool_preferences(votes, NAME_OF, KNOWN)
     assert prefs["LangChain"].total_prefs == 1
     assert prefs["LangChain"].useful == 1
     assert prefs["LlamaIndex"].total_prefs == 1
