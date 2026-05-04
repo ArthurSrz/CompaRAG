@@ -333,3 +333,52 @@ def test_get_readiness_registry_is_singleton():
     a = get_readiness_registry()
     b = get_readiness_registry()
     assert a is b
+
+
+# --------------------------------------------------------------------------- #
+# Adaptive probe loop — non-READY servers re-probed at tick cadence (15s),
+# READY servers only on the full-cycle pulse.
+# --------------------------------------------------------------------------- #
+
+
+async def test_probe_loop_targets_only_failed_between_full_cycles(monkeypatch):
+    """Self-heal: a non-READY server gets re-probed every tick; READY servers
+    only on the full-cycle pulse. Regression for ``self-heal failed readiness
+    probes within 15s`` — before the fix, all servers waited a full minute,
+    keeping a flapped Clarifeye out of the dispatch pool until the next pulse.
+    """
+    from backend.tool_arena import readiness as rd
+
+    healthy = _none_server("healthy")
+    flapped = _none_server("flapped")
+
+    reg = get_readiness_registry()
+    reg.set_ready(healthy.id)
+    reg.set_failed(flapped.id, ServerStatus.UPSTREAM_DOWN, "boom")
+
+    probed: list[str] = []
+
+    async def fake_probe(server, registry, timeout_seconds=30.0):
+        probed.append(server.id)
+        return registry.get(server.id)
+
+    sleep_calls = 0
+
+    async def fake_sleep(seconds):
+        nonlocal sleep_calls
+        sleep_calls += 1
+        # Stop the loop after we have observed: 1 full-cycle tick + 2 inter-
+        # ticks. interval=60 / tick=15 -> ticks_per_full_cycle=4; iterations
+        # i=0 (full), i=1 (filtered), i=2 (filtered) is enough.
+        if sleep_calls >= 3:
+            raise asyncio.CancelledError
+
+    monkeypatch.setattr(rd, "probe_server", fake_probe)
+    monkeypatch.setattr(rd.asyncio, "sleep", fake_sleep)
+
+    with pytest.raises(asyncio.CancelledError):
+        await rd.readiness_probe_loop([healthy, flapped], interval_seconds=60)
+
+    # First tick (i=0) is a full cycle: both probed.
+    # Subsequent ticks (i=1, i=2) only re-probe the non-READY server.
+    assert probed == ["healthy", "flapped", "flapped", "flapped"], probed
