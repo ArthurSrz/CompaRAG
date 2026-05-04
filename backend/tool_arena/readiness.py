@@ -214,7 +214,7 @@ async def _probe_oauth(server: MCPServerConfig) -> None:
 async def probe_server(
     server: MCPServerConfig,
     registry: ReadinessRegistry,
-    timeout_seconds: float = 10.0,
+    timeout_seconds: float = 30.0,
 ) -> ServerReadiness:
     """Probe a single MCP server and update the registry.
 
@@ -283,23 +283,36 @@ async def readiness_probe_loop(
         return
 
     registry = get_readiness_registry()
+    # Self-heal cadence: probe non-READY servers every `tick`, READY servers
+    # every `interval_seconds`. Failed servers recover within `tick` instead
+    # of waiting a full minute, while healthy servers are not over-probed.
+    tick = max(1, min(interval_seconds, 15))
+    ticks_per_full_cycle = max(1, interval_seconds // tick)
     logger.info(
-        "readiness_probe_loop: started (interval=%ds, servers=%s)",
-        interval_seconds, [s.id for s in servers],
+        "readiness_probe_loop: started (interval=%ds, tick=%ds, servers=%s)",
+        interval_seconds, tick, [s.id for s in servers],
     )
     try:
+        i = 0
         while True:
+            full_cycle = (i % ticks_per_full_cycle) == 0
+            targets = servers if full_cycle else [
+                s for s in servers
+                if registry.get(s.id).status != ServerStatus.READY
+            ]
             try:
-                await asyncio.gather(
-                    *(probe_server(s, registry) for s in servers),
-                    return_exceptions=True,
-                )
+                if targets:
+                    await asyncio.gather(
+                        *(probe_server(s, registry) for s in targets),
+                        return_exceptions=True,
+                    )
             except Exception as exc:  # noqa: BLE001 — keep loop alive
                 logger.error(
                     "readiness_probe_loop: probe iteration failed: %s: %s",
                     type(exc).__name__, exc,
                 )
-            await asyncio.sleep(interval_seconds)
+            i += 1
+            await asyncio.sleep(tick)
     except asyncio.CancelledError:
         logger.info("readiness_probe_loop: cancelled, exiting cleanly.")
         raise
