@@ -68,7 +68,10 @@ async def setup_oauth(server_id: str) -> None:
     thread = Thread(target=httpd.handle_request, daemon=True)
     thread.start()
 
-    storage = FileTokenStorage(server_id)
+    # Write to the server's auth-keyed storage so co-tenant entries
+    # (e.g. summary_clarifeye + qa_clarifeye sharing auth_key="clarifeye")
+    # observe the seeded tokens via the same path.
+    storage = FileTokenStorage(server.auth_id)
 
     async def redirect_handler(auth_url: str) -> None:
         logger.info(f"\nOpening browser for authorization...")

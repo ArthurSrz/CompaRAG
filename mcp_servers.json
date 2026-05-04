@@ -157,6 +157,7 @@
     "transport": "streamablehttp",
     "task_type": "summary",
     "weight": 3.0,
+    "auth_key": "clarifeye",
     "auth": {
       "type": "oauth2",
       "client_id": "Zlq2o82F4VDm7CV-vue4l8h-nSHgoj-B8lt0_XM7chc",
@@ -191,6 +192,7 @@
     "transport": "streamablehttp",
     "task_type": "qa",
     "weight": 3.0,
+    "auth_key": "clarifeye",
     "auth": {
       "type": "oauth2",
       "client_id": "Zlq2o82F4VDm7CV-vue4l8h-nSHgoj-B8lt0_XM7chc",
