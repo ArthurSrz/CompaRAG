@@ -106,7 +106,7 @@
     "endpoint": "https://env-3256.gcp.clarifeye.io/mcp",
     "transport": "streamablehttp",
     "task_type": "summary",
-    "weight": 3.0,
+    "weight": 10.0,
     "auth_key": "clarifeye",
     "auth": {
       "type": "oauth2",
@@ -141,7 +141,7 @@
     "endpoint": "https://env-3256.gcp.clarifeye.io/mcp",
     "transport": "streamablehttp",
     "task_type": "qa",
-    "weight": 3.0,
+    "weight": 10.0,
     "auth_key": "clarifeye",
     "auth": {
       "type": "oauth2",
