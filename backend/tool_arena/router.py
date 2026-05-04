@@ -22,7 +22,7 @@ from typing import Literal
 
 from fastapi import APIRouter, Depends, Header, HTTPException
 from fastapi.responses import JSONResponse
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 from backend.tool_arena.client import single_mcp_call
 from backend.tool_arena.dispatcher import (
@@ -175,11 +175,19 @@ class CompareResponse(BaseModel):
 
 
 class ToolPreferencesPayload(BaseModel):
-    """Per-side preference flags supplied by the user at vote time.
+    """Per-side feedback supplied by the user at vote time.
 
-    Field names mirror tool_votes columns (vote_<pref>_<side>) so the payload
-    maps 1:1 onto ToolVoteRecord without translation.
+    The pill flags (vote_<pref>_<side>) are kept for back-compat with historical
+    rows but are no longer collected from new clients — the UI was replaced by
+    a single 1-5 goal-attainment rating per side. Field names mirror tool_votes
+    columns so the payload maps 1:1 onto ToolVoteRecord.
     """
+    # New: 1-5 goal-attainment rating per side. None when the user submits
+    # without rating (e.g. older client).
+    vote_goal_rating_a: int | None = Field(default=None, ge=1, le=5)
+    vote_goal_rating_b: int | None = Field(default=None, ge=1, le=5)
+
+    # Legacy pill flags. New UIs do not send these; existing rows keep theirs.
     vote_useful_a: bool = False
     vote_useful_b: bool = False
     vote_complete_a: bool = False

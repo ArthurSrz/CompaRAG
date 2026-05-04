@@ -103,7 +103,7 @@
 
   async function handleVote(
     chosen: 'a' | 'b' | 'tie',
-    preferences: Record<string, boolean>
+    preferences: { vote_goal_rating_a: number | null; vote_goal_rating_b: number | null }
   ) {
     if (voting) return
     voting = true

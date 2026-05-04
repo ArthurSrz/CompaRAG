@@ -28,6 +28,11 @@ class ToolVoteRecord(BaseModel):
     timestamp: str       # ISO format
     competitor_type: str = "tool"
 
+    # 1-5 goal-attainment rating per side. NULL for legacy rows that pre-date
+    # the star UI; required nullability matches the SMALLINT column.
+    vote_goal_rating_a: int | None = None
+    vote_goal_rating_b: int | None = None
+
     # Per-side preference flags (mirror LLM `votes` table). Default False so
     # callers that don't supply prefs continue to work unchanged.
     vote_useful_a: bool = False
