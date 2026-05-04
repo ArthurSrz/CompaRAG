@@ -1,123 +1,123 @@
 <script lang="ts">
   import { m } from '$lib/i18n/messages'
 
-  export type ToolPrefKey =
-    | 'useful'
-    | 'complete'
-    | 'creative'
-    | 'clear_formatting'
-    | 'incorrect'
-    | 'superficial'
-    | 'instructions_not_followed'
-
-  export const POSITIVE_PREFS: ToolPrefKey[] = [
-    'useful',
-    'complete',
-    'creative',
-    'clear_formatting'
-  ]
-  export const NEGATIVE_PREFS: ToolPrefKey[] = [
-    'incorrect',
-    'superficial',
-    'instructions_not_followed'
-  ]
-
+  // 1-5 goal-attainment rating per side. ``null`` until the user clicks a star.
+  // The component is bindable so the parent (ToolVoteArea) can submit the
+  // payload as part of /tool-arena/vote.
   let {
     side,
-    selected = $bindable([]),
+    rating = $bindable(null),
     disabled = false
   }: {
     side: 'a' | 'b'
-    selected: ToolPrefKey[]
+    rating: number | null
     disabled?: boolean
   } = $props()
 
-  function toggle(pref: ToolPrefKey) {
+  const STARS: ReadonlyArray<1 | 2 | 3 | 4 | 5> = [1, 2, 3, 4, 5] as const
+
+  function pick(value: 1 | 2 | 3 | 4 | 5) {
     if (disabled) return
-    selected = selected.includes(pref)
-      ? selected.filter((p) => p !== pref)
-      : [...selected, pref]
+    rating = rating === value ? null : value
   }
 
-  // i18n fallback labels (lookups happen at render time and may be missing
-  // in older locale files — fall back to the English key).
-  function label(pref: ToolPrefKey, polarity: 'positive' | 'negative'): string {
-    const key = `vote.choices.${polarity}.${pref}` as const
+  // i18n with English fallback so a missing key never blanks the UI.
+  function t(key: string, fallback: string): string {
     try {
       const fn = (m as unknown as Record<string, () => string>)[key]
-      return fn ? fn() : pref.replace(/_/g, ' ')
+      return fn ? fn() : fallback
     } catch {
-      return pref.replace(/_/g, ' ')
+      return fallback
     }
+  }
+
+  const heading = $derived(side === 'a' ? 'Tool A' : 'Tool B')
+  const question = t(
+    'vote.goalRating.question',
+    'Cette réponse atteint-elle votre objectif ?'
+  )
+  function ariaLabel(n: number): string {
+    return t(`vote.goalRating.aria_${n}`, `${n} étoile${n > 1 ? 's' : ''} sur 5`)
   }
 </script>
 
 <fieldset class="cg-border rounded-lg p-4">
-  <legend class="fr-text--sm font-medium px-2">
-    {side === 'a' ? 'Tool A' : 'Tool B'}
-  </legend>
+  <legend class="fr-text--sm font-medium px-2">{heading}</legend>
 
-  <div class="flex flex-col gap-3 md:flex-row md:gap-6">
-    <div class="flex-1">
-      <p class="fr-text--xs text-grey mb-2">
-        {m['vote.choices.positive.question']?.() ?? 'Positive aspects'}
-      </p>
-      <div class="flex flex-wrap gap-2">
-        {#each POSITIVE_PREFS as pref (pref)}
-          <button
-            type="button"
-            class="pref-chip"
-            class:selected={selected.includes(pref)}
-            {disabled}
-            onclick={() => toggle(pref)}
-          >
-            {label(pref, 'positive')}
-          </button>
-        {/each}
-      </div>
-    </div>
+  <p class="fr-text--xs text-grey mb-3">{question}</p>
 
-    <div class="flex-1">
-      <p class="fr-text--xs text-grey mb-2">
-        {m['vote.choices.negative.question']?.() ?? 'Negative aspects'}
-      </p>
-      <div class="flex flex-wrap gap-2">
-        {#each NEGATIVE_PREFS as pref (pref)}
-          <button
-            type="button"
-            class="pref-chip"
-            class:selected={selected.includes(pref)}
-            {disabled}
-            onclick={() => toggle(pref)}
+  <div role="radiogroup" aria-label={question} class="flex gap-1.5">
+    {#each STARS as value (value)}
+      <button
+        type="button"
+        role="radio"
+        aria-checked={rating === value}
+        aria-label={ariaLabel(value)}
+        class="star"
+        class:filled={rating !== null && value <= rating}
+        {disabled}
+        onclick={() => pick(value)}
+      >
+        <!-- Solid star when filled, outline otherwise. -->
+        {#if rating !== null && value <= rating}
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            viewBox="0 0 24 24"
+            width="28"
+            height="28"
+            fill="currentColor"
+            aria-hidden="true"
           >
-            {label(pref, 'negative')}
-          </button>
-        {/each}
-      </div>
-    </div>
+            <path
+              d="M12 2l3.09 6.26L22 9.27l-5 4.87L18.18 22 12 18.27 5.82 22 7 14.14l-5-4.87 6.91-1.01z"
+            />
+          </svg>
+        {:else}
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            viewBox="0 0 24 24"
+            width="28"
+            height="28"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="1.6"
+            stroke-linejoin="round"
+            aria-hidden="true"
+          >
+            <path
+              d="M12 2l3.09 6.26L22 9.27l-5 4.87L18.18 22 12 18.27 5.82 22 7 14.14l-5-4.87 6.91-1.01z"
+            />
+          </svg>
+        {/if}
+      </button>
+    {/each}
   </div>
 </fieldset>
 
 <style>
-  .pref-chip {
-    border: 1px solid var(--grey-925-125);
-    border-radius: 999px;
-    padding: 4px 12px;
-    font-size: 0.85rem;
-    background: white;
+  .star {
+    background: none;
+    border: none;
+    padding: 2px;
     cursor: pointer;
-    transition: all 0.15s;
+    color: var(--grey-625-425);
+    transition: color 0.12s, transform 0.08s;
   }
-  .pref-chip:hover:not(:disabled) {
-    border-color: var(--blue-france-main-525);
-  }
-  .pref-chip.selected {
-    background: var(--blue-france-975-75);
-    border-color: var(--blue-france-main-525);
+  .star:hover:not(:disabled),
+  .star:focus-visible {
     color: var(--blue-france-main-525);
+    transform: scale(1.05);
   }
-  .pref-chip:disabled {
+  .star.filled {
+    color: #f5a623; /* warm amber matching the DSFR accent palette */
+  }
+  .star:disabled {
     opacity: 0.5;
     cursor: not-allowed;
+  }
+  .star:focus-visible {
+    outline: 2px solid var(--outline-color);
+    outline-offset: 2px;
+    border-radius: 4px;
   }
 </style>

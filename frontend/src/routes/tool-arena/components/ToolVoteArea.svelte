@@ -1,9 +1,14 @@
 <script lang="ts">
   import { m } from '$lib/i18n/messages'
   import { Button } from '$components/dsfr'
-  import ToolPreferencesPanel, { type ToolPrefKey } from './ToolPreferencesPanel.svelte'
+  import ToolPreferencesPanel from './ToolPreferencesPanel.svelte'
 
-  export type ToolVotePreferences = Record<`vote_${ToolPrefKey}_${'a' | 'b'}`, boolean>
+  // Per-side 1-5 rating. Submitted as vote_goal_rating_{a,b}; backend keeps
+  // the legacy pill columns but they are no longer collected here.
+  export type ToolVotePreferences = {
+    vote_goal_rating_a: number | null
+    vote_goal_rating_b: number | null
+  }
 
   let {
     onvote,
@@ -14,26 +19,14 @@
   } = $props()
 
   let chosen = $state<'a' | 'b' | 'tie' | null>(null)
-  let prefsA = $state<ToolPrefKey[]>([])
-  let prefsB = $state<ToolPrefKey[]>([])
-
-  const ALL_PREF_KEYS: ToolPrefKey[] = [
-    'useful',
-    'complete',
-    'creative',
-    'clear_formatting',
-    'incorrect',
-    'superficial',
-    'instructions_not_followed'
-  ]
+  let ratingA = $state<number | null>(null)
+  let ratingB = $state<number | null>(null)
 
   function buildPayload(): ToolVotePreferences {
-    const out = {} as ToolVotePreferences
-    for (const k of ALL_PREF_KEYS) {
-      out[`vote_${k}_a`] = prefsA.includes(k)
-      out[`vote_${k}_b`] = prefsB.includes(k)
+    return {
+      vote_goal_rating_a: ratingA,
+      vote_goal_rating_b: ratingB
     }
-    return out
   }
 
   const choices = [
@@ -93,8 +86,8 @@
   </fieldset>
 
   <div class="mt-6 grid gap-4 md:grid-cols-2">
-    <ToolPreferencesPanel side="a" bind:selected={prefsA} {disabled} />
-    <ToolPreferencesPanel side="b" bind:selected={prefsB} {disabled} />
+    <ToolPreferencesPanel side="a" bind:rating={ratingA} {disabled} />
+    <ToolPreferencesPanel side="b" bind:rating={ratingB} {disabled} />
   </div>
 
   <div class="text-center mt-6">
