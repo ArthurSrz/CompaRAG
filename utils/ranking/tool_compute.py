@@ -6,6 +6,16 @@ Only shared primitive: bootstrap_confidence_intervals from bradley_terry.py.
 
 Output shape mirrors the LLM pipeline (DatasetData + PreferencesData) so the
 frontend leaderboard can reuse LLM ranking components.
+
+Co-tenant aggregation
+---------------------
+A single RAG engine is registered under multiple tool_ids (one per task_type
+pill — e.g. summary_default__langchain, summary_bullets__langchain,
+qa_precise__langchain all share the engine name "LangChain"). For the
+leaderboard we want one row per engine, so we re-ID votes from tool_id to
+MCPServerConfig.name before running Bradley-Terry. Intra-engine battles
+(both sides resolve to the same name) are dropped — they measure prompt
+template quality, not engine quality.
 """
 
 import logging
@@ -14,6 +24,7 @@ from collections import defaultdict
 from dataclasses import dataclass, field
 
 from backend.config import ALL_PREFS, NEGATIVE_PREFS, POSITIVE_PREFS
+from backend.tool_arena.config import load_mcp_servers
 from utils.ranking.bradley_terry import bootstrap_confidence_intervals
 from utils.ranking.tool_queries import fetch_tool_votes
 from utils.utils import configure_logger
@@ -58,35 +69,61 @@ class ToolRankingResult:
     preferences: dict[str, ToolPreferencesData] = field(default_factory=dict)
 
 
-def _tool_votes_to_battles(votes: list[dict]) -> list[tuple[str, str, str]]:
-    """Convert tool vote records to battle tuples, filtering ties."""
+def _engine_name_map() -> dict[str, str]:
+    """tool_id → MCPServerConfig.name. Loaded once per ranking run.
+
+    Unknown tool_ids (legacy votes for retired registry entries) are absent
+    from the map; callers should fall through to the raw tool_id so historical
+    data is never silently dropped.
+    """
+    return {s.id: s.name for s in load_mcp_servers()}
+
+
+def _tool_votes_to_battles(
+    votes: list[dict], name_of: dict[str, str]
+) -> list[tuple[str, str, str]]:
+    """Convert tool vote records to battle tuples, re-IDed to engine name.
+
+    Drops ties (no winner) and intra-engine battles (both sides resolve to the
+    same engine name — these measure prompt-template quality, not engine
+    quality, and would produce 'LangChain vs LangChain' rows in the BT input).
+    """
     battles = []
     for v in votes:
         if v["chosen"] == "tie":
             continue
-        winner = v["tool_a_id"] if v["chosen"] == "a" else v["tool_b_id"]
-        battles.append((v["tool_a_id"], v["tool_b_id"], winner))
+        a = name_of.get(v["tool_a_id"], v["tool_a_id"])
+        b = name_of.get(v["tool_b_id"], v["tool_b_id"])
+        if a == b:
+            continue
+        winner = a if v["chosen"] == "a" else b
+        battles.append((a, b, winner))
     return battles
 
 
 def _aggregate_tool_preferences(
-    votes: list[dict],
+    votes: list[dict], name_of: dict[str, str]
 ) -> dict[str, ToolPreferencesData]:
-    """Aggregate per-side preference flags from tool_votes into per-tool counts.
+    """Aggregate per-side preference flags into per-engine counts.
 
-    Mirrors compute._aggregate_preferences (vote-side branch only — there is no
-    tool_reactions table). Each vote row contributes to BOTH tools' totals.
+    Re-IDs each side to MCPServerConfig.name before counting. Intra-engine
+    rows are skipped on both sides so an engine's totals reflect only votes
+    where it competed against a different engine — same invariant as
+    _tool_votes_to_battles.
     """
     counts: dict[str, dict[str, int]] = defaultdict(lambda: {f: 0 for f in ALL_PREFS})
     total: dict[str, int] = defaultdict(int)
 
     for v in votes:
-        for side in ("a", "b"):
-            tool = v[f"tool_{side}_id"]
-            total[tool] += 1
+        a = name_of.get(v["tool_a_id"], v["tool_a_id"])
+        b = name_of.get(v["tool_b_id"], v["tool_b_id"])
+        if a == b:
+            continue
+        for side, engine in (("a", a), ("b", b)):
+            total[engine] += 1
             for pref_field in ALL_PREFS:
                 if v.get(f"vote_{pref_field}_{side}"):
-                    counts[tool][pref_field] += 1
+                    counts[engine][pref_field] += 1
 
     result: dict[str, ToolPreferencesData] = {}
     for tool in total:
@@ -130,7 +167,8 @@ def compute_tool_rankings() -> ToolRankingResult | None:
         logger.error("[ToolRanking] Failed to fetch tool votes", exc_info=True)
         return None
 
-    battles = _tool_votes_to_battles(votes)
+    name_of = _engine_name_map()
+    battles = _tool_votes_to_battles(votes, name_of)
 
     if not battles:
         logger.warning("[ToolRanking] No tool battles found, returning empty result")
@@ -192,7 +230,7 @@ def compute_tool_rankings() -> ToolRankingResult | None:
             provisional=n_match < PROVISIONAL_THRESHOLD,
         )
 
-    preferences = _aggregate_tool_preferences(votes)
+    preferences = _aggregate_tool_preferences(votes, name_of)
 
     return ToolRankingResult(
         timestamp=time.time(),
