@@ -26,7 +26,7 @@
 <Header hideDiscussBtn={isHome} />
 
 {#if isHome}
-  <Link button href="/ranking" text={m['header.banner']()} cornered class="w-auto!" />
+  <Link button href="/tool-arena/leaderboard" text={m['header.banner']()} cornered class="w-auto!" />
 {/if}
 
 <div
