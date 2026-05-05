@@ -64,9 +64,11 @@ class TxtaiEngine:
                         rows.append((uid, chunk, None))
                         uid += 1
 
+            # Strip provider prefix (e.g. "openai/text-embedding-3-small" → "text-embedding-3-small")
+            model_id = pill.embedder.split("/", 1)[-1]
             embeddings = Embeddings(
                 {
-                    "path": pill.embedder,
+                    "path": model_id,
                     "provider": "openai",
                     "api": self._embed.base_url,
                     "apikey": self._embed.api_key,

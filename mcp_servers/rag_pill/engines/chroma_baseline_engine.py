@@ -84,6 +84,8 @@ class ChromaBaselineEngine:
                     docs.append(chunk)
                     metas.append({"source": src})
 
+            if not ids:
+                return collection  # empty corpus — skip add, queries will return no results
             collection.add(ids=ids, documents=docs, metadatas=metas)
             return collection
 
@@ -105,8 +107,14 @@ class ChromaBaselineEngine:
 
         top_k = getattr(pill, "top_k", 3)
         query = f"{task} {goal}"
+        n_items = collection.count()
+        if n_items == 0:
+            return "No documents available to search."
         result = await asyncio.get_event_loop().run_in_executor(
-            None, lambda: collection.query(query_texts=[query], n_results=top_k)
+            None,
+            lambda: collection.query(
+                query_texts=[query], n_results=min(top_k, n_items)
+            ),
         )
         chunks = result.get("documents", [[]])[0]
         context = "\n\n---\n\n".join(chunks)
