@@ -208,6 +208,55 @@ async def test_single_mcp_call_no_authorization_header_when_no_auth():
     assert "Authorization" not in headers
 
 
+async def test_single_mcp_call_raises_when_result_is_error():
+    """When the tool call returns isError=True, raise MCPToolError so the
+    dispatcher's error path takes over instead of treating the error payload
+    as a successful answer (e.g. "Engine X failed: No embedding data received"
+    rendered as Tool A's answer next to Tool B's "Tool encountered an error")."""
+    from mcp.types import TextContent
+    from backend.tool_arena.client import MCPToolError, single_mcp_call
+
+    server = _make_server(tools=["my_tool"], auth_type=None)
+
+    mock_session = MagicMock()
+    mock_session.initialize = AsyncMock(return_value=None)
+
+    error_content = MagicMock(spec=TextContent)
+    error_content.text = "Engine 'mistral-embed' failed: No embedding data received"
+    error_result = MagicMock()
+    error_result.content = [error_content]
+    error_result.isError = True
+    mock_session.call_tool = AsyncMock(return_value=error_result)
+
+    ctx_manager, session_ctx = _make_stream_ctx(mock_session)
+
+    with patch("backend.tool_arena.client.streamablehttp_client", return_value=ctx_manager):
+        with patch("backend.tool_arena.client.ClientSession", return_value=session_ctx):
+            with pytest.raises(MCPToolError, match="No embedding data received"):
+                await single_mcp_call(server, "task", "goal")
+
+
+async def test_single_mcp_call_raises_mcp_tool_error_when_iserror_with_empty_content():
+    """isError=True with no text content still surfaces as MCPToolError."""
+    from backend.tool_arena.client import MCPToolError, single_mcp_call
+
+    server = _make_server(tools=["my_tool"], auth_type=None)
+
+    mock_session = MagicMock()
+    mock_session.initialize = AsyncMock(return_value=None)
+    error_result = MagicMock()
+    error_result.content = []
+    error_result.isError = True
+    mock_session.call_tool = AsyncMock(return_value=error_result)
+
+    ctx_manager, session_ctx = _make_stream_ctx(mock_session)
+
+    with patch("backend.tool_arena.client.streamablehttp_client", return_value=ctx_manager):
+        with patch("backend.tool_arena.client.ClientSession", return_value=session_ctx):
+            with pytest.raises(MCPToolError):
+                await single_mcp_call(server, "task", "goal")
+
+
 async def test_single_mcp_call_raises_mcp_error_on_protocol_failure():
     """Test 7: single_mcp_call raises mcp.McpError when session.call_tool raises it."""
     import mcp
