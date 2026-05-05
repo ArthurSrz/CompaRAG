@@ -45,9 +45,6 @@ class TxtaiEngine:
         self._llm = llm
         self._embed = embedding_config
 
-    def _embed_model_name(self, pill: Pill) -> str:
-        return pill.embedder.split("/", 1)[1] if "/" in pill.embedder else pill.embedder
-
     async def _build_index(self, pill: Pill, document_content: str):
         loop = asyncio.get_event_loop()
 
@@ -69,7 +66,7 @@ class TxtaiEngine:
 
             embeddings = Embeddings(
                 {
-                    "path": self._embed_model_name(pill),
+                    "path": pill.embedder,
                     "provider": "openai",
                     "api": self._embed.base_url,
                     "apikey": self._embed.api_key,

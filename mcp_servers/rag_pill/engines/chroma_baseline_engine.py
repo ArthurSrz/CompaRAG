@@ -47,9 +47,6 @@ class ChromaBaselineEngine:
         self._llm = llm
         self._embed = embedding_config
 
-    def _embed_model_name(self, pill: Pill) -> str:
-        return pill.embedder.split("/", 1)[1] if "/" in pill.embedder else pill.embedder
-
     async def _build_index(self, pill: Pill, document_content: str):
         loop = asyncio.get_event_loop()
 
@@ -58,7 +55,7 @@ class ChromaBaselineEngine:
             embed_fn = OpenAIEmbeddingFunction(
                 api_key=self._embed.api_key,
                 api_base=self._embed.base_url,
-                model_name=self._embed_model_name(pill),
+                model_name=pill.embedder,
             )
             # Unique collection name per build keeps caches isolated.
             doc_key = doc_hash(document_content)

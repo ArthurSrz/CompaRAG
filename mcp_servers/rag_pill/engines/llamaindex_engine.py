@@ -19,7 +19,7 @@ CORPUS_DIR = Path(__file__).resolve().parent.parent.parent / "corpus"
 try:
     from llama_index.core import Document, Settings, VectorStoreIndex
     from llama_index.core.node_parser import SentenceSplitter
-    from llama_index.embeddings.openai import OpenAIEmbedding
+    from llama_index.embeddings.openai_like import OpenAILikeEmbedding
 
     _AVAILABLE = True
 except ImportError:
@@ -41,13 +41,11 @@ class LlamaIndexEngine:
         self._embed = embedding_config
 
     def _configure(self, pill: Pill) -> None:
-        # LlamaIndex's OpenAIEmbedding validates the model name against a
-        # closed enum, so OpenRouter-prefixed names like
-        # "openai/text-embedding-3-small" are rejected. Strip the provider
-        # prefix; OpenRouter routes by the bare suffix.
-        embed_model = pill.embedder.split("/", 1)[1] if "/" in pill.embedder else pill.embedder
-        Settings.embed_model = OpenAIEmbedding(
-            model=embed_model,
+        # OpenAIEmbedding validates against a closed enum and rejects
+        # provider-prefixed names. OpenAILikeEmbedding accepts any string,
+        # which is what OpenRouter requires (model IDs are "openai/...").
+        Settings.embed_model = OpenAILikeEmbedding(
+            model_name=pill.embedder,
             api_base=self._embed.base_url,
             api_key=self._embed.api_key,
         )

@@ -45,10 +45,6 @@ class HaystackEngine:
         self._llm = llm
         self._embed = embedding_config
 
-    def _embed_model_name(self, pill: Pill) -> str:
-        # Haystack's OpenAI embedders forward the bare model name; strip provider prefix.
-        return pill.embedder.split("/", 1)[1] if "/" in pill.embedder else pill.embedder
-
     async def _build_index(self, pill: Pill, document_content: str):
         loop = asyncio.get_event_loop()
 
@@ -72,7 +68,7 @@ class HaystackEngine:
             embedder = OpenAIDocumentEmbedder(
                 api_key=Secret.from_token(self._embed.api_key),
                 api_base_url=self._embed.base_url,
-                model=self._embed_model_name(pill),
+                model=pill.embedder,
             )
             embedded = embedder.run(documents=chunks)["documents"]
             store.write_documents(embedded)
@@ -101,7 +97,7 @@ class HaystackEngine:
             text_embedder = OpenAITextEmbedder(
                 api_key=Secret.from_token(self._embed.api_key),
                 api_base_url=self._embed.base_url,
-                model=self._embed_model_name(pill),
+                model=pill.embedder,
             )
             q_emb = text_embedder.run(text=query)["embedding"]
             retriever = InMemoryEmbeddingRetriever(document_store=store, top_k=top_k)
