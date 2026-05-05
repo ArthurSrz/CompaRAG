@@ -48,7 +48,9 @@ async def lifespan(app):
     for engine in engines:
         if not engine.SUPPORTS:
             log.warning(
-                "engine.disabled id=%s reason=framework_not_installed", engine.id
+                "engine.disabled id=%s reason=framework_not_installed import_error=%s",
+                engine.id,
+                getattr(engine, "_import_error", "unknown"),
             )
     registry = PillRegistry(PILLS_DIR, engines)
     log.info(
