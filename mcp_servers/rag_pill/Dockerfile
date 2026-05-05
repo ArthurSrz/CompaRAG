@@ -8,7 +8,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 
 WORKDIR /app
 
-COPY mcp_servers/rag_pill/requirements.txt .
+COPY mcp_servers/rag_pill/requirements*.txt ./
 RUN pip install --no-cache-dir -r requirements.txt
 
 COPY mcp_servers/corpus /app/mcp_servers/corpus
