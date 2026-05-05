@@ -1,4 +1,5 @@
 name: summary_default
+display_description: Paragraphe, compression 20%
 task_type: summary
 llm: mistralai/mistral-medium-3.1
 embedder: openai/text-embedding-3-small

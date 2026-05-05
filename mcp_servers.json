@@ -50,6 +50,81 @@
     }
   },
   {
+    "id": "summary_default__haystack",
+    "name": "Haystack",
+    "description": "Paragraphe, compression 20%, Haystack + InMemoryDocumentStore",
+    "endpoint": "http://localhost:8012/mcp",
+    "transport": "streamablehttp",
+    "tools": [
+      "rag_pill_query"
+    ],
+    "tool_args": {
+      "pill_id": "summary_default",
+      "engine_id": "haystack"
+    },
+    "task_type": "summary",
+    "llm_id": "openrouter/mistralai/mistral-medium-3.1",
+    "sanitize": {
+      "url_patterns": [],
+      "metadata_keys": [],
+      "extra_terms": [
+        "Haystack",
+        "haystack",
+        "deepset"
+      ]
+    }
+  },
+  {
+    "id": "summary_default__txtai",
+    "name": "txtai",
+    "description": "Paragraphe, compression 20%, txtai Embeddings DB",
+    "endpoint": "http://localhost:8012/mcp",
+    "transport": "streamablehttp",
+    "tools": [
+      "rag_pill_query"
+    ],
+    "tool_args": {
+      "pill_id": "summary_default",
+      "engine_id": "txtai"
+    },
+    "task_type": "summary",
+    "llm_id": "openrouter/mistralai/mistral-medium-3.1",
+    "sanitize": {
+      "url_patterns": [],
+      "metadata_keys": [],
+      "extra_terms": [
+        "txtai",
+        "TXTAI",
+        "NeuML"
+      ]
+    }
+  },
+  {
+    "id": "summary_default__chroma_baseline",
+    "name": "Chroma (baseline)",
+    "description": "Paragraphe, compression 20%, Chroma + naive retriever",
+    "endpoint": "http://localhost:8012/mcp",
+    "transport": "streamablehttp",
+    "tools": [
+      "rag_pill_query"
+    ],
+    "tool_args": {
+      "pill_id": "summary_default",
+      "engine_id": "chroma_baseline"
+    },
+    "task_type": "summary",
+    "llm_id": "openrouter/mistralai/mistral-medium-3.1",
+    "sanitize": {
+      "url_patterns": [],
+      "metadata_keys": [],
+      "extra_terms": [
+        "Chroma",
+        "chroma",
+        "chromadb"
+      ]
+    }
+  },
+  {
     "id": "qa_precise__langchain",
     "name": "LangChain",
     "description": "Avec citations, top_k=3, temperature=0, LangChain + FAISS",
@@ -96,6 +171,81 @@
         "LlamaIndex",
         "llama-index",
         "llama_index"
+      ]
+    }
+  },
+  {
+    "id": "qa_precise__haystack",
+    "name": "Haystack",
+    "description": "Avec citations, top_k=3, temperature=0, Haystack + InMemoryDocumentStore",
+    "endpoint": "http://localhost:8012/mcp",
+    "transport": "streamablehttp",
+    "tools": [
+      "rag_pill_query"
+    ],
+    "tool_args": {
+      "pill_id": "qa_precise",
+      "engine_id": "haystack"
+    },
+    "task_type": "qa",
+    "llm_id": "openrouter/mistralai/mistral-medium-3.1",
+    "sanitize": {
+      "url_patterns": [],
+      "metadata_keys": [],
+      "extra_terms": [
+        "Haystack",
+        "haystack",
+        "deepset"
+      ]
+    }
+  },
+  {
+    "id": "qa_precise__txtai",
+    "name": "txtai",
+    "description": "Avec citations, top_k=3, temperature=0, txtai Embeddings DB",
+    "endpoint": "http://localhost:8012/mcp",
+    "transport": "streamablehttp",
+    "tools": [
+      "rag_pill_query"
+    ],
+    "tool_args": {
+      "pill_id": "qa_precise",
+      "engine_id": "txtai"
+    },
+    "task_type": "qa",
+    "llm_id": "openrouter/mistralai/mistral-medium-3.1",
+    "sanitize": {
+      "url_patterns": [],
+      "metadata_keys": [],
+      "extra_terms": [
+        "txtai",
+        "TXTAI",
+        "NeuML"
+      ]
+    }
+  },
+  {
+    "id": "qa_precise__chroma_baseline",
+    "name": "Chroma (baseline)",
+    "description": "Avec citations, top_k=3, temperature=0, Chroma + naive retriever",
+    "endpoint": "http://localhost:8012/mcp",
+    "transport": "streamablehttp",
+    "tools": [
+      "rag_pill_query"
+    ],
+    "tool_args": {
+      "pill_id": "qa_precise",
+      "engine_id": "chroma_baseline"
+    },
+    "task_type": "qa",
+    "llm_id": "openrouter/mistralai/mistral-medium-3.1",
+    "sanitize": {
+      "url_patterns": [],
+      "metadata_keys": [],
+      "extra_terms": [
+        "Chroma",
+        "chroma",
+        "chromadb"
       ]
     }
   },

@@ -12,7 +12,14 @@ from starlette.requests import Request
 from starlette.responses import JSONResponse, PlainTextResponse
 
 from mcp_servers.rag_pill.cache import IndexCache
-from mcp_servers.rag_pill.engines import LangChainEngine, LlamaIndexEngine
+from mcp_servers.rag_pill.engines import (
+    ChromaBaselineEngine,
+    HaystackEngine,
+    LangChainEngine,
+    LlamaIndexEngine,
+    TxtaiEngine,
+)
+from mcp_servers.rag_pill.providers import EmbeddingConfig, OpenRouterLLM
 from mcp_servers.rag_pill.registry import PillRegistry
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s [rag-pill] %(message)s")
@@ -27,7 +34,22 @@ registry: PillRegistry | None = None
 @asynccontextmanager
 async def lifespan(app):
     global registry
-    engines = [LangChainEngine(cache), LlamaIndexEngine(cache)]
+    llm = OpenRouterLLM()
+    embed_cfg = EmbeddingConfig.from_env()
+    engines = [
+        LangChainEngine(cache, llm=llm, embedding_config=embed_cfg),
+        LlamaIndexEngine(cache, llm=llm, embedding_config=embed_cfg),
+        HaystackEngine(cache, llm=llm, embedding_config=embed_cfg),
+        TxtaiEngine(cache, llm=llm, embedding_config=embed_cfg),
+        ChromaBaselineEngine(cache, llm=llm, embedding_config=embed_cfg),
+    ]
+    # Loud-WARN any engine whose framework failed to import — silent capability
+    # loss skews arena fairness, so make it visible at startup.
+    for engine in engines:
+        if not engine.SUPPORTS:
+            log.warning(
+                "engine.disabled id=%s reason=framework_not_installed", engine.id
+            )
     registry = PillRegistry(PILLS_DIR, engines)
     log.info(
         "registry.ready %s",

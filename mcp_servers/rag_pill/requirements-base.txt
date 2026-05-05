@@ -1,0 +1,5 @@
+# Base deps — required regardless of which engines are installed.
+fastmcp>=2.0.0
+pydantic>=2.6
+pyyaml>=6.0
+openai>=1.40

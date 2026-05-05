@@ -1,12 +1,18 @@
-"""LangChain engine adapter — lazy-imports langchain so a missing install
-only disables this engine via SUPPORTS = set()."""
+"""LangChain engine adapter — index + retrieve via LangChain/FAISS, generate via LLMProvider.
+
+Prompt construction lives in mcp_servers/rag_pill/strategies/; OpenRouter
+wiring lives in mcp_servers/rag_pill/providers/. This module is responsible
+only for framework-specific indexing and retrieval — the bits that actually
+differ between LangChain, LlamaIndex, Haystack, etc.
+"""
 
 import asyncio
-import os
 from pathlib import Path
 
 from mcp_servers.rag_pill.cache import IndexCache, doc_hash
-from mcp_servers.rag_pill.schemas import Pill, QAPill, SummaryPill
+from mcp_servers.rag_pill.providers import EmbeddingConfig, LLMProvider
+from mcp_servers.rag_pill.schemas import Pill
+from mcp_servers.rag_pill.strategies import render_prompt
 
 CORPUS_DIR = Path(__file__).resolve().parent.parent.parent / "corpus"
 
@@ -14,8 +20,7 @@ try:
     from langchain_community.document_loaders import DirectoryLoader, TextLoader
     from langchain_community.vectorstores import FAISS
     from langchain_core.documents import Document as LCDocument
-    from langchain_core.prompts import ChatPromptTemplate
-    from langchain_openai import ChatOpenAI, OpenAIEmbeddings
+    from langchain_openai import OpenAIEmbeddings
     from langchain_text_splitters import RecursiveCharacterTextSplitter
 
     _AVAILABLE = True
@@ -27,9 +32,15 @@ class LangChainEngine:
     id = "langchain"
     SUPPORTS: set[str] = {"summary", "qa"} if _AVAILABLE else set()
 
-    def __init__(self, cache: IndexCache) -> None:
+    def __init__(
+        self,
+        cache: IndexCache,
+        llm: LLMProvider,
+        embedding_config: EmbeddingConfig,
+    ) -> None:
         self._cache = cache
-        self._api_key = os.environ["OPENROUTER_API_KEY"]
+        self._llm = llm
+        self._embed = embedding_config
 
     def _splitter(self, pill: Pill):
         return RecursiveCharacterTextSplitter(
@@ -39,18 +50,8 @@ class LangChainEngine:
     def _embeddings(self, pill: Pill):
         return OpenAIEmbeddings(
             model=pill.embedder,
-            base_url="https://openrouter.ai/api/v1",
-            openai_api_key=self._api_key,
-        )
-
-    def _llm(self, pill: Pill):
-        max_tokens = getattr(pill, "max_output_tokens", 4096)
-        return ChatOpenAI(
-            model=pill.llm,
-            base_url="https://openrouter.ai/api/v1",
-            api_key=self._api_key,
-            temperature=pill.temperature,
-            extra_body={"max_tokens": max_tokens},
+            base_url=self._embed.base_url,
+            openai_api_key=self._embed.api_key,
         )
 
     async def _build_index(self, pill: Pill, document_content: str):
@@ -90,22 +91,5 @@ class LangChainEngine:
         results = retriever.invoke(query)
         context = "\n\n---\n\n".join(d.page_content for d in results)
 
-        if isinstance(pill, SummaryPill):
-            instruction = (
-                f"Summarize the context as {pill.style}, "
-                f"compressing to ~{int(pill.compression_ratio * 100)}% of source length."
-            )
-        elif isinstance(pill, QAPill):
-            cite = " Cite source chunks." if pill.cite_sources else ""
-            instruction = f"Answer the question using ONLY the context.{cite}"
-        else:
-            instruction = "Use the context to satisfy the goal."
-
-        prompt = ChatPromptTemplate.from_template(
-            f"{instruction}\n\nContext:\n{{context}}\n\nQuestion: {{query}}\n\nAnswer:"
-        )
-        msgs = prompt.format_messages(context=context, query=query)
-        answer = await asyncio.get_event_loop().run_in_executor(
-            None, lambda: self._llm(pill).invoke(msgs)
-        )
-        return answer.content
+        prompt = render_prompt(pill, context, task, goal)
+        return await self._llm.invoke(pill, prompt)

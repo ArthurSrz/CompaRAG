@@ -9,6 +9,11 @@ class BasePill(BaseModel):
     """Fields shared by every pill regardless of task_type."""
 
     name: str
+    # Recipe-side display string used by the Tool Arena registry generator.
+    # Engine-side label (e.g. "LangChain + FAISS") is appended at generation
+    # time, so this field captures only the recipe facts: "Paragraphe,
+    # compression 20%". Optional — falls back to a derived string if absent.
+    display_description: str | None = None
     llm: str = "mistralai/mistral-medium-3.1"
     embedder: str = "openai/text-embedding-3-small"
     chunk_size: int = 500
