@@ -44,7 +44,7 @@
   let secondHeader = $state<HTMLElement | undefined>(undefined)
   let secondHeaderSize = $derived(secondHeader?.offsetHeight ?? 0)
 
-  const bothFailed = $derived(!!errorA && !!errorB && !resultA && !resultB)
+  const eitherFailed = $derived((!!errorA || !!errorB) && (!resultA || !resultB))
 
   async function handleCompare(
     task: string,
@@ -240,7 +240,7 @@
         <ToolResultCard label="B" result={resultB} error={errorB} />
       </div>
 
-      {#if bothFailed}
+      {#if eitherFailed}
         <div class="text-center py-7">
           <p class="fr-text--sm text-red-600 mb-4">{m['toolArena.bothToolsFailed']()}</p>
           <Button onclick={resetArena}>{m['toolArena.tryAgain']()}</Button>
