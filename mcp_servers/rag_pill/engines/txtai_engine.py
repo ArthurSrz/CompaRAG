@@ -64,17 +64,22 @@ class TxtaiEngine:
                         rows.append((uid, chunk, None))
                         uid += 1
 
-            # Strip provider prefix (e.g. "openai/text-embedding-3-small" → "text-embedding-3-small")
-            model_id = pill.embedder.split("/", 1)[-1]
-            embeddings = Embeddings(
-                {
-                    "path": model_id,
-                    "provider": "openai",
-                    "api": self._embed.base_url,
-                    "apikey": self._embed.api_key,
-                    "content": True,
-                }
+            # Use a transform callable so txtai never tries to load the model locally.
+            # txtai's provider auto-detection only works for local HuggingFace models;
+            # for API-backed embeddings the safest path is an explicit transform.
+            import openai as _openai
+
+            model_id = pill.embedder.split("/", 1)[-1]  # "openai/…" → "…"
+            _client = _openai.OpenAI(
+                api_key=self._embed.api_key,
+                base_url=self._embed.base_url or None,
             )
+
+            def _embed_fn(inputs: list[str]) -> list[list[float]]:
+                resp = _client.embeddings.create(model=model_id, input=inputs)
+                return [e.embedding for e in resp.data]
+
+            embeddings = Embeddings({"transform": _embed_fn, "content": True})
             embeddings.index(rows)
             return embeddings
 

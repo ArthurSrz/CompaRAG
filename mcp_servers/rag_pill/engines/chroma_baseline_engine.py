@@ -52,10 +52,11 @@ class ChromaBaselineEngine:
 
         def _build():
             client = chromadb.EphemeralClient()
+            model_id = pill.embedder.split("/", 1)[-1]  # strip "openai/" prefix
             embed_fn = OpenAIEmbeddingFunction(
                 api_key=self._embed.api_key,
                 api_base=self._embed.base_url,
-                model_name=pill.embedder,
+                model_name=model_id,
             )
             # Unique collection name per build keeps caches isolated.
             doc_key = doc_hash(document_content)
