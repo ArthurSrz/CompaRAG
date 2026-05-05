@@ -1985,7 +1985,7 @@
     "revealButton": "Reveal tools",
     "anonymousToolA": "Tool A",
     "anonymousToolB": "Tool B",
-    "bothToolsFailed": "Both tools encountered errors.",
+    "bothToolsFailed": "Comparison cancelled — at least one tool encountered an error.",
     "tryAgain": "Try Again",
     "errorFallback": "An unexpected error occurred",
     "leaderboard": {

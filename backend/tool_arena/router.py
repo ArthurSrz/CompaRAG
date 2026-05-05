@@ -520,15 +520,19 @@ async def vote(
 
     Guards:
       - 403 if already voted (re-vote prevention, Pitfall 2)
-      - 422 if both tools failed (voting not meaningful, Pitfall 6)
+      - 422 if either tool failed (voting not meaningful, Pitfall 6)
     """
     # Guard: re-vote prevention (Pitfall 2)
     if session.get("voted"):
         raise HTTPException(status_code=403, detail="Already voted")
 
-    # Guard: both tools failed (Pitfall 6)
-    if session["tool_a"].get("error") and session["tool_b"].get("error"):
-        raise HTTPException(status_code=422, detail="Both tools failed, vote not possible")
+    # Guard: at least one tool failed — comparison is not meaningful
+    # (Pitfall 6, extended). If either side errored, the user shouldn't be
+    # asked to vote between a working tool and a broken one. The frontend
+    # hides the vote area on either-failed; this is the server-side mirror
+    # so an old client or a direct API call can't bypass the gate.
+    if session["tool_a"].get("error") or session["tool_b"].get("error"):
+        raise HTTPException(status_code=422, detail="At least one tool failed, vote not possible")
 
     # Mark session as voted
     session["voted"] = True

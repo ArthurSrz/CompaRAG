@@ -2187,7 +2187,7 @@
     "revealButton": "Révéler les outils",
     "anonymousToolA": "Outil A",
     "anonymousToolB": "Outil B",
-    "bothToolsFailed": "Les deux outils ont rencontré des erreurs.",
+    "bothToolsFailed": "Comparaison annulée — au moins un outil a rencontré une erreur.",
     "tryAgain": "Réessayer",
     "errorFallback": "Une erreur inattendue est survenue",
     "unavailable": {
