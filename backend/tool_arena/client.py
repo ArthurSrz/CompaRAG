@@ -21,6 +21,18 @@ from backend.tool_arena.credential import (
 logger = logging.getLogger("languia")
 
 
+class MCPToolError(RuntimeError):
+    """The MCP server returned a tool call result with isError=True.
+
+    The protocol succeeded — we got a CallToolResult back — but the tool
+    itself failed. Without raising, the error payload (e.g. "Engine X failed:
+    No embedding data received") flows through as if it were the answer, and
+    the user is asked to vote between an error string and an empty card.
+    Surface as an exception so the dispatcher's existing error path takes
+    over and the router emits ``error_a`` / ``error_b`` correctly.
+    """
+
+
 def _build_task_prompt(task: str, document_content: str) -> str:
     """Prepend a [CONTEXT] block to the task when document_content is provided.
 
@@ -111,6 +123,14 @@ async def single_mcp_call(
                 c.text for c in result.content if isinstance(c, TextContent)
             )
             duration_ms = int((time.monotonic() - start) * 1000)
+
+            if getattr(result, "isError", False):
+                logger.warning(
+                    "mcp call returned isError=True server=%s tool=%s duration_ms=%d payload=%r",
+                    server.id, tool_name, duration_ms, raw_text[:500],
+                )
+                raise MCPToolError(raw_text or "tool returned isError=True with empty content")
+
             logger.info(
                 "mcp call server=%s tool=%s raw_len=%d duration_ms=%d",
                 server.id, tool_name, len(raw_text), duration_ms,
