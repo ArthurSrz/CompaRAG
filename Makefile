@@ -1,4 +1,4 @@
-.PHONY: help install install-backend install-frontend dev dev-redis dev-backend dev-frontend dev-controller build-frontend db-generate-init db  db-prd-local docker-app-up docker-app-down docker-app-logs clean redis models-doc 
+.PHONY: help install install-backend install-frontend dev dev-redis dev-backend dev-frontend dev-controller build-frontend db-generate-init db  db-prd-local docker-app-up docker-app-down docker-app-logs clean redis models-doc mcp-registry mcp-registry-check
 
 # Variables
 PYTHON := python3
@@ -146,6 +146,12 @@ models-maintenance: ## Run the models maintenance script
 models-doc: ## Build/generate llm doc and JSON schemas
 	@echo "Generating LLM specs documentation and JSON schemas..."
 	$(UV) run python -m utils.models.schemas.build_doc
+
+mcp-registry: ## Regenerate mcp_servers.json from pills/ + engine metadata + mcp_servers.external.json
+	$(UV) run python scripts/generate_mcp_registry.py
+
+mcp-registry-check: ## Fail if mcp_servers.json is stale (CI guard)
+	$(UV) run python scripts/generate_mcp_registry.py --check
 
 # Dataset utilities
 dataset-export: ## Export datasets to HuggingFace (requires HF_PUSH_DATASET_KEY and COMPARIA_DB_URI)

@@ -1,17 +1,9 @@
-fastmcp>=2.0.0
-pydantic>=2.6
-pyyaml>=6.0
-
-# LangChain engine
-langchain>=0.3
-langchain-community>=0.3
-langchain-text-splitters>=0.3
-langchain-openai>=0.2
-faiss-cpu>=1.9
-
-# LlamaIndex engine
-llama-index-core>=0.12
-llama-index-readers-file>=0.4
-llama-index-embeddings-openai>=0.3
-llama-index-llms-openai>=0.3
-llama-index-llms-openai-like>=0.3
+# Aggregator — installs every engine. Existing Dockerfile uses this file as-is.
+# Production deploys that don't need all engines can install requirements-base.txt
+# plus only the engines they want.
+-r requirements-base.txt
+-r requirements-langchain.txt
+-r requirements-llamaindex.txt
+-r requirements-haystack.txt
+-r requirements-txtai.txt
+-r requirements-chroma.txt

@@ -1,11 +1,18 @@
-"""LlamaIndex engine adapter — lazy-imports llama_index."""
+"""LlamaIndex engine adapter — index + retrieve via LlamaIndex, generate via LLMProvider.
+
+Bypasses LlamaIndex's `as_query_engine().query()` so the LLM seam is the same
+LLMProvider every other engine uses. The arena is comparing *retrieval
+pipelines* (Tool varies) under a constant LLM (Agent invariant) — wiring the
+LlamaIndex query engine to its own LLM would violate that invariant.
+"""
 
 import asyncio
-import os
 from pathlib import Path
 
 from mcp_servers.rag_pill.cache import IndexCache, doc_hash
-from mcp_servers.rag_pill.schemas import Pill, QAPill, SummaryPill
+from mcp_servers.rag_pill.providers import EmbeddingConfig, LLMProvider
+from mcp_servers.rag_pill.schemas import Pill
+from mcp_servers.rag_pill.strategies import render_prompt
 
 CORPUS_DIR = Path(__file__).resolve().parent.parent.parent / "corpus"
 
@@ -13,7 +20,6 @@ try:
     from llama_index.core import Document, Settings, VectorStoreIndex
     from llama_index.core.node_parser import SentenceSplitter
     from llama_index.embeddings.openai import OpenAIEmbedding
-    from llama_index.llms.openai_like import OpenAILike
 
     _AVAILABLE = True
 except ImportError:
@@ -24,33 +30,26 @@ class LlamaIndexEngine:
     id = "llamaindex"
     SUPPORTS: set[str] = {"summary", "qa"} if _AVAILABLE else set()
 
-    def __init__(self, cache: IndexCache) -> None:
+    def __init__(
+        self,
+        cache: IndexCache,
+        llm: LLMProvider,
+        embedding_config: EmbeddingConfig,
+    ) -> None:
         self._cache = cache
-        self._api_key = os.environ["OPENROUTER_API_KEY"]
+        self._llm = llm
+        self._embed = embedding_config
 
     def _configure(self, pill: Pill) -> None:
         # LlamaIndex's OpenAIEmbedding validates the model name against a
-        # closed enum (OpenAIEmbeddingModelType), so OpenRouter-prefixed names
-        # like "openai/text-embedding-3-small" are rejected. Strip the provider
+        # closed enum, so OpenRouter-prefixed names like
+        # "openai/text-embedding-3-small" are rejected. Strip the provider
         # prefix; OpenRouter routes by the bare suffix.
         embed_model = pill.embedder.split("/", 1)[1] if "/" in pill.embedder else pill.embedder
         Settings.embed_model = OpenAIEmbedding(
             model=embed_model,
-            api_base="https://openrouter.ai/api/v1",
-            api_key=self._api_key,
-        )
-        Settings.llm = OpenAILike(
-            model=pill.llm,
-            api_base="https://openrouter.ai/api/v1",
-            api_key=self._api_key,
-            temperature=pill.temperature,
-            max_tokens=getattr(pill, "max_output_tokens", 4096),
-            is_chat_model=True,
-            # LlamaIndex's response synthesizer computes available context as
-            # context_window - prompt_tokens - max_tokens. For unknown models
-            # it defaults to ~512, which goes negative on real prompts.
-            # 32k is conservative for Mistral Medium / GPT-class models.
-            context_window=32000,
+            api_base=self._embed.base_url,
+            api_key=self._embed.api_key,
         )
         Settings.node_parser = SentenceSplitter(
             chunk_size=pill.chunk_size, chunk_overlap=pill.chunk_overlap
@@ -87,18 +86,11 @@ class LlamaIndexEngine:
 
         top_k = getattr(pill, "top_k", 3)
         query = f"{task} {goal}"
-
-        if isinstance(pill, SummaryPill):
-            preamble = (
-                f"Provide a {pill.style} summary at ~{int(pill.compression_ratio * 100)}% length. "
-            )
-        elif isinstance(pill, QAPill):
-            preamble = "Answer using only the retrieved context. "
-        else:
-            preamble = ""
-
-        engine = index.as_query_engine(similarity_top_k=top_k)
-        response = await asyncio.get_event_loop().run_in_executor(
-            None, lambda: engine.query(preamble + query)
+        retriever = index.as_retriever(similarity_top_k=top_k)
+        nodes = await asyncio.get_event_loop().run_in_executor(
+            None, lambda: retriever.retrieve(query)
         )
-        return str(response)
+        context = "\n\n---\n\n".join(n.get_content() for n in nodes)
+
+        prompt = render_prompt(pill, context, task, goal)
+        return await self._llm.invoke(pill, prompt)
