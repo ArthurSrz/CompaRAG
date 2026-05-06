@@ -2124,7 +2124,31 @@
       "taskLabel": "Décrivez la tâche",
       "goalLabel": "Objectif",
       "submit": "Comparer les outils",
-      "taskType": "Type de tâche"
+      "taskType": "Type de tâche",
+      "title": "Comparez deux outils RAG",
+      "taskPlaceholder": "Décrivez ce que vous souhaitez faire avec le document…",
+      "goalPlaceholder": "Quel résultat attendez-vous ?",
+      "taskTypes": {
+        "summarize": {
+          "label": "Résumé",
+          "prompt": "Résume le document en mettant en avant les points clés et les informations essentielles.",
+          "goal": "Obtenir un résumé clair et structuré du document"
+        }
+      },
+      "suggestions": {
+        "1": {
+          "text": "Résume ce document en 5 points clés"
+        },
+        "2": {
+          "text": "Extrais les données chiffrées importantes"
+        },
+        "3": {
+          "text": "Identifie les sujets principaux abordés"
+        },
+        "4": {
+          "text": "Quelles sont les conclusions principales ?"
+        }
+      }
     },
     "loading": {
       "title": "Comparaison en cours...",
@@ -2150,6 +2174,15 @@
       "loading": "Chargement du classement…",
       "empty": "Aucun résultat disponible pour l'instant.",
       "eloExplanation": "Le score Elo mesure la performance relative de chaque outil sur la base des votes des utilisateurs."
+    },
+    "anonymousToolA": "Outil A",
+    "anonymousToolB": "Outil B",
+    "bothToolsFailed": "Les deux outils ont rencontré une erreur. Veuillez réessayer.",
+    "errorFallback": "Une erreur inattendue s'est produite.",
+    "tryAgain": "Réessayer",
+    "unavailable": {
+      "title": "Outils temporairement indisponibles",
+      "message": "Les outils MCP sont en cours de démarrage. Veuillez réessayer dans quelques instants."
     }
   },
   "vote": {
