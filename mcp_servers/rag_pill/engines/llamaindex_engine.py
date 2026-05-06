@@ -41,13 +41,8 @@ class LlamaIndexEngine:
         self._embed = embedding_config
 
     def _configure(self, pill: Pill) -> None:
-        # OpenAILikeEmbedding accepts any string but still calls the raw OpenAI
-        # embeddings API, which rejects provider-prefixed names (e.g.
-        # "openai/text-embedding-3-small"). Strip the prefix so OpenRouter
-        # receives "text-embedding-3-small" — same fix as txtai/chroma engines.
-        embed_model_id = pill.embedder.split("/", 1)[-1]
         Settings.embed_model = OpenAILikeEmbedding(
-            model_name=embed_model_id,
+            model_name=pill.embedder,
             api_base=self._embed.base_url,
             api_key=self._embed.api_key,
         )

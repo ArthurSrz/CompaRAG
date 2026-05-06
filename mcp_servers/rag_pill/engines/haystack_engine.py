@@ -65,11 +65,10 @@ class HaystackEngine:
             splitter.warm_up()
             chunks = splitter.run(documents=raw_docs)["documents"]
 
-            embed_model_id = pill.embedder.split("/", 1)[-1]  # strip "openai/" prefix
             embedder = OpenAIDocumentEmbedder(
                 api_key=Secret.from_token(self._embed.api_key),
                 api_base_url=self._embed.base_url,
-                model=embed_model_id,
+                model=pill.embedder,
             )
             embedded = embedder.run(documents=chunks)["documents"]
             store.write_documents(embedded)
@@ -98,7 +97,7 @@ class HaystackEngine:
             text_embedder = OpenAITextEmbedder(
                 api_key=Secret.from_token(self._embed.api_key),
                 api_base_url=self._embed.base_url,
-                model=pill.embedder.split("/", 1)[-1],  # strip "openai/" prefix
+                model=pill.embedder,
             )
             q_emb = text_embedder.run(text=query)["embedding"]
             retriever = InMemoryEmbeddingRetriever(document_store=store, top_k=top_k)

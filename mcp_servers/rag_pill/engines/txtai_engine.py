@@ -69,14 +69,13 @@ class TxtaiEngine:
             # for API-backed embeddings the safest path is an explicit transform.
             import openai as _openai
 
-            model_id = pill.embedder.split("/", 1)[-1]  # "openai/…" → "…"
             _client = _openai.OpenAI(
                 api_key=self._embed.api_key,
                 base_url=self._embed.base_url or None,
             )
 
             def _embed_fn(inputs: list[str]) -> list[list[float]]:
-                resp = _client.embeddings.create(model=model_id, input=inputs)
+                resp = _client.embeddings.create(model=pill.embedder, input=inputs)
                 return [e.embedding for e in resp.data]
 
             embeddings = Embeddings({"transform": _embed_fn, "content": True})

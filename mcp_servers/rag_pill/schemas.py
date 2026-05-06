@@ -2,7 +2,7 @@
 
 from typing import Annotated, Literal, Union
 
-from pydantic import BaseModel, Discriminator, Field
+from pydantic import BaseModel, Discriminator, Field, field_validator
 
 
 class BasePill(BaseModel):
@@ -16,6 +16,14 @@ class BasePill(BaseModel):
     display_description: str | None = None
     llm: str = "mistralai/mistral-medium-3.1"
     embedder: str = "openai/text-embedding-3-small"
+
+    @field_validator("embedder", mode="before")
+    @classmethod
+    def _strip_provider_prefix(cls, v: str) -> str:
+        # OpenRouter's embeddings endpoint rejects provider-prefixed model IDs
+        # (e.g. "openai/text-embedding-3-small"). Strip once at parse time so
+        # engines always receive the bare model name.
+        return v.split("/", 1)[-1] if isinstance(v, str) else v
     chunk_size: int = 500
     chunk_overlap: int = 50
     temperature: float = 0.2
