@@ -21,6 +21,7 @@ from mcp_servers.rag_pill.engines import (
 )
 from mcp_servers.rag_pill.providers import EmbeddingConfig, OpenRouterLLM
 from mcp_servers.rag_pill.registry import PillRegistry
+from mcp_servers.rag_pill.retry import execute_with_embedding_retry
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s [rag-pill] %(message)s")
 log = logging.getLogger("rag_pill")
@@ -29,13 +30,18 @@ PILLS_DIR = Path(__file__).parent / "pills"
 
 cache = IndexCache(max_entries=32)
 registry: PillRegistry | None = None
+embed_cfg: EmbeddingConfig | None = None
 
 
 @asynccontextmanager
 async def lifespan(app):
-    global registry
+    global registry, embed_cfg
     llm = OpenRouterLLM()
     embed_cfg = EmbeddingConfig.from_env()
+    log.info(
+        "embedding.config %s",
+        json.dumps({"provider": embed_cfg.provider_label, "base_url": embed_cfg.base_url}),
+    )
     engines = [
         LangChainEngine(cache, llm=llm, embedding_config=embed_cfg),
         LlamaIndexEngine(cache, llm=llm, embedding_config=embed_cfg),
@@ -107,9 +113,25 @@ async def rag_pill_query(
 
     t0 = time.time()
     try:
-        answer = await engine.execute(pill, task, goal, document_content)
+        answer = await execute_with_embedding_retry(
+            engine, pill, task, goal, document_content
+        )
     except Exception as exc:
-        log.exception("rag_pill_query.error")
+        log.warning(
+            "rag_pill_query.failed %s",
+            json.dumps({
+                "engine_id": engine_id,
+                "pill_id": pill_id,
+                "embedder": pill.embedder,
+                "base_url": embed_cfg.base_url if embed_cfg else None,
+                "provider": embed_cfg.provider_label if embed_cfg else None,
+                "exc_type": type(exc).__name__,
+                "exc_msg": str(exc)[:500],
+                "doc_chars": len(document_content),
+                "duration_ms": int((time.time() - t0) * 1000),
+            }),
+        )
+        log.debug("rag_pill_query.error", exc_info=exc)
         return f"Engine '{engine_id}' failed: {exc}"
 
     log.info(
