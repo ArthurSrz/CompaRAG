@@ -146,6 +146,82 @@ async def admin_oauth_seed(
 
 
 # ---------------------------------------------------------------------------
+# Admin ranking diagnostics
+
+
+@admin_router.get("/ranking/diag")
+async def admin_ranking_diag(_: None = Depends(_require_admin_token)) -> dict:
+    """Return the last cron run diagnostics from Redis + latest Postgres entry."""
+    from utils.ranking.run import CRON_DIAG_KEY
+    from utils.storage.db import db_cursor
+    import logging as _log
+
+    _logger = _log.getLogger("languia")
+    result: dict = {}
+
+    try:
+        client = get_redis_client()
+        raw = client.get(CRON_DIAG_KEY)
+        result["redis_diag"] = json.loads(raw) if raw else None
+    except Exception as e:
+        result["redis_diag_error"] = str(e)
+
+    try:
+        with db_cursor("get cron diagnostics", _logger) as cursor:
+            cursor.execute(
+                "SELECT id, ts, payload FROM cron_diagnostics ORDER BY id DESC LIMIT 5"
+            )
+            rows = cursor.fetchall()
+            result["postgres_diag"] = [
+                {"id": r[0], "ts": r[1].isoformat() if r[1] else None, "payload": r[2]}
+                for r in rows
+            ] if rows else []
+    except Exception as e:
+        result["postgres_diag_error"] = str(e)
+
+    try:
+        with db_cursor("get cron sentinel", _logger) as cursor:
+            cursor.execute(
+                "SELECT id, ts, msg FROM cron_sentinel ORDER BY id DESC LIMIT 5"
+            )
+            rows = cursor.fetchall()
+            result["cron_sentinel"] = [
+                {"id": r[0], "ts": r[1].isoformat() if r[1] else None, "msg": r[2]}
+                for r in rows
+            ] if rows else []
+    except Exception as e:
+        result["cron_sentinel_error"] = str(e)
+
+    try:
+        with db_cursor("get vote counts", _logger) as cursor:
+            cursor.execute("""
+                SELECT
+                    (SELECT COUNT(*) FROM votes WHERE archived = FALSE) as votes_total,
+                    (SELECT COUNT(*) FROM reactions WHERE archived = FALSE) as reactions_total,
+                    (SELECT COUNT(*) FROM votes v
+                     JOIN conversations c ON v.conversation_pair_id = c.conversation_pair_id
+                     WHERE v.archived = FALSE AND c.archived = FALSE
+                       AND (COALESCE(c.cohorts, '') NOT LIKE '%pix%')) as votes_rankable,
+                    (SELECT COUNT(*) FROM reactions r
+                     JOIN conversations c ON r.conversation_pair_id = c.conversation_pair_id
+                     WHERE r.archived = FALSE AND c.archived = FALSE
+                       AND (COALESCE(c.cohorts, '') NOT LIKE '%pix%')) as reactions_rankable
+            """)
+            row = cursor.fetchone()
+            if row:
+                result["vote_counts"] = {
+                    "votes_total": row[0],
+                    "reactions_total": row[1],
+                    "votes_rankable": row[2],
+                    "reactions_rankable": row[3],
+                }
+    except Exception as e:
+        result["vote_counts_error"] = str(e)
+
+    return result
+
+
+# ---------------------------------------------------------------------------
 # Pydantic models
 # ---------------------------------------------------------------------------
 
