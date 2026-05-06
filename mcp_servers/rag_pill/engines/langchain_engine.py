@@ -48,8 +48,11 @@ class LangChainEngine:
         )
 
     def _embeddings(self, pill: Pill):
+        # Strip provider prefix ("openai/…" → "…") — OpenRouter's embeddings
+        # endpoint rejects prefixed names, same as txtai/chroma engines.
+        embed_model_id = pill.embedder.split("/", 1)[-1]
         return OpenAIEmbeddings(
-            model=pill.embedder,
+            model=embed_model_id,
             base_url=self._embed.base_url,
             openai_api_key=self._embed.api_key,
         )
