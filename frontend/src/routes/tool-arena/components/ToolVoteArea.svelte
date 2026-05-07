@@ -1,16 +1,33 @@
 <script lang="ts">
   import { m } from '$lib/i18n/messages'
   import { Button } from '$components/dsfr'
+  import ToolPreferencesPanel from './ToolPreferencesPanel.svelte'
+
+  // Per-side 1-5 rating. Submitted as vote_goal_rating_{a,b}; backend keeps
+  // the legacy pill columns but they are no longer collected here.
+  export type ToolVotePreferences = {
+    vote_goal_rating_a: number | null
+    vote_goal_rating_b: number | null
+  }
 
   let {
     onvote,
     disabled = false
   }: {
-    onvote: (chosen: 'a' | 'b' | 'tie') => void
+    onvote: (chosen: 'a' | 'b' | 'tie', preferences: ToolVotePreferences) => void
     disabled?: boolean
   } = $props()
 
   let chosen = $state<'a' | 'b' | 'tie' | null>(null)
+  let ratingA = $state<number | null>(null)
+  let ratingB = $state<number | null>(null)
+
+  function buildPayload(): ToolVotePreferences {
+    return {
+      vote_goal_rating_a: ratingA,
+      vote_goal_rating_b: ratingB
+    }
+  }
 
   const choices = [
     { value: 'a' as const, label: m['toolArena.anonymousToolA']() },
@@ -34,6 +51,7 @@
           <input
             type="radio"
             id="tool-radio-{value}"
+            data-testid="tool-vote-choice-{value}"
             name="tool-vote-radio-group"
             {value}
             disabled={disabled}
@@ -68,9 +86,15 @@
     </div>
   </fieldset>
 
+  <div class="mt-6 grid gap-4 md:grid-cols-2">
+    <ToolPreferencesPanel side="a" bind:rating={ratingA} {disabled} />
+    <ToolPreferencesPanel side="b" bind:rating={ratingB} {disabled} />
+  </div>
+
   <div class="text-center mt-6">
     <Button
-      onclick={() => { if (chosen !== null) onvote(chosen) }}
+      data-testid="tool-reveal-button"
+      onclick={() => { if (chosen !== null) onvote(chosen, buildPayload()) }}
       disabled={disabled || chosen === null}
     >
       {m['toolArena.revealButton']()}

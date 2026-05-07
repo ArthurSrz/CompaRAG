@@ -257,7 +257,7 @@
     </div>
 
   {:else if phase === 'revealed'}
-    <div class="fr-container py-8 md:py-12">
+    <div data-testid="tool-reveal-content" class="fr-container py-8 md:py-12">
       <div class="gap-5 lg:grid-cols-2 lg:gap-6 grid grid-cols-1 mb-8">
         <ToolRevealCard
           {...revealData!.tool_a}
