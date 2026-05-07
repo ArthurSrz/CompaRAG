@@ -129,6 +129,10 @@ i18n-build-news: ## generate news files
 	@echo "Generating news files..."
 	$(UV) run python -m utils.news.build_news
 
+i18n-build-tools: ## generate arena tools catalog
+	@echo "Generating tools catalog..."
+	$(UV) run python -m utils.news.build_tools
+
 dev-full-reset-data:
 	@echo "Removing docker dev data (volumes)..."
 	@cd docker && docker down -v

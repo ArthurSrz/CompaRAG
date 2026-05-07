@@ -3,6 +3,7 @@
   import type { BadgeProps } from '$components/dsfr/Badge.svelte'
   import SeoHead from '$components/SEOHead.svelte'
   import data from '$lib/generated/news.json'
+  import toolsData from '$lib/generated/tools.json'
   import { m } from '$lib/i18n/messages'
 
   type NewsKind = (typeof NEWS_KINDS)[number]
@@ -24,7 +25,7 @@
     subKinds: { id: string; label: string; linkLabel?: string }[]
   }
 
-  const NEWS_KINDS = ['resource', 'talk', 'media'] as const
+  const NEWS_KINDS = ['resource', 'talk', 'media', 'tool'] as const
   const SUBKINDS: Record<NewsKind, Sub> = {
     resource: {
       title: 'Ressources',
@@ -57,10 +58,23 @@
         { id: 'press', label: 'Presse écrite', linkLabel: "Lire l'article" },
         { id: 'video', label: 'Vidéo', linkLabel: 'Voir la vidéo' }
       ]
+    },
+    tool: {
+      title: 'Outils MCP',
+      variant: 'orange',
+      icon: 'i-ri-tools-fill',
+      subKinds: [
+        { id: 'framework', label: 'Framework', linkLabel: 'Visiter le site' },
+        { id: 'engine', label: 'Moteur', linkLabel: 'Visiter le site' },
+        { id: 'hosted', label: 'Service hébergé', linkLabel: 'Visiter le site' }
+      ]
     }
   }
 
-  const news = (data as News[]).map((n) => ({
+  // Tools live in their own generated file (built from utils/news/tools-fr.yaml)
+  // and are concatenated with the news feed so they share the same card grid +
+  // filtering machinery.
+  const news = ([...(data as News[]), ...(toolsData as News[])]).map((n) => ({
     ...n,
     href: n.href ?? '#',
     linkLabel:
@@ -91,7 +105,8 @@
   let kinds = $state<Record<NewsKind, string[]>>({
     resource: [],
     media: [],
-    talk: []
+    talk: [],
+    tool: []
   })
   let sortingMethod = $state<'date-desc' | 'kind-asc'>('date-desc')
   const allFilters = $derived(Object.values(kinds).flat())
@@ -291,7 +306,7 @@
               </div>
               <div class="fr-card__header">
                 <div class="fr-card__img">
-                  <img class="fr-responsive-img rounded-t-xl" src="/news/{news.imgSrc}" alt="" />
+                  <img class="fr-responsive-img rounded-t-xl" src="/{news.kind === 'tool' ? 'tools' : 'news'}/{news.imgSrc}" alt="" />
                 </div>
               </div>
             </div>

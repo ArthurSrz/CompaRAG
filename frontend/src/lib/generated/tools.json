@@ -1,0 +1,56 @@
+[
+  {
+    "kind": "tool",
+    "subKind": "framework",
+    "title": "LangChain",
+    "desc": "Framework Python pour orchestrer des chaînes RAG, des agents et des appels\nLLM. Dans l'arène, LangChain est associé à FAISS comme magasin vectoriel.",
+    "imgSrc": "langchain.svg",
+    "href": "https://www.langchain.com",
+    "linkLabel": "Visiter le site"
+  },
+  {
+    "kind": "tool",
+    "subKind": "framework",
+    "title": "LlamaIndex",
+    "desc": "Framework de connecteurs et d'index pour applications LLM, centré sur le RAG\navancé. Évalué dans l'arène avec son `VectorStoreIndex` natif.",
+    "imgSrc": "llamaindex.svg",
+    "href": "https://www.llamaindex.ai",
+    "linkLabel": "Visiter le site"
+  },
+  {
+    "kind": "tool",
+    "subKind": "framework",
+    "title": "Haystack",
+    "desc": "Framework open-source de deepset pour pipelines NLP de production : recherche\nsémantique, RAG, agents. Configuré ici avec `InMemoryDocumentStore`.",
+    "imgSrc": "haystack.png",
+    "href": "https://haystack.deepset.ai",
+    "linkLabel": "Visiter le site"
+  },
+  {
+    "kind": "tool",
+    "subKind": "engine",
+    "title": "txtai",
+    "desc": "Plateforme tout-en-un de recherche sémantique et d'orchestration de modèles,\navec base de données d'embeddings intégrée. Branchée à OpenAI pour la\nvectorisation externe.",
+    "imgSrc": "txtai.png",
+    "href": "https://neuml.github.io/txtai",
+    "linkLabel": "Visiter le site"
+  },
+  {
+    "kind": "tool",
+    "subKind": "engine",
+    "title": "Chroma",
+    "desc": "Base de données vectorielle open-source pensée pour les applications IA.\nPrésente dans l'arène comme baseline interprétable (chunking simple, top-k\ncosinus, sans reranker).",
+    "imgSrc": "chroma.png",
+    "href": "https://www.trychroma.com",
+    "linkLabel": "Visiter le site"
+  },
+  {
+    "kind": "tool",
+    "subKind": "hosted",
+    "title": "Clarifeye",
+    "desc": "Plateforme hébergée d'agents IA outillés sur des sources de connaissance\nstructurées (playbooks, schémas). Connectée à l'arène via un serveur MCP\ndédié.",
+    "imgSrc": "clarifeye.ico",
+    "href": "https://clarifeye.io",
+    "linkLabel": "Visiter le site"
+  }
+]
