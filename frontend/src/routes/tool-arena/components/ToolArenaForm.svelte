@@ -1,6 +1,20 @@
 <script lang="ts">
+  import { browser, dev } from '$app/environment'
+  import { env as publicEnv } from '$env/dynamic/public'
   import { Button } from '$components/dsfr'
   import { m } from '$lib/i18n/messages'
+
+  // Same resolution as +page.svelte:65-69 — keeps extract calls on the
+  // same origin as POST /tool-arena/compare.
+  function backendBase(): string {
+    if (!browser) return publicEnv.PUBLIC_API_LOCAL_URL || publicEnv.PUBLIC_API_URL || 'http://localhost:8001'
+    if (dev || publicEnv.PUBLIC_API_DEV_MODE === 'true') return 'http://localhost:8001'
+    return publicEnv.PUBLIC_API_URL || window.location.origin || 'http://localhost:8001'
+  }
+
+  const TEXT_MAX = 500 * 1024
+  const BINARY_MAX = 5 * 1024 * 1024
+  const BINARY_EXTENSIONS = new Set(['pdf', 'docx'])
 
   let {
     onsubmit,
@@ -68,7 +82,7 @@
     }
   }
 
-  function handleFileChange(e: Event) {
+  async function handleFileChange(e: Event) {
     const input = e.target as HTMLInputElement
     const file = input.files?.[0]
     fileError = ''
@@ -77,13 +91,40 @@
       fileName = ''
       return
     }
-    if (file.size > 500_000) {
-      fileError = 'Le fichier est trop volumineux (max 500 Ko).'
+    const ext = file.name.split('.').pop()?.toLowerCase() ?? ''
+    const isBinary = BINARY_EXTENSIONS.has(ext)
+    const limit = isBinary ? BINARY_MAX : TEXT_MAX
+    if (file.size > limit) {
+      const human = isBinary ? '5 Mo' : '500 Ko'
+      fileError = `Le fichier est trop volumineux (max ${human}).`
       documentContent = ''
       fileName = ''
       return
     }
     fileName = file.name
+    if (isBinary) {
+      try {
+        const form = new FormData()
+        form.append('file', file)
+        const resp = await fetch(`${backendBase()}/tool-arena/documents/extract`, {
+          method: 'POST',
+          body: form
+        })
+        if (!resp.ok) {
+          fileError = `Échec de l'extraction (${resp.status}).`
+          documentContent = ''
+          fileName = ''
+          return
+        }
+        const body = (await resp.json()) as { document_content: string }
+        documentContent = body.document_content ?? ''
+      } catch {
+        fileError = 'Impossible de lire le fichier.'
+        documentContent = ''
+        fileName = ''
+      }
+      return
+    }
     const reader = new FileReader()
     reader.onload = (ev) => {
       documentContent = (ev.target?.result as string) ?? ''
@@ -125,14 +166,14 @@
     <div class="fr-upload-group" class:fr-upload-group--error={!!fileError}>
       <label class="fr-label" for="tool-arena-document">
         Document à analyser
-        <span class="fr-hint-text">Formats acceptés : .txt, .md — Taille max : 500 Ko</span>
+        <span class="fr-hint-text">Formats acceptés : .txt, .md (500 Ko max), .pdf, .docx (5 Mo max)</span>
       </label>
       <input
         id="tool-arena-document"
         data-testid="tool-arena-file-input"
         class="file-input-hidden"
         type="file"
-        accept=".txt,.md"
+        accept=".txt,.md,.pdf,.docx"
         onchange={handleFileChange}
         {disabled}
       />

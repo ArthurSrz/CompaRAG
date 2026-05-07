@@ -23,6 +23,8 @@ dependencies = [
     "rich>=14.2.0",
     "sentry-sdk>=2.50.0",
     "uvicorn>=0.40.0",
+    "python-docx>=1.2.0",
+    "pypdf>=6.10.2",
 ]
 
 [dependency-groups]
@@ -46,6 +48,7 @@ dev = [
     "pytest>=9.0.2",
     "pytest-anyio>=0.0.0",
     "python-jenkins>=1.8.3",
+    "reportlab>=4.5.0",
     "types-markdown>=3.10.0.20251106",
     "types-psycopg2>=2.9.21.20251012",
     "types-requests>=2.32.4.20260107",
