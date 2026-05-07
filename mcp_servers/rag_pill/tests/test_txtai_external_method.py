@@ -29,7 +29,7 @@ from mcp_servers.rag_pill.providers import EmbeddingConfig
 from mcp_servers.rag_pill.schemas import QAPill
 
 
-pytestmark = pytest.mark.anyio
+pytestmark = [pytest.mark.anyio, pytest.mark.parametrize("anyio_backend", ["asyncio"])]
 
 
 class _CapturingLLM:
