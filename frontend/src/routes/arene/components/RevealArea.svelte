@@ -112,7 +112,7 @@
           <Link
             button
             size="lg"
-            href="/ranking"
+            href="/tool-arena/leaderboard"
             icon="trophy-line"
             text={m['reveal.thanks.cta']()}
             class="sm:w-auto! w-full!"
