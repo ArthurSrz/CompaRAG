@@ -42,6 +42,19 @@ class ApiKeyAuth(BaseModel):
     header: str = "Authorization"
 
 
+class BearerAuth(BaseModel):
+    """Bearer-token auth. Long-lived static token stored as env var name.
+
+    Distinct from ApiKeyAuth: BearerCredential prefixes the value with
+    'Bearer ' before placing it in the Authorization header. Used for
+    upstream MCP servers (e.g. Clarifeye) that issue long-lived tokens
+    out-of-band, sidestepping the OAuth refresh flow.
+    """
+
+    type: Literal["bearer"]
+    token_env: str  # env var name holding the bearer token
+
+
 class NoAuth(BaseModel):
     """No authentication required."""
 
@@ -49,7 +62,7 @@ class NoAuth(BaseModel):
 
 
 MCPAuthConfig = Annotated[
-    OAuth2Auth | ApiKeyAuth | NoAuth,
+    OAuth2Auth | ApiKeyAuth | BearerAuth | NoAuth,
     Field(discriminator="type"),
 ]
 

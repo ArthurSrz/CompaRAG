@@ -5,6 +5,17 @@ import pytest
 from backend.tool_arena.credential import _clear_credential_cache
 
 
+@pytest.fixture
+def anyio_backend():
+    """Pin anyio tests to the asyncio backend.
+
+    trio is not a runtime dependency and isn't installed in dev/CI; pinning
+    here prevents anyio's default dual-backend parametrization from creating
+    spurious '[trio]' failures.
+    """
+    return "asyncio"
+
+
 @pytest.fixture(autouse=True)
 def _clear_credential_cache_between_tests():
     """Phase 1 introduced a per-server.id Credential cache. Tests reuse ids

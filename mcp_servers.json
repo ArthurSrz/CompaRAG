@@ -259,10 +259,8 @@
     "weight": 10.0,
     "auth_key": "clarifeye",
     "auth": {
-      "type": "oauth2",
-      "client_id": "Zlq2o82F4VDm7CV-vue4l8h-nSHgoj-B8lt0_XM7chc",
-      "client_secret_env": "CLARIFEYE_CLIENT_SECRET",
-      "token_url": "https://env-3256.gcp.clarifeye.io/o/token/"
+      "type": "bearer",
+      "token_env": "CLARIFEYE_API_KEY"
     },
     "sanitize": {
       "url_patterns": [
@@ -294,10 +292,8 @@
     "weight": 10.0,
     "auth_key": "clarifeye",
     "auth": {
-      "type": "oauth2",
-      "client_id": "Zlq2o82F4VDm7CV-vue4l8h-nSHgoj-B8lt0_XM7chc",
-      "client_secret_env": "CLARIFEYE_CLIENT_SECRET",
-      "token_url": "https://env-3256.gcp.clarifeye.io/o/token/"
+      "type": "bearer",
+      "token_env": "CLARIFEYE_API_KEY"
     },
     "sanitize": {
       "url_patterns": [

@@ -8,12 +8,14 @@ import pytest
 
 from backend.tool_arena.config import (
     ApiKeyAuth,
+    BearerAuth,
     MCPServerConfig,
     NoAuth,
     OAuth2Auth,
 )
 from backend.tool_arena.credential import (
     ApiKeyCredential,
+    BearerCredential,
     Credential,
     CredentialMisconfigured,
     CredentialRevoked,
@@ -102,6 +104,32 @@ async def test_api_key_credential_raises_on_wrong_auth_type():
 
 
 # --------------------------------------------------------------------------- #
+# BearerCredential — B1 (tracer bullet)
+# --------------------------------------------------------------------------- #
+
+
+async def test_bearer_credential_returns_authorization_header(monkeypatch):
+    """Bearer auth wraps the env var value with the 'Bearer ' prefix.
+
+    Distinct from ApiKeyCredential which sends the raw value. This is what the
+    Clarifeye MCP endpoint expects per the upstream client snippet:
+        headers = {"Authorization": f"Bearer {BEARER_TOKEN}"}
+    """
+    monkeypatch.setenv("CLARIFEYE_API_KEY", "secret-bearer-123")
+    server = _server(auth=BearerAuth(type="bearer", token_env="CLARIFEYE_API_KEY"))
+    cred = BearerCredential()
+    assert await cred.headers_for(server) == {"Authorization": "Bearer secret-bearer-123"}
+
+
+async def test_bearer_credential_raises_when_env_missing(monkeypatch):
+    monkeypatch.delenv("MISSING_BEARER", raising=False)
+    server = _server(auth=BearerAuth(type="bearer", token_env="MISSING_BEARER"))
+    cred = BearerCredential()
+    with pytest.raises(CredentialMisconfigured):
+        await cred.headers_for(server)
+
+
+# --------------------------------------------------------------------------- #
 # OAuth2Credential
 # --------------------------------------------------------------------------- #
 
@@ -174,6 +202,35 @@ def test_credential_for_dispatches_on_auth_type():
     assert isinstance(credential_for(api_srv), ApiKeyCredential)
     assert isinstance(credential_for(oauth_srv), OAuth2Credential)
     assert isinstance(credential_for(null_srv), NoneCredential)
+
+
+def test_credential_for_dispatches_bearer_auth():
+    """B2: bearer auth → BearerCredential instance."""
+    bearer_srv = _server(
+        "clarifeye_like",
+        auth=BearerAuth(type="bearer", token_env="SOME_BEARER_ENV"),
+    )
+    assert isinstance(credential_for(bearer_srv), BearerCredential)
+
+
+def test_mcp_server_config_parses_bearer_auth_from_dict():
+    """B3: discriminated union routes {"type": "bearer", ...} to BearerAuth.
+
+    This is the JSON-loader path the registry uses to materialize
+    mcp_servers.json entries — a load-time guard that the new auth shape
+    survives serialization round-trips.
+    """
+    raw = {
+        "id": "test_bearer_srv",
+        "name": "Test",
+        "description": "test",
+        "endpoint": "https://example.com/mcp",
+        "transport": "streamablehttp",
+        "auth": {"type": "bearer", "token_env": "MY_TOKEN_ENV"},
+    }
+    cfg = MCPServerConfig.model_validate(raw)
+    assert isinstance(cfg.auth, BearerAuth)
+    assert cfg.auth.token_env == "MY_TOKEN_ENV"
 
 
 def test_credential_for_caches_per_server_id():

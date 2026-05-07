@@ -146,6 +146,28 @@ class ApiKeyCredential:
         return {auth.header: key}
 
 
+class BearerCredential:
+    """Long-lived bearer-token auth. Wraps the env var value with 'Bearer '.
+
+    Used by upstreams that issue long-lived tokens out-of-band (e.g. Clarifeye),
+    avoiding the OAuth refresh dance. Returns the header eagerly — no provider
+    indirection — so the SDK gets the token without a token-endpoint round-trip.
+    """
+
+    async def headers_for(self, server: MCPServerConfig) -> dict[str, str]:
+        auth = server.auth
+        if auth is None or auth.type != "bearer":
+            raise CredentialMisconfigured(
+                f"BearerCredential used on server {server.id!r} with auth={auth!r}"
+            )
+        token = os.environ.get(auth.token_env, "")
+        if not token:
+            raise CredentialMisconfigured(
+                f"Bearer token env var {auth.token_env!r} is unset for server {server.id!r}"
+            )
+        return {"Authorization": f"Bearer {token}"}
+
+
 class OAuth2Credential:
     """OAuth2 wrapper around ``CompaRAGOAuthProvider``.
 
@@ -232,6 +254,8 @@ def credential_for(server: MCPServerConfig) -> Credential:
         cred = NoneCredential()
     elif auth.type == "api_key":
         cred = ApiKeyCredential()
+    elif auth.type == "bearer":
+        cred = BearerCredential()
     elif auth.type == "oauth2":
         cred = OAuth2Credential()
     else:  # pragma: no cover — pydantic discriminator prevents this
