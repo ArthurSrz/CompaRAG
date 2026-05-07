@@ -1338,7 +1338,7 @@
     "logoAlt": "République Française",
     "menu": "Menu",
     "startDiscussion": "Commencer à discuter",
-    "subtitle": "Le comparateur d’outils MCP",
+    "subtitle": "Le comparateur d’outils RAG",
     "title": "CompaRAG",
     "votes": {
       "count": "{count} votes",
