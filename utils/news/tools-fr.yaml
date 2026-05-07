@@ -47,7 +47,7 @@
     avec base de données d'embeddings intégrée. Branchée à OpenAI pour la
     vectorisation externe.
   homepage_url: https://neuml.github.io/txtai
-  logo_url: https://avatars.githubusercontent.com/u/68267795
+  logo_url: https://raw.githubusercontent.com/neuml/txtai/master/logo.png
 
 - id: chroma
   name: Chroma
@@ -66,5 +66,5 @@
     Plateforme hébergée d'agents IA outillés sur des sources de connaissance
     structurées (playbooks, schémas). Connectée à l'arène via un serveur MCP
     dédié.
-  homepage_url: https://clarifeye.io
-  logo_url: https://env-3256.gcp.clarifeye.io/favicon.ico
+  homepage_url: https://clarifeye.ai
+  logo_url: https://clarifeye.ai/favicon.svg
