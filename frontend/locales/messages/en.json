@@ -1979,6 +1979,21 @@
           "label": "Summary",
           "prompt": "Summarize the document highlighting the key points and essential information.",
           "goal": "Get a clear and structured summary of the document"
+        },
+        "summary": {
+          "label": "Summary",
+          "prompt": "Summarize the document, highlighting the key points and essential information.",
+          "goal": "Get a clear, structured summary of the document"
+        },
+        "qa": {
+          "label": "Q&A",
+          "prompt": "Answer the question using the information in the document.",
+          "goal": "Get a precise, sourced answer from the document"
+        },
+        "extraction": {
+          "label": "Extraction",
+          "prompt": "Extract the key information from the document in a structured form (list, table).",
+          "goal": "Get the precise data extracted from the document"
         }
       },
       "suggestions": {

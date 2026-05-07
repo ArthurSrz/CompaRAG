@@ -2133,6 +2133,21 @@
           "label": "Résumé",
           "prompt": "Résume le document en mettant en avant les points clés et les informations essentielles.",
           "goal": "Obtenir un résumé clair et structuré du document"
+        },
+        "summary": {
+          "label": "Résumé",
+          "prompt": "Résume le document en mettant en avant les points clés et les informations essentielles.",
+          "goal": "Obtenir un résumé clair et structuré du document"
+        },
+        "qa": {
+          "label": "Questions/Réponses",
+          "prompt": "Réponds à la question en t’appuyant sur les informations du document.",
+          "goal": "Obtenir une réponse précise et sourcée à partir du document"
+        },
+        "extraction": {
+          "label": "Extraction",
+          "prompt": "Extrait du document les informations clés sous forme structurée (liste, tableau).",
+          "goal": "Obtenir les données précises extraites du document"
         }
       },
       "suggestions": {
