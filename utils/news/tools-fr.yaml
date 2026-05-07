@@ -47,7 +47,7 @@
     avec base de données d'embeddings intégrée. Branchée à OpenAI pour la
     vectorisation externe.
   homepage_url: https://neuml.github.io/txtai
-  logo_url: https://raw.githubusercontent.com/neuml/txtai/master/logo.png
+  logo_url: https://avatars.githubusercontent.com/u/68267795
 
 - id: chroma
   name: Chroma

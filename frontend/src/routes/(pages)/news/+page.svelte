@@ -306,7 +306,15 @@
               </div>
               <div class="fr-card__header">
                 <div class="fr-card__img">
-                  <img class="fr-responsive-img rounded-t-xl" src="/{news.kind === 'tool' ? 'tools' : 'news'}/{news.imgSrc}" alt="" />
+                  {#if news.kind === 'tool'}
+                    <img
+                      class="tool-logo rounded-t-xl"
+                      src="/tools/{news.imgSrc}"
+                      alt={news.title}
+                    />
+                  {:else}
+                    <img class="fr-responsive-img rounded-t-xl" src="/news/{news.imgSrc}" alt="" />
+                  {/if}
                 </div>
               </div>
             </div>
@@ -322,3 +330,17 @@
     </div>
   </div>
 </main>
+
+<style>
+  /* Tool logos vary wildly in aspect ratio (square favicons, landscape
+     wordmarks, portrait blobs). Render them in a uniform white tile with
+     object-fit: contain so each is centred and undistorted. */
+  .tool-logo {
+    width: 100%;
+    height: 200px;
+    object-fit: contain;
+    background: white;
+    padding: 1.5rem;
+    box-sizing: border-box;
+  }
+</style>
