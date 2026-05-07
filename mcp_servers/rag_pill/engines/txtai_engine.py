@@ -8,6 +8,8 @@ the arena.
 import asyncio
 from pathlib import Path
 
+import numpy as np
+
 from mcp_servers.rag_pill.cache import IndexCache, doc_hash
 from mcp_servers.rag_pill.providers import EmbeddingConfig, LLMProvider
 from mcp_servers.rag_pill.schemas import Pill
@@ -74,11 +76,17 @@ class TxtaiEngine:
                 base_url=self._embed.base_url or None,
             )
 
-            def _embed_fn(inputs: list[str]) -> list[list[float]]:
+            def _embed_fn(inputs: list[str]) -> np.ndarray:
                 resp = _client.embeddings.create(model=pill.embedder, input=inputs)
-                return [e.embedding for e in resp.data]
+                return np.array([e.embedding for e in resp.data], dtype=np.float32)
 
-            embeddings = Embeddings({"transform": _embed_fn, "content": True})
+            # method=external is required: without it txtai ignores `transform`
+            # and falls back to the default transformers backend, which tries
+            # to load `pill.embedder` from HuggingFace and errors with
+            # "openai/text-embedding-3-small is not a valid model identifier".
+            embeddings = Embeddings(
+                {"method": "external", "transform": _embed_fn, "content": True}
+            )
             embeddings.index(rows)
             return embeddings
 
