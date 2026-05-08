@@ -57,9 +57,14 @@ class ChromaBaselineEngine:
                 api_base=self._embed.base_url,
                 model_name=pill.embedder,
             )
-            # Unique collection name per build keeps caches isolated.
+            # Idempotent build: chromadb keeps module-level collection state
+            # across EphemeralClient() instances, so a failed attempt (e.g.
+            # OpenRouter empty-embeddings flake mid-add) leaves an orphan
+            # collection that blocks the retry from execute_with_embedding_retry
+            # with "Collection already exists". get_or_create + upsert below
+            # makes the build safe to repeat.
             doc_key = doc_hash(document_content)
-            collection = client.create_collection(
+            collection = client.get_or_create_collection(
                 name=f"baseline_{pill.name}_{doc_key}",
                 embedding_function=embed_fn,
             )
@@ -86,7 +91,10 @@ class ChromaBaselineEngine:
 
             if not ids:
                 return collection  # empty corpus — skip add, queries will return no results
-            collection.add(ids=ids, documents=docs, metadatas=metas)
+            # upsert (not add) so retries against a partially-populated
+            # collection from a prior failed attempt don't error on
+            # duplicate ids.
+            collection.upsert(ids=ids, documents=docs, metadatas=metas)
             return collection
 
         return await loop.run_in_executor(None, _build)

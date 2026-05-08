@@ -14,15 +14,32 @@ enable.
 
 from __future__ import annotations
 
+from pathlib import Path
+
 import pytest
 
+from backend.tool_arena.extractors import extract_text
 from mcp_servers.rag_pill.engines import (
     ChromaBaselineEngine,
     HaystackEngine,
+    LangChainEngine,
+    LlamaIndexEngine,
     TxtaiEngine,
 )
 from mcp_servers.rag_pill.providers import OpenRouterLLM
 from mcp_servers.rag_pill.schemas import QAPill
+
+_FIXTURES = (
+    Path(__file__).resolve().parents[3]
+    / "backend"
+    / "tool_arena"
+    / "tests"
+    / "fixtures"
+)
+# The known sentence inside both sample.pdf and sample.docx (built in
+# backend/tool_arena/tests/fixtures/) — used as a tracer through the
+# extraction → chunking → retrieval → prompt pipeline.
+EXTRACTED_TRACER = "marmot"
 
 
 pytestmark = pytest.mark.anyio
@@ -124,6 +141,68 @@ async def test_end_to_end_real_llm_returns_grounded_answer(
     # The grounded fact "4242" comes only from the uploaded document; if the
     # LLM mentions it, the retrieval pipeline produced usable context.
     assert "4242" in answer
+
+
+# Full pill matrix: every engine the rag_pill server can register.
+# Engines whose framework lib is missing skip gracefully (their SUPPORTS
+# set is empty when _AVAILABLE is False), mirroring production where each
+# engine is shipped in its own image.
+ALL_ENGINES = [
+    pytest.param(ChromaBaselineEngine, id="chroma"),
+    pytest.param(HaystackEngine, id="haystack"),
+    pytest.param(TxtaiEngine, id="txtai"),
+    pytest.param(LangChainEngine, id="langchain"),
+    pytest.param(LlamaIndexEngine, id="llamaindex"),
+]
+
+
+@pytest.mark.parametrize(
+    "fixture_name",
+    [pytest.param("sample.pdf", id="pdf"), pytest.param("sample.docx", id="docx")],
+)
+@pytest.mark.parametrize("engine_cls", ALL_ENGINES)
+async def test_engine_handles_extracted_document(
+    engine_cls, fixture_name, cache, capturing_llm, embedding_config
+):
+    """Each engine accepts a string produced by backend extraction of a
+    real .pdf / .docx upload, runs the full chunk→embed→retrieve→prompt
+    pipeline, and routes the LLM call through CapturingLLM exactly once
+    with the extracted content actually present in the prompt context.
+
+    The fixtures are the same ones used by the backend extractor tests
+    (backend/tool_arena/tests/fixtures/) — both contain the sentence
+    "The marmot inspects the equifinality of every tool."
+    """
+    if not engine_cls.SUPPORTS:
+        pytest.skip(f"{engine_cls.__name__} framework lib not installed")
+
+    raw = (_FIXTURES / fixture_name).read_bytes()
+    document_content = extract_text(fixture_name, raw)
+    assert EXTRACTED_TRACER in document_content, (
+        f"extractor lost the tracer — extracted text was: {document_content!r}"
+    )
+
+    engine = engine_cls(cache, llm=capturing_llm, embedding_config=embedding_config)
+    pill = _qa_pill()
+
+    answer = await engine.execute(
+        pill,
+        task="What does the marmot",
+        goal="inspect?",
+        document_content=document_content,
+    )
+
+    assert answer == "stub-answer", (
+        f"{engine_cls.__name__} did not invoke the LLM stub for {fixture_name}"
+    )
+    assert len(capturing_llm.calls) == 1, (
+        f"{engine_cls.__name__} called LLM {len(capturing_llm.calls)} times for {fixture_name}"
+    )
+    sent_prompt = capturing_llm.calls[0][1]
+    assert EXTRACTED_TRACER in sent_prompt.lower(), (
+        f"{engine_cls.__name__} did not surface extracted '{EXTRACTED_TRACER}' "
+        f"into the prompt for {fixture_name}; prompt was: {sent_prompt!r}"
+    )
 
 
 @pytest.mark.parametrize("engine_cls", ENGINES_UNDER_TEST)
