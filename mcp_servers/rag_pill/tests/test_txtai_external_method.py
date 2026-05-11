@@ -24,6 +24,7 @@ import numpy as np
 import pytest
 
 from mcp_servers.rag_pill.cache import IndexCache
+from mcp_servers.rag_pill.corpus.ephemeral import EphemeralCorpus
 from mcp_servers.rag_pill.engines import TxtaiEngine
 from mcp_servers.rag_pill.providers import EmbeddingConfig
 from mcp_servers.rag_pill.schemas import QAPill
@@ -75,11 +76,9 @@ async def test_txtai_uses_external_transform_not_hf():
     fake_client = MagicMock()
     fake_client.embeddings.create.side_effect = lambda model, input: _fake_openai_response(input)
 
+    corpus = EphemeralCorpus("alpha bravo charlie. delta echo foxtrot. golf hotel.")
     with patch("openai.OpenAI", return_value=fake_client):
-        embeddings = await engine._build_index(
-            pill,
-            document_content="alpha bravo charlie. delta echo foxtrot. golf hotel.",
-        )
+        embeddings = await engine._build_index(pill, corpus)
 
     # The transform fn was actually called (proving txtai routed through external).
     assert fake_client.embeddings.create.called, (
