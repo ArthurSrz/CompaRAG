@@ -33,6 +33,20 @@ logger = configure_logger(logging.getLogger("ranking.tool_compute"))
 
 PROVISIONAL_THRESHOLD = 50
 
+# Engines withdrawn from the arena. Their historical votes stay in the DB
+# (audit trail) but are dropped from leaderboard inputs so the engine does
+# not surface under its raw tool_id once removed from the registry.
+RETIRED_ENGINES: frozenset[str] = frozenset({"clarifeye"})
+
+
+def _normalize(s: str) -> str:
+    return s.lower().replace("_", "").replace("-", "").replace(" ", "")
+
+
+def _is_retired(tool_id: str) -> bool:
+    norm = _normalize(tool_id)
+    return any(tag in norm for tag in RETIRED_ENGINES)
+
 
 @dataclass
 class ToolRankingEntry:
@@ -84,10 +98,6 @@ def _known_engine_names() -> set[str]:
     return {s.name for s in load_mcp_servers()}
 
 
-def _normalize(s: str) -> str:
-    return s.lower().replace("_", "").replace("-", "").replace(" ", "")
-
-
 def _resolve_engine(
     tool_id: str, name_of: dict[str, str], known: set[str]
 ) -> str:
@@ -120,13 +130,16 @@ def _tool_votes_to_battles(
 ) -> list[tuple[str, str, str]]:
     """Convert tool vote records to battle tuples, re-IDed to engine name.
 
-    Drops ties (no winner) and intra-engine battles (both sides resolve to the
+    Drops ties (no winner), intra-engine battles (both sides resolve to the
     same engine name — these measure prompt-template quality, not engine
-    quality, and would produce 'LangChain vs LangChain' rows in the BT input).
+    quality, and would produce 'LangChain vs LangChain' rows in the BT input),
+    and any battle where either side references a retired engine.
     """
     battles = []
     for v in votes:
         if v["chosen"] == "tie":
+            continue
+        if _is_retired(v["tool_a_id"]) or _is_retired(v["tool_b_id"]):
             continue
         a = _resolve_engine(v["tool_a_id"], name_of, known)
         b = _resolve_engine(v["tool_b_id"], name_of, known)
@@ -151,6 +164,8 @@ def _aggregate_tool_preferences(
     total: dict[str, int] = defaultdict(int)
 
     for v in votes:
+        if _is_retired(v["tool_a_id"]) or _is_retired(v["tool_b_id"]):
+            continue
         a = _resolve_engine(v["tool_a_id"], name_of, known)
         b = _resolve_engine(v["tool_b_id"], name_of, known)
         if a == b:

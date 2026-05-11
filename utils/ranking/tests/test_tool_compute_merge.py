@@ -21,6 +21,7 @@ import pytest
 
 from utils.ranking.tool_compute import (
     _aggregate_tool_preferences,
+    _is_retired,
     _resolve_engine,
     _tool_votes_to_battles,
     compute_tool_rankings,
@@ -69,10 +70,10 @@ NAME_OF = {
     "summary_default__llamaindex": "LlamaIndex",
     "summary_bullets__llamaindex": "LlamaIndex",
     "qa_precise__llamaindex": "LlamaIndex",
-    "summary_clarifeye": "Clarifeye",
-    "qa_clarifeye": "Clarifeye",
+    "summary_acme": "Acme",
+    "qa_acme": "Acme",
 }
-KNOWN = {"LangChain", "LlamaIndex", "Clarifeye"}
+KNOWN = {"LangChain", "LlamaIndex", "Acme"}
 
 
 def test_battles_reid_to_engine_name():
@@ -94,10 +95,32 @@ def test_intra_engine_battles_are_dropped():
         _vote("summary_default__langchain", "summary_bullets__langchain", "a"),
         _vote("summary_default__llamaindex", "qa_precise__llamaindex", "b"),
         # one valid inter-engine battle so we can confirm the rest survives
-        _vote("summary_clarifeye", "summary_default__langchain", "a"),
+        _vote("summary_acme", "summary_default__langchain", "a"),
     ]
     battles = _tool_votes_to_battles(votes, NAME_OF, KNOWN)
-    assert battles == [("Clarifeye", "LangChain", "Clarifeye")]
+    assert battles == [("Acme", "LangChain", "Acme")]
+
+
+def test_retired_engine_votes_are_filtered_from_battles():
+    """Withdrawn engines' historical votes must be dropped from leaderboard
+    inputs — they would otherwise surface under their raw tool_id or aggregate
+    under a no-longer-registered engine name."""
+    assert _is_retired("summary_clarifeye")
+    assert _is_retired("qa_clarifeye")
+    assert _is_retired("clarifeye")
+    assert not _is_retired("summary_default__langchain")
+
+    votes = [
+        _vote("summary_clarifeye", "summary_default__langchain", "a"),
+        _vote("qa_clarifeye", "qa_precise__llamaindex", "b"),
+        _vote("summary_default__langchain", "summary_default__llamaindex", "a"),
+    ]
+    battles = _tool_votes_to_battles(votes, NAME_OF, KNOWN)
+    assert battles == [("LangChain", "LlamaIndex", "LangChain")]
+
+    prefs = _aggregate_tool_preferences(votes, NAME_OF, KNOWN)
+    assert "Clarifeye" not in prefs
+    assert set(prefs.keys()) == {"LangChain", "LlamaIndex"}
 
 
 def test_ties_stay_dropped():
@@ -120,11 +143,11 @@ def test_truly_unknown_tool_id_falls_through_raw():
     [
         ("langchain_rag", "LangChain"),
         ("llamaindex_rag", "LlamaIndex"),
-        ("clarifeye", "Clarifeye"),                       # pre-OAuth-split id
+        ("acme", "Acme"),                                 # bare engine id
         ("summary_bullets__langchain", "LangChain"),      # retired pill variant
         ("summary_bullets__llamaindex", "LlamaIndex"),
         ("LANGCHAIN_LEGACY", "LangChain"),                # case-insensitive
-        ("ClarifEye-experimental", "Clarifeye"),          # separator-insensitive
+        ("Acme-experimental", "Acme"),                    # separator-insensitive
     ],
 )
 def test_legacy_ids_resolve_via_substring(legacy_id, expected_engine):
@@ -208,9 +231,9 @@ def test_compute_tool_rankings_collapses_eight_ids_to_three_engines(monkeypatch)
         _vote("summary_default__langchain", "summary_default__llamaindex", "a"),
         _vote("summary_default__llamaindex", "qa_precise__langchain", "a"),
         _vote("qa_precise__llamaindex", "qa_precise__langchain", "b"),
-        _vote("summary_clarifeye", "summary_default__langchain", "a"),
-        _vote("qa_clarifeye", "qa_precise__llamaindex", "a"),
-        _vote("summary_default__llamaindex", "summary_clarifeye", "a"),
+        _vote("summary_acme", "summary_default__langchain", "a"),
+        _vote("qa_acme", "qa_precise__llamaindex", "a"),
+        _vote("summary_default__llamaindex", "summary_acme", "a"),
         # An intra-engine row that must NOT add LangChain↔LangChain to BT
         _vote("summary_default__langchain", "summary_bullets__langchain", "a"),
     ]
@@ -225,23 +248,19 @@ def test_compute_tool_rankings_collapses_eight_ids_to_three_engines(monkeypatch)
         result = compute_tool_rankings()
 
     assert result is not None
-    assert set(result.rankings.keys()) == {"LangChain", "LlamaIndex", "Clarifeye"}
-    assert set(result.preferences.keys()) <= {"LangChain", "LlamaIndex", "Clarifeye"}
+    assert set(result.rankings.keys()) == {"LangChain", "LlamaIndex", "Acme"}
+    assert set(result.preferences.keys()) <= {"LangChain", "LlamaIndex", "Acme"}
 
     # Each engine's n_match must equal its participation in inter-engine battles
     # only (the intra-engine LangChain vs LangChain row is excluded).
-    # Inter-engine battles per engine in the fixture above:
-    #   LangChain : 4 (rows 1, 2, 3, 4)
-    #   LlamaIndex: 4 (rows 1, 2, 3, 5, 6)  → 5 actually
-    # Recompute to be precise — let me count by tool_id resolved to engine:
     # row1 LC vs LI       → LC+1, LI+1
     # row2 LI vs LC       → LI+1, LC+1
     # row3 LI vs LC       → LI+1, LC+1
-    # row4 CE vs LC       → CE+1, LC+1
-    # row5 CE vs LI       → CE+1, LI+1
-    # row6 LI vs CE       → LI+1, CE+1
+    # row4 AC vs LC       → AC+1, LC+1
+    # row5 AC vs LI       → AC+1, LI+1
+    # row6 LI vs AC       → LI+1, AC+1
     # row7 intra-LC       → dropped
-    # ⇒ LangChain=4, LlamaIndex=5, Clarifeye=3
+    # ⇒ LangChain=4, LlamaIndex=5, Acme=3
     assert result.rankings["LangChain"].n_match == 4
     assert result.rankings["LlamaIndex"].n_match == 5
-    assert result.rankings["Clarifeye"].n_match == 3
+    assert result.rankings["Acme"].n_match == 3
