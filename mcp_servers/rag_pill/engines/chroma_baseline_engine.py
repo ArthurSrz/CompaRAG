@@ -9,8 +9,11 @@ attributable to retrieval sophistication, not just framework choice.
 
 import asyncio
 from pathlib import Path
+from typing import Any
 
-from mcp_servers.rag_pill.cache import IndexCache, doc_hash
+from mcp_servers.rag_pill.cache import IndexCache
+from mcp_servers.rag_pill.corpus.ephemeral import EphemeralCorpus
+from mcp_servers.rag_pill.corpus.fixed import FixedCorpus
 from mcp_servers.rag_pill.providers import EmbeddingConfig, LLMProvider
 from mcp_servers.rag_pill.schemas import Pill
 from mcp_servers.rag_pill.strategies import render_prompt
@@ -33,6 +36,24 @@ def _chunk_text(text: str, chunk_size: int, chunk_overlap: int) -> list[str]:
     return [text[i : i + chunk_size] for i in range(0, len(text), step)] or [""]
 
 
+def _resolve_corpus(document_content: str, corpus: Any) -> Any | None:
+    """Bridge legacy document_content (str) -> HaystackCorpus.
+
+    Precedence:
+      1. Explicit `corpus` argument (slice 2.10+ callers).
+      2. Non-empty document_content -> EphemeralCorpus (legacy sandbox path).
+      3. CORPUS_DIR if it exists -> FixedCorpus (legacy benchmark fallback).
+      4. None -> caller returns "no documents available".
+    """
+    if corpus is not None:
+        return corpus
+    if document_content.strip():
+        return EphemeralCorpus(document_content)
+    if CORPUS_DIR.exists():
+        return FixedCorpus(CORPUS_DIR)
+    return None
+
+
 class ChromaBaselineEngine:
     id = "chroma_baseline"
     SUPPORTS: set[str] = {"summary", "qa"} if _AVAILABLE else set()
@@ -47,7 +68,7 @@ class ChromaBaselineEngine:
         self._llm = llm
         self._embed = embedding_config
 
-    async def _build_index(self, pill: Pill, document_content: str):
+    async def _build_index(self, pill: Pill, corpus: Any):
         loop = asyncio.get_event_loop()
 
         def _build():
@@ -57,60 +78,55 @@ class ChromaBaselineEngine:
                 api_base=self._embed.base_url,
                 model_name=pill.embedder,
             )
-            # Idempotent build: chromadb keeps module-level collection state
-            # across EphemeralClient() instances, so a failed attempt (e.g.
-            # OpenRouter empty-embeddings flake mid-add) leaves an orphan
-            # collection that blocks the retry from execute_with_embedding_retry
-            # with "Collection already exists". get_or_create + upsert below
-            # makes the build safe to repeat.
-            doc_key = doc_hash(document_content)
+            # Idempotent build (see prior comment block): get_or_create +
+            # upsert keep the build safe to repeat across retry attempts.
             collection = client.get_or_create_collection(
-                name=f"baseline_{pill.name}_{doc_key}",
+                name=f"baseline_{pill.name}_{corpus.version_hash[:16]}",
                 embedding_function=embed_fn,
             )
-
-            sources: list[tuple[str, str]] = []
-            if document_content.strip():
-                sources.append(("uploaded", document_content))
-            else:
-                for p in CORPUS_DIR.glob("*.md"):
-                    sources.append((p.stem, p.read_text()))
 
             ids: list[str] = []
             docs: list[str] = []
             metas: list[dict] = []
-            for src, text in sources:
+            for doc in corpus.iter_documents():
+                src = doc.id.removesuffix(".md") or doc.id
                 for i, chunk in enumerate(
-                    _chunk_text(text, pill.chunk_size, pill.chunk_overlap)
+                    _chunk_text(doc.text, pill.chunk_size, pill.chunk_overlap)
                 ):
                     if not chunk.strip():
                         continue
                     ids.append(f"{src}-{i}")
                     docs.append(chunk)
-                    metas.append({"source": src})
+                    metas.append({"source": src, "doc_id": doc.id})
 
             if not ids:
-                return collection  # empty corpus — skip add, queries will return no results
-            # upsert (not add) so retries against a partially-populated
-            # collection from a prior failed attempt don't error on
-            # duplicate ids.
+                return collection
             collection.upsert(ids=ids, documents=docs, metadatas=metas)
             return collection
 
         return await loop.run_in_executor(None, _build)
 
     async def execute(
-        self, pill: Pill, task: str, goal: str, document_content: str
+        self,
+        pill: Pill,
+        task: str,
+        goal: str,
+        document_content: str = "",
+        corpus: Any = None,
     ) -> str:
+        resolved = _resolve_corpus(document_content, corpus)
+        if resolved is None:
+            return "No documents available to search."
+
         key = (
             self.id,
             pill.embedder,
             pill.chunk_size,
             pill.chunk_overlap,
-            doc_hash(document_content),
+            resolved.version_hash,
         )
         collection = await self._cache.get_or_build(
-            key, lambda: self._build_index(pill, document_content)
+            key, lambda: self._build_index(pill, resolved)
         )
 
         top_k = getattr(pill, "top_k", 3)
