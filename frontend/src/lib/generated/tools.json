@@ -43,14 +43,5 @@
     "imgSrc": "chroma.png",
     "href": "https://www.trychroma.com",
     "linkLabel": "Visiter le site"
-  },
-  {
-    "kind": "tool",
-    "subKind": "hosted",
-    "title": "Clarifeye",
-    "desc": "Plateforme hébergée d'agents IA outillés sur des sources de connaissance\nstructurées (playbooks, schémas). Connectée à l'arène via un serveur MCP\ndédié.",
-    "imgSrc": "clarifeye.svg",
-    "href": "https://clarifeye.ai",
-    "linkLabel": "Visiter le site"
   }
 ]

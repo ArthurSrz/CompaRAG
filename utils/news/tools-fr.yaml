@@ -58,13 +58,3 @@
     cosinus, sans reranker).
   homepage_url: https://www.trychroma.com
   logo_url: https://avatars.githubusercontent.com/u/110818415
-
-- id: clarifeye
-  name: Clarifeye
-  sub_kind: hosted
-  desc: |
-    Plateforme hébergée d'agents IA outillés sur des sources de connaissance
-    structurées (playbooks, schémas). Connectée à l'arène via un serveur MCP
-    dédié.
-  homepage_url: https://clarifeye.ai
-  logo_url: https://clarifeye.ai/favicon.svg
