@@ -9,7 +9,7 @@ from pathlib import Path
 
 from fastmcp import FastMCP
 from starlette.requests import Request
-from starlette.responses import JSONResponse, PlainTextResponse
+from starlette.responses import JSONResponse, PlainTextResponse, StreamingResponse
 
 from mcp_servers.rag_pill.cache import IndexCache
 from mcp_servers.rag_pill.engines import (
@@ -22,6 +22,7 @@ from mcp_servers.rag_pill.engines import (
 from mcp_servers.rag_pill.providers import EmbeddingConfig, OpenRouterLLM
 from mcp_servers.rag_pill.registry import PillRegistry
 from mcp_servers.rag_pill.retry import execute_with_embedding_retry
+from mcp_servers.rag_pill.run_streaming import build_ndjson_stream
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s [rag-pill] %(message)s")
 log = logging.getLogger("rag_pill")
@@ -148,6 +149,56 @@ async def rag_pill_query(
         ),
     )
     return answer
+
+
+@mcp.custom_route("/run-streaming", methods=["POST"])
+async def run_streaming(request: Request) -> StreamingResponse:
+    """NDJSON stream of progress events + terminal result/error.
+
+    Body: {pill_id, engine_id, task, goal, document_content?}
+    Output: application/x-ndjson; one event per line:
+      - {type: 'ingest_start' | 'ingest_done' | 'retrieval_*' | 'mediation_*', ...}
+      - {type: 'result', result: {answer, retrieved_spans, ...}}
+      - {type: 'error', message: '...'}
+
+    Used by the backend tool_arena SSE handler (Phase 13 / Wave 6.8) to
+    multiplex per-side progress into a single text/event-stream response
+    to the frontend.
+    """
+    if registry is None:
+        return JSONResponse({"error": "registry not ready"}, status_code=503)
+    body = await request.json()
+    try:
+        pill = registry.get_pill(body["pill_id"])
+        engine = registry.get_engine(body["engine_id"])
+    except KeyError as exc:
+        return JSONResponse(
+            {"error": "unknown_pill_or_engine", "message": str(exc)},
+            status_code=400,
+        )
+
+    if pill.task_type not in engine.SUPPORTS:
+        return JSONResponse(
+            {
+                "error": "engine_unsupported_task_type",
+                "message": (
+                    f"Engine '{body['engine_id']}' does not support "
+                    f"task_type '{pill.task_type}'."
+                ),
+            },
+            status_code=400,
+        )
+
+    stream = build_ndjson_stream(
+        engine=engine,
+        pill=pill,
+        engine_id=body["engine_id"],
+        pill_id=body["pill_id"],
+        task=body.get("task", ""),
+        goal=body.get("goal", ""),
+        document_content=body.get("document_content", ""),
+    )
+    return StreamingResponse(stream, media_type="application/x-ndjson")
 
 
 if __name__ == "__main__":
