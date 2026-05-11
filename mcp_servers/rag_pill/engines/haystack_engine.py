@@ -6,12 +6,15 @@ of crashing on module load.
 """
 
 import asyncio
+import time
 from pathlib import Path
 from typing import Any
 
 from mcp_servers.rag_pill.cache import IndexCache
 from mcp_servers.rag_pill.corpus.ephemeral import EphemeralCorpus
 from mcp_servers.rag_pill.corpus.fixed import FixedCorpus
+from mcp_servers.rag_pill.engines.base import locate_span
+from mcp_servers.rag_pill.engines.result import EngineResult
 from mcp_servers.rag_pill.providers import EmbeddingConfig, LLMProvider
 from mcp_servers.rag_pill.providers.embedding_validator import (
     validate_document_embeddings,
@@ -105,9 +108,28 @@ class HaystackEngine:
         document_content: str = "",
         corpus: Any = None,
     ) -> str:
+        """Back-compat thin wrapper — see chroma_baseline_engine.execute."""
+        result = await self.execute_with_spans(
+            pill, task, goal, document_content=document_content, corpus=corpus
+        )
+        return result.answer
+
+    async def execute_with_spans(
+        self,
+        pill: Pill,
+        task: str,
+        goal: str,
+        document_content: str = "",
+        corpus: Any = None,
+    ) -> EngineResult:
         resolved = _resolve_corpus(document_content, corpus)
         if resolved is None:
-            return "No documents available to search."
+            return EngineResult(
+                answer="No documents available to search.",
+                retrieved_spans=(),
+                retrieval_latency_ms=0,
+                generation_latency_ms=0,
+            )
 
         key = (
             self.id,
@@ -133,8 +155,31 @@ class HaystackEngine:
             retriever = InMemoryEmbeddingRetriever(document_store=store, top_k=top_k)
             return retriever.run(query_embedding=q_emb)["documents"]
 
+        t0 = time.perf_counter()
         docs = await asyncio.get_event_loop().run_in_executor(None, _retrieve)
-        context = "\n\n---\n\n".join(d.content for d in docs)
+        retrieval_latency_ms = int((time.perf_counter() - t0) * 1000)
 
+        spans: list = []
+        unlocated = 0
+        for rank, d in enumerate(docs):
+            doc_id = (d.meta or {}).get("doc_id", "")
+            score = getattr(d, "score", None)
+            span = locate_span(resolved, doc_id, d.content, score=score, rank=rank)
+            if span is None:
+                unlocated += 1
+            else:
+                spans.append(span)
+
+        context = "\n\n---\n\n".join(d.content for d in docs)
         prompt = render_prompt(pill, context, task, goal)
-        return await self._llm.invoke(pill, prompt)
+        t1 = time.perf_counter()
+        answer = await self._llm.invoke(pill, prompt)
+        generation_latency_ms = int((time.perf_counter() - t1) * 1000)
+
+        return EngineResult(
+            answer=answer,
+            retrieved_spans=tuple(spans),
+            retrieval_latency_ms=retrieval_latency_ms,
+            generation_latency_ms=generation_latency_ms,
+            unlocated_span_count=unlocated,
+        )
