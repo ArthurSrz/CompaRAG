@@ -24,11 +24,14 @@ from fastapi import APIRouter, Depends, Header, HTTPException
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel, Field, model_validator
 
+from pathlib import Path
+
 from backend.tool_arena.client import single_mcp_call
 from backend.tool_arena.dispatcher import (
     InsufficientReadyServersError,
     MCPDispatcher,
 )
+from backend.tool_arena.evaluation import EvaluationCatalog
 from backend.tool_arena.normalizer import normalize_output
 from backend.tool_arena.readiness import get_readiness_registry, probe_server
 from backend.tool_arena.sanitizer import sanitize_envelope
@@ -47,6 +50,19 @@ logger = logging.getLogger("languia")
 
 router = APIRouter(prefix="/tool-arena", tags=["tool-arena"])
 router.include_router(documents_router)
+
+# EvaluationCatalog — backend-side metadata loader for benchmark queries.
+# Path resolution: prefer EVAL_QUERIES_PATH env var (Dockerfile copies the
+# YAML in), fall back to the in-repo corpus path for local dev. Empty
+# catalog when file absent — router validator rejects benchmark requests in
+# that case (returns 422, never 500).
+_EVAL_QUERIES_PATH = Path(
+    os.environ.get(
+        "EVAL_QUERIES_PATH",
+        str(Path(__file__).resolve().parents[2] / "mcp_servers" / "corpus" / "evaluation" / "queries.yaml"),
+    )
+)
+_eval_catalog = EvaluationCatalog(_EVAL_QUERIES_PATH)
 
 
 # ---------------------------------------------------------------------------
@@ -536,11 +552,35 @@ async def compare(body: CompareRequest):
     """
     session_hash = create_tool_session()
 
+    # Benchmark mode: look up the canned query in the catalog and substitute
+    # its task/goal text into the dispatcher call. The body's task/goal are
+    # ignored here (they default to "" in benchmark mode — slice 4.4 enforces
+    # evaluation_query_id presence; slice 4.7 looks up the actual text).
+    effective_task = body.task
+    effective_goal = body.goal
+    if body.haystack == "benchmark":
+        assert body.evaluation_query_id is not None  # validated by model_validator
+        eval_meta = _eval_catalog.get(body.evaluation_query_id)
+        if eval_meta is None:
+            return JSONResponse(
+                status_code=422,
+                content={
+                    "error": "unknown_evaluation_query_id",
+                    "message": (
+                        f"evaluation_query_id={body.evaluation_query_id!r} not "
+                        f"found in catalog."
+                    ),
+                    "evaluation_query_id": body.evaluation_query_id,
+                },
+            )
+        effective_task = eval_meta.query_text
+        effective_goal = eval_meta.goal_text
+
     dispatcher = MCPDispatcher()
     try:
         tool_a, tool_b = await dispatcher.dispatch(
-            task=body.task,
-            goal=body.goal,
+            task=effective_task,
+            goal=effective_goal,
             session_id=session_hash,
             document_content=body.document_content,
             task_type=body.task_type,
