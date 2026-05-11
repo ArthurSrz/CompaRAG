@@ -35,11 +35,11 @@ Phase 11 document library fully complete. Both document endpoints wired with Cac
 
 ## Out-of-Phase Work
 
-### 2026-05-11 — Frontend task-type restriction
-- **Why:** Backend registry (`mcp_servers.json`, 12 servers) only declares `task_type ∈ {summary, qa}`. Frontend dropdown was still offering `extraction`, producing dead UI that would 503 on submit.
-- **What:** Removed `'extraction'` from the `TaskType` union and the `taskTypes` array in `frontend/src/routes/tool-arena/components/ToolArenaForm.svelte`. Tightened the parent `+page.svelte` handler signature accordingly. Updated the `requiresDocument` comment.
-- **Scope:** Frontend only — backend `CompareRequest.task_type` Literal still includes `extraction` (kept permissive so a future extraction pill can be added without coordinated rollout).
-- **Validation:** Production UI smoke test (Playwright + browser-harness) confirmed pre-fix that haystack engine no longer surfaces `NoneType is not subscriptable`. 30-iteration probe in progress (`/tmp/arena_30runs_report.md`).
+### 2026-05-11 — Frontend task-type restriction (two passes)
+- **Pass 1 (commit `e0442485`):** Removed `'extraction'` because no server in `mcp_servers.json` declares it. Frontend `TaskType` reduced from `{summary, qa, extraction}` → `{summary, qa}`. Vercel-deployed and confirmed via SSR HTML poll.
+- **Pass 2 (this commit):** User reported QA hasn't been end-to-end validated either. `TaskType` further reduced to `{summary}`. The 1-option dropdown is hidden entirely (`{#if taskTypes.length > 1}` guard) so users see a clean form instead of a degenerate select. The `requiresDocument` comparison against `'qa'` is preserved so re-enabling QA is a one-line change.
+- **Scope:** Frontend only — backend `CompareRequest.task_type` Literal stays permissive.
+- **Validation:** Production UI smoke test confirmed pre-fix that haystack engine no longer surfaces `NoneType is not subscriptable`. 30-iteration probe in progress (`/tmp/arena_30runs_report.md`).
 
 ### 2026-05-11 — Haystack engine None-embedding fix
 - **Why:** Beta-user surfaced `TypeError: 'NoneType' object is not subscriptable` from haystack when OpenRouter returns degraded embedding payloads (200 OK with `embedding=None` instead of empty `data`).

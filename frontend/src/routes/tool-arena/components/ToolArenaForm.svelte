@@ -26,10 +26,10 @@
 
   // Frontend-restricted subset of the backend's task_type Literal
   // (see backend/tool_arena/router.py::CompareRequest.task_type).
-  // Only task types with at least one MCP server registered in
-  // backend/mcp_servers.json are exposed; "extraction" is hidden until
-  // an extraction pill ships.
-  type TaskType = 'summary' | 'qa'
+  // Currently only "summary" is exposed — "qa" and "extraction" are
+  // hidden until end-to-end validation is in place. Backend Literal
+  // stays permissive so re-enabling either is a frontend-only change.
+  type TaskType = 'summary'
 
   const taskTypes: { value: TaskType; label: string; prompt: string; goalText: string }[] = [
     {
@@ -37,12 +37,6 @@
       label: m['toolArena.form.taskTypes.summary.label'](),
       prompt: m['toolArena.form.taskTypes.summary.prompt'](),
       goalText: m['toolArena.form.taskTypes.summary.goal']()
-    },
-    {
-      value: 'qa',
-      label: m['toolArena.form.taskTypes.qa.label'](),
-      prompt: m['toolArena.form.taskTypes.qa.prompt'](),
-      goalText: m['toolArena.form.taskTypes.qa.goal']()
     }
   ]
 
@@ -53,8 +47,9 @@
   let fileName = $state('')
   let fileError = $state('')
 
-  // Summary operates on a user-provided document; QA can run against the
-  // static corpus, so it doesn't require an upload.
+  // Document is always required while only summary is exposed. The
+  // selectedTaskType comparison is preserved so re-enabling QA (which
+  // can run against the static corpus) is a one-line change.
   const requiresDocument = $derived(selectedTaskType !== 'qa')
 
   const canSubmit = $derived(
@@ -142,22 +137,24 @@
 </script>
 
 <form onsubmit={handleSubmit} class="gap-3 py-10 md:pb-12 md:pt-12 grid">
-  <div class="fr-select-group">
-    <label class="fr-label" for="tool-arena-task-type">
-      Type de tâche
-    </label>
-    <select
-      id="tool-arena-task-type"
-      class="fr-select"
-      bind:value={selectedTaskType}
-      onchange={handleTaskTypeChange}
-      {disabled}
-    >
-      {#each taskTypes as taskType}
-        <option value={taskType.value}>{taskType.label}</option>
-      {/each}
-    </select>
-  </div>
+  {#if taskTypes.length > 1}
+    <div class="fr-select-group">
+      <label class="fr-label" for="tool-arena-task-type">
+        Type de tâche
+      </label>
+      <select
+        id="tool-arena-task-type"
+        class="fr-select"
+        bind:value={selectedTaskType}
+        onchange={handleTaskTypeChange}
+        {disabled}
+      >
+        {#each taskTypes as taskType}
+          <option value={taskType.value}>{taskType.label}</option>
+        {/each}
+      </select>
+    </div>
+  {/if}
 
   {#if requiresDocument}
     <div class="fr-upload-group" class:fr-upload-group--error={!!fileError}>

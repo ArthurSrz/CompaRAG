@@ -50,7 +50,7 @@
     task: string,
     goal: string,
     documentContent: string = '',
-    taskType: 'summary' | 'qa' | null = null
+    taskType: 'summary' | null = null
   ) {
     phase = 'loading'
     compareError = null
