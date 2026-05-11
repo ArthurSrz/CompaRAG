@@ -24,9 +24,12 @@
     disabled?: boolean
   } = $props()
 
-  // 1-1 with backend Literal["summary","qa","extraction"] in
-  // backend/tool_arena/router.py::CompareRequest.task_type
-  type TaskType = 'summary' | 'qa' | 'extraction'
+  // Frontend-restricted subset of the backend's task_type Literal
+  // (see backend/tool_arena/router.py::CompareRequest.task_type).
+  // Only task types with at least one MCP server registered in
+  // backend/mcp_servers.json are exposed; "extraction" is hidden until
+  // an extraction pill ships.
+  type TaskType = 'summary' | 'qa'
 
   const taskTypes: { value: TaskType; label: string; prompt: string; goalText: string }[] = [
     {
@@ -40,12 +43,6 @@
       label: m['toolArena.form.taskTypes.qa.label'](),
       prompt: m['toolArena.form.taskTypes.qa.prompt'](),
       goalText: m['toolArena.form.taskTypes.qa.goal']()
-    },
-    {
-      value: 'extraction',
-      label: m['toolArena.form.taskTypes.extraction.label'](),
-      prompt: m['toolArena.form.taskTypes.extraction.prompt'](),
-      goalText: m['toolArena.form.taskTypes.extraction.goal']()
     }
   ]
 
@@ -56,8 +53,8 @@
   let fileName = $state('')
   let fileError = $state('')
 
-  // Summary and extraction operate on a user-provided document; QA can run
-  // against the static corpus, so it doesn't require an upload.
+  // Summary operates on a user-provided document; QA can run against the
+  // static corpus, so it doesn't require an upload.
   const requiresDocument = $derived(selectedTaskType !== 'qa')
 
   const canSubmit = $derived(
