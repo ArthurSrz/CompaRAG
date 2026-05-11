@@ -19,6 +19,7 @@ from mcp_servers.rag_pill.corpus.base import (
     ExpectedSpan,
     compute_version_hash,
 )
+from mcp_servers.rag_pill.corpus.ephemeral import EphemeralCorpus
 from mcp_servers.rag_pill.corpus.fixed import FixedCorpus
 
 
@@ -114,3 +115,30 @@ def test_fixed_corpus_raises_on_malformed_queries_yaml(tmp_path: Path) -> None:
     corpus = FixedCorpus(tmp_path)
     with pytest.raises(ValueError, match="list"):
         corpus.list_evaluation_queries()
+
+
+def test_ephemeral_corpus_empty_text_raises() -> None:
+    """Sandbox mode requires non-empty content. Whitespace-only counts as
+    empty — otherwise a user submitting only spaces would produce a corpus
+    with one zero-information document and confuse downstream retrieval."""
+    with pytest.raises(ValueError):
+        EphemeralCorpus("")
+    with pytest.raises(ValueError):
+        EphemeralCorpus("   \n\t  ")
+
+
+def test_ephemeral_corpus_upload_id_deterministic() -> None:
+    """Same text -> same upload id (cache hit); different text -> different.
+    Determinism keeps cached engine indices reusable across identical uploads."""
+    a1 = EphemeralCorpus("Paris is the capital of France.")
+    a2 = EphemeralCorpus("Paris is the capital of France.")
+    b = EphemeralCorpus("Berlin is the capital of Germany.")
+
+    a1_id = next(iter(a1.iter_documents())).id
+    a2_id = next(iter(a2.iter_documents())).id
+    b_id = next(iter(b.iter_documents())).id
+
+    assert a1_id == a2_id
+    assert a1_id != b_id
+    assert a1_id.startswith("upload-")
+    assert a1.has_ground_truth is False
