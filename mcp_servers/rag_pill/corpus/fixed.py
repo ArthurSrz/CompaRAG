@@ -12,6 +12,7 @@ from mcp_servers.rag_pill.corpus.base import (
     CorpusDocument,
     EvaluationQuery,
     ExpectedSpan,
+    compute_version_hash,
 )
 
 
@@ -39,6 +40,16 @@ class FixedCorpus:
 
     def iter_documents(self) -> Iterable[CorpusDocument]:
         return iter(self._docs)
+
+    def get_document(self, doc_id: str) -> CorpusDocument | None:
+        for d in self._docs:
+            if d.id == doc_id:
+                return d
+        return None
+
+    @cached_property
+    def version_hash(self) -> str:
+        return compute_version_hash(self._docs)
 
     def list_evaluation_queries(self) -> list[EvaluationQuery]:
         if self._queries_path is None:

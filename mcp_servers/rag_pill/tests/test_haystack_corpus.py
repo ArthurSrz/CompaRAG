@@ -142,3 +142,29 @@ def test_ephemeral_corpus_upload_id_deterministic() -> None:
     assert a1_id != b_id
     assert a1_id.startswith("upload-")
     assert a1.has_ground_truth is False
+
+
+def test_fixed_corpus_exposes_version_hash_and_get_document(tmp_path: Path) -> None:
+    """Engines key their indices on corpus.version_hash and resolve span
+    offsets via corpus.get_document() — both must be present and consistent."""
+    (tmp_path / "x.md").write_text("alpha")
+    (tmp_path / "y.md").write_text("beta")
+    corpus = FixedCorpus(tmp_path)
+
+    h = corpus.version_hash
+    assert len(h) == 64
+
+    assert corpus.get_document("x.md").text == "alpha"
+    assert corpus.get_document("y.md").text == "beta"
+    assert corpus.get_document("missing.md") is None
+
+
+def test_ephemeral_corpus_exposes_version_hash_and_get_document() -> None:
+    """Same surface as FixedCorpus so engines are corpus-agnostic."""
+    corpus = EphemeralCorpus("hello world")
+    h = corpus.version_hash
+    assert len(h) == 64
+
+    doc_id = next(iter(corpus.iter_documents())).id
+    assert corpus.get_document(doc_id).text == "hello world"
+    assert corpus.get_document("upload-other") is None
