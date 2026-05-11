@@ -16,6 +16,13 @@ class FixedCorpus:
         self._root = Path(root)
         if not self._root.exists():
             raise FileNotFoundError(f"FixedCorpus root does not exist: {self._root}")
+        self._queries_path: Path | None = self._root / "evaluation" / "queries.yaml"
+        if not self._queries_path.exists():
+            self._queries_path = None
+
+    @property
+    def has_ground_truth(self) -> bool:
+        return self._queries_path is not None
 
     @cached_property
     def _docs(self) -> list[CorpusDocument]:

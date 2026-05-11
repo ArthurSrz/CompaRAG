@@ -55,3 +55,12 @@ def test_fixed_corpus_iter_returns_md_files_sorted(tmp_path: Path) -> None:
     ids = [doc.id for doc in corpus.iter_documents()]
 
     assert ids == ["a.md", "b.md", "c.md"]
+
+
+def test_fixed_corpus_has_ground_truth_false_without_queries_yaml(tmp_path: Path) -> None:
+    """A directory of .md files with no evaluation/queries.yaml is not a
+    benchmark corpus — has_ground_truth must surface that distinction so
+    the judge knows whether automated scoring is even possible."""
+    (tmp_path / "only.md").write_text("hello")
+    corpus = FixedCorpus(tmp_path)
+    assert corpus.has_ground_truth is False
