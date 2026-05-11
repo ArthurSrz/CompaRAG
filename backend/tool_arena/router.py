@@ -22,7 +22,7 @@ from typing import Literal
 
 from fastapi import APIRouter, Depends, Header, HTTPException
 from fastapi.responses import JSONResponse
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, model_validator
 
 from backend.tool_arena.client import single_mcp_call
 from backend.tool_arena.dispatcher import (
@@ -227,14 +227,37 @@ async def admin_ranking_diag(_: None = Depends(_require_admin_token)) -> dict:
 
 
 class CompareRequest(BaseModel):
-    task: str
-    goal: str
+    task: str = ""
+    goal: str = ""
     document_content: str = ""
     # Optional task taxonomy from the UI's "Type de tâche" picker. When set,
     # the dispatcher restricts pairing to entries whose task_type matches —
     # equifinality fairness invariant. Legacy clients (no task_type) get the
     # current behavior: random pick from any group with >=2 READY servers.
     task_type: Literal["summary", "qa", "extraction"] | None = None
+    # Phase 13 — haystack mode discriminator. "sandbox" (default) uses
+    # document_content as an ephemeral corpus; "benchmark" requires
+    # evaluation_query_id to look up the canned task/goal from the catalog.
+    haystack: Literal["benchmark", "sandbox"] = "sandbox"
+    evaluation_query_id: str | None = None
+
+    @model_validator(mode="after")
+    def _validate_haystack_mode(self) -> "CompareRequest":
+        if self.haystack == "benchmark":
+            if not self.evaluation_query_id:
+                raise ValueError(
+                    "benchmark mode requires evaluation_query_id"
+                )
+        else:  # sandbox
+            if self.evaluation_query_id:
+                raise ValueError(
+                    "evaluation_query_id is only valid in benchmark mode"
+                )
+            if not self.document_content.strip():
+                raise ValueError(
+                    "sandbox mode requires non-empty document_content"
+                )
+        return self
 
 
 class CompareResponse(BaseModel):
