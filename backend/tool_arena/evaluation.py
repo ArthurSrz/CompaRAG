@@ -12,11 +12,13 @@ by shipping the same YAML to both surfaces).
 
 from __future__ import annotations
 
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from functools import cached_property
 from pathlib import Path
 
 import yaml
+
+from mcp_servers.rag_pill.corpus import ExpectedSpan
 
 
 @dataclass(frozen=True)
@@ -24,6 +26,7 @@ class EvaluationQueryMeta:
     id: str
     query_text: str
     goal_text: str
+    expected_spans: tuple[ExpectedSpan, ...] = field(default_factory=tuple)
 
 
 class EvaluationCatalog:
@@ -48,6 +51,14 @@ class EvaluationCatalog:
                 id=entry["id"],
                 query_text=entry["query_text"],
                 goal_text=entry.get("goal_text", ""),
+                expected_spans=tuple(
+                    ExpectedSpan(
+                        source_doc_id=s["source_doc_id"],
+                        char_start=int(s["char_start"]),
+                        char_end=int(s["char_end"]),
+                    )
+                    for s in entry.get("expected_spans", [])
+                ),
             )
             for entry in data
         }

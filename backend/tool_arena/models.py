@@ -43,6 +43,12 @@ class MCPToolCall(BaseModel):
     )
     error: str | None = None  # captures failure reason if any
 
+    # Phase 13 / Wave 5 — per-side retrieval judgement (JSON-serializable dict
+    # from JudgementScore.to_dict()). Defaulted None; only populated in
+    # benchmark mode after dispatch. Persisted to tool_votes.judgement_{a,b}
+    # at vote time via ToolVoteRecord.
+    judgement: dict | None = None
+
 
 class ToolCallRecord(BaseModel):
     """

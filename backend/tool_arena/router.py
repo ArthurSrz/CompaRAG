@@ -32,6 +32,7 @@ from backend.tool_arena.dispatcher import (
     MCPDispatcher,
 )
 from backend.tool_arena.evaluation import EvaluationCatalog
+from backend.tool_arena.judge.ground_truth import GroundTruthJudge
 from backend.tool_arena.normalizer import normalize_output
 from backend.tool_arena.readiness import get_readiness_registry, probe_server
 from backend.tool_arena.sanitizer import sanitize_envelope
@@ -63,6 +64,7 @@ _EVAL_QUERIES_PATH = Path(
     )
 )
 _eval_catalog = EvaluationCatalog(_EVAL_QUERIES_PATH)
+_retrieval_judge = GroundTruthJudge()
 
 
 # ---------------------------------------------------------------------------
@@ -604,6 +606,18 @@ async def compare(body: CompareRequest):
                 "ready_count": exc.ready_count,
             },
         )
+
+    # Benchmark mode: score each side's retrieved spans against the catalog's
+    # expected spans. Scores ride on MCPToolCall.judgement and the session
+    # payload so the vote endpoint can persist them onto tool_votes.judgement_*
+    # at vote time (Wave 5 / slice 5.10 + 5.11).
+    if body.haystack == "benchmark":
+        assert body.evaluation_query_id is not None
+        eval_meta = _eval_catalog.get(body.evaluation_query_id)
+        expected = list(eval_meta.expected_spans) if eval_meta else []
+        for tc in (tool_a, tool_b):
+            spans = getattr(tc, "retrieved_spans", None) or []
+            tc.judgement = _retrieval_judge.score(spans, expected).to_dict()
 
     # Persist both tool calls to DB early (don't lose data if user never votes)
     for tc in (tool_a, tool_b):
