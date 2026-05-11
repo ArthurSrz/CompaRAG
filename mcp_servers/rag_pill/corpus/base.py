@@ -21,6 +21,26 @@ class CorpusDocument:
     meta: dict = field(default_factory=dict)
 
 
+@dataclass(frozen=True)
+class ExpectedSpan:
+    """One [char_start, char_end) interval where an answer is known to live."""
+
+    source_doc_id: str
+    char_start: int
+    char_end: int
+
+
+@dataclass(frozen=True)
+class EvaluationQuery:
+    """A query whose ground-truth answer spans are known."""
+
+    id: str
+    query_text: str
+    goal_text: str
+    expected_spans: tuple[ExpectedSpan, ...]
+    notes: str | None = None
+
+
 def compute_version_hash(documents: Iterable[CorpusDocument]) -> str:
     """sha256 over sorted(doc_id, text) — stable across input order."""
     hasher = hashlib.sha256()

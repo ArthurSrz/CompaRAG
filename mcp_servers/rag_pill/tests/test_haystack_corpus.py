@@ -15,6 +15,8 @@ import pytest
 
 from mcp_servers.rag_pill.corpus.base import (
     CorpusDocument,
+    EvaluationQuery,
+    ExpectedSpan,
     compute_version_hash,
 )
 from mcp_servers.rag_pill.corpus.fixed import FixedCorpus
@@ -64,3 +66,39 @@ def test_fixed_corpus_has_ground_truth_false_without_queries_yaml(tmp_path: Path
     (tmp_path / "only.md").write_text("hello")
     corpus = FixedCorpus(tmp_path)
     assert corpus.has_ground_truth is False
+
+
+def test_fixed_corpus_loads_evaluation_queries(tmp_path: Path) -> None:
+    """When evaluation/queries.yaml is present, list_evaluation_queries()
+    returns parsed EvaluationQuery entries with expected_spans intact."""
+    (tmp_path / "geography_fr.md").write_text("Paris est la capitale de la France.")
+    (tmp_path / "evaluation").mkdir()
+    (tmp_path / "evaluation" / "queries.yaml").write_text(
+        """\
+- id: q01_capital_france
+  query_text: "Quelle est la capitale de la France ?"
+  goal_text: "Réponse précise."
+  expected_spans:
+    - source_doc_id: "geography_fr.md"
+      char_start: 0
+      char_end: 35
+  notes: "Easy needle."
+"""
+    )
+
+    corpus = FixedCorpus(tmp_path)
+    assert corpus.has_ground_truth is True
+    queries = corpus.list_evaluation_queries()
+
+    assert len(queries) == 1
+    q = queries[0]
+    assert isinstance(q, EvaluationQuery)
+    assert q.id == "q01_capital_france"
+    assert q.query_text.startswith("Quelle")
+    assert q.goal_text == "Réponse précise."
+    assert q.notes == "Easy needle."
+    assert len(q.expected_spans) == 1
+    span = q.expected_spans[0]
+    assert isinstance(span, ExpectedSpan)
+    assert span.source_doc_id == "geography_fr.md"
+    assert (span.char_start, span.char_end) == (0, 35)
