@@ -137,24 +137,22 @@
 </script>
 
 <form onsubmit={handleSubmit} class="gap-3 py-10 md:pb-12 md:pt-12 grid">
-  {#if taskTypes.length > 1}
-    <div class="fr-select-group">
-      <label class="fr-label" for="tool-arena-task-type">
-        Type de tâche
-      </label>
-      <select
-        id="tool-arena-task-type"
-        class="fr-select"
-        bind:value={selectedTaskType}
-        onchange={handleTaskTypeChange}
-        {disabled}
-      >
-        {#each taskTypes as taskType}
-          <option value={taskType.value}>{taskType.label}</option>
-        {/each}
-      </select>
-    </div>
-  {/if}
+  <div class="fr-select-group">
+    <label class="fr-label" for="tool-arena-task-type">
+      Type de tâche
+    </label>
+    <select
+      id="tool-arena-task-type"
+      class="fr-select"
+      bind:value={selectedTaskType}
+      onchange={handleTaskTypeChange}
+      {disabled}
+    >
+      {#each taskTypes as taskType}
+        <option value={taskType.value}>{taskType.label}</option>
+      {/each}
+    </select>
+  </div>
 
   {#if requiresDocument}
     <div class="fr-upload-group" class:fr-upload-group--error={!!fileError}>
