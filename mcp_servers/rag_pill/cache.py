@@ -30,6 +30,17 @@ class IndexCache:
             self._locks[key] = asyncio.Lock()
         return self._locks[key]
 
+    def has(self, key: CacheKey) -> bool:
+        """True iff a built index is currently cached for this key.
+
+        Race-safe at the API boundary: a True here means the next
+        get_or_build will skip the builder (engine should emit cache_hit=True).
+        A False might race a concurrent build — emitting cache_hit=False is
+        the right call in that case (caller waited for the build, so the
+        ingest cost was paid from this caller's perspective).
+        """
+        return key in self._entries
+
     async def get_or_build(
         self,
         key: CacheKey,

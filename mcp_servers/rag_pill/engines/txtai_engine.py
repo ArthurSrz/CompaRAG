@@ -150,11 +150,12 @@ class TxtaiEngine:
             pill.chunk_overlap,
             resolved.version_hash,
         )
+        cache_hit = self._cache.has(key)
         emitter.emit("ingest_start")
         embeddings = await self._cache.get_or_build(
             key, lambda: self._build_index(pill, resolved)
         )
-        emitter.emit("ingest_done")
+        emitter.emit("ingest_done", cache_hit=cache_hit)
 
         top_k = getattr(pill, "top_k", 3)
         query = f"{task} {goal}"
