@@ -9,6 +9,7 @@ Tests below drive the module's contract (slices 2.1-2.8 of the TDD plan).
 """
 
 import dataclasses
+from pathlib import Path
 
 import pytest
 
@@ -16,6 +17,7 @@ from mcp_servers.rag_pill.corpus.base import (
     CorpusDocument,
     compute_version_hash,
 )
+from mcp_servers.rag_pill.corpus.fixed import FixedCorpus
 
 
 def test_corpus_document_is_frozen() -> None:
@@ -40,3 +42,16 @@ def test_compute_version_hash_stable_across_input_order() -> None:
 
     assert h_forward == h_reverse == h_jumbled
     assert len(h_forward) == 64  # sha256 hex
+
+
+def test_fixed_corpus_iter_returns_md_files_sorted(tmp_path: Path) -> None:
+    """Engines depend on a stable iteration order so cache keys stay stable
+    across process restarts. Iteration must sort by filename."""
+    (tmp_path / "c.md").write_text("# C\n\nthird.")
+    (tmp_path / "a.md").write_text("# A\n\nfirst.")
+    (tmp_path / "b.md").write_text("# B\n\nsecond.")
+
+    corpus = FixedCorpus(tmp_path)
+    ids = [doc.id for doc in corpus.iter_documents()]
+
+    assert ids == ["a.md", "b.md", "c.md"]
