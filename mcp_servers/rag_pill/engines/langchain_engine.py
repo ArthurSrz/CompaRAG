@@ -8,16 +8,29 @@ differ between LangChain, LlamaIndex, Haystack, etc.
 
 import asyncio
 from pathlib import Path
+from typing import Any
 
-from mcp_servers.rag_pill.cache import IndexCache, doc_hash
+from mcp_servers.rag_pill.cache import IndexCache
+from mcp_servers.rag_pill.corpus.ephemeral import EphemeralCorpus
+from mcp_servers.rag_pill.corpus.fixed import FixedCorpus
 from mcp_servers.rag_pill.providers import EmbeddingConfig, LLMProvider
 from mcp_servers.rag_pill.schemas import Pill
 from mcp_servers.rag_pill.strategies import render_prompt
 
 CORPUS_DIR = Path(__file__).resolve().parent.parent.parent / "corpus"
 
+
+def _resolve_corpus(document_content: str, corpus: Any) -> Any | None:
+    """See chroma_baseline_engine._resolve_corpus — same precedence rules."""
+    if corpus is not None:
+        return corpus
+    if document_content.strip():
+        return EphemeralCorpus(document_content)
+    if CORPUS_DIR.exists():
+        return FixedCorpus(CORPUS_DIR)
+    return None
+
 try:
-    from langchain_community.document_loaders import DirectoryLoader, TextLoader
     from langchain_community.vectorstores import FAISS
     from langchain_core.documents import Document as LCDocument
     from langchain_openai import OpenAIEmbeddings
@@ -54,35 +67,48 @@ class LangChainEngine:
             openai_api_key=self._embed.api_key,
         )
 
-    async def _build_index(self, pill: Pill, document_content: str):
+    async def _build_index(self, pill: Pill, corpus: Any):
         loop = asyncio.get_event_loop()
         splitter = self._splitter(pill)
         embeddings = self._embeddings(pill)
 
-        if document_content.strip():
-            doc = LCDocument(page_content=document_content, metadata={"source": "uploaded"})
-            chunks = splitter.split_documents([doc])
-        else:
-            loader = DirectoryLoader(str(CORPUS_DIR), glob="*.md", loader_cls=TextLoader)
-            docs = loader.load()
-            chunks = splitter.split_documents(docs)
+        docs = [
+            LCDocument(
+                page_content=doc.text,
+                metadata={
+                    "source": doc.id.removesuffix(".md") or doc.id,
+                    "doc_id": doc.id,
+                },
+            )
+            for doc in corpus.iter_documents()
+        ]
+        chunks = splitter.split_documents(docs)
 
         return await loop.run_in_executor(
             None, lambda: FAISS.from_documents(chunks, embeddings)
         )
 
     async def execute(
-        self, pill: Pill, task: str, goal: str, document_content: str
+        self,
+        pill: Pill,
+        task: str,
+        goal: str,
+        document_content: str = "",
+        corpus: Any = None,
     ) -> str:
+        resolved = _resolve_corpus(document_content, corpus)
+        if resolved is None:
+            return "No documents available to search."
+
         key = (
             self.id,
             pill.embedder,
             pill.chunk_size,
             pill.chunk_overlap,
-            doc_hash(document_content),
+            resolved.version_hash,
         )
         vectorstore = await self._cache.get_or_build(
-            key, lambda: self._build_index(pill, document_content)
+            key, lambda: self._build_index(pill, resolved)
         )
 
         top_k = getattr(pill, "top_k", 3)
