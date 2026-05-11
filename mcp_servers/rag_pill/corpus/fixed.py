@@ -44,6 +44,10 @@ class FixedCorpus:
         if self._queries_path is None:
             return []
         data = yaml.safe_load(self._queries_path.read_text())
+        if not isinstance(data, list):
+            raise ValueError(
+                f"{self._queries_path} must be a top-level list of query entries"
+            )
         return [
             EvaluationQuery(
                 id=entry["id"],

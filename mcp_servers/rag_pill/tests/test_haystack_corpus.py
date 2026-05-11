@@ -102,3 +102,15 @@ def test_fixed_corpus_loads_evaluation_queries(tmp_path: Path) -> None:
     assert isinstance(span, ExpectedSpan)
     assert span.source_doc_id == "geography_fr.md"
     assert (span.char_start, span.char_end) == (0, 35)
+
+
+def test_fixed_corpus_raises_on_malformed_queries_yaml(tmp_path: Path) -> None:
+    """A top-level dict (instead of list) in queries.yaml is a hand-edit
+    error worth catching loudly — silently returning [] would mask the bug."""
+    (tmp_path / "a.md").write_text("x")
+    (tmp_path / "evaluation").mkdir()
+    (tmp_path / "evaluation" / "queries.yaml").write_text("not_a_list: {id: q1}")
+
+    corpus = FixedCorpus(tmp_path)
+    with pytest.raises(ValueError, match="list"):
+        corpus.list_evaluation_queries()
