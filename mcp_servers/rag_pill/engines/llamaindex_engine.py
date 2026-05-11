@@ -8,13 +8,27 @@ LlamaIndex query engine to its own LLM would violate that invariant.
 
 import asyncio
 from pathlib import Path
+from typing import Any
 
-from mcp_servers.rag_pill.cache import IndexCache, doc_hash
+from mcp_servers.rag_pill.cache import IndexCache
+from mcp_servers.rag_pill.corpus.ephemeral import EphemeralCorpus
+from mcp_servers.rag_pill.corpus.fixed import FixedCorpus
 from mcp_servers.rag_pill.providers import EmbeddingConfig, LLMProvider
 from mcp_servers.rag_pill.schemas import Pill
 from mcp_servers.rag_pill.strategies import render_prompt
 
 CORPUS_DIR = Path(__file__).resolve().parent.parent.parent / "corpus"
+
+
+def _resolve_corpus(document_content: str, corpus: Any) -> Any | None:
+    """See chroma_baseline_engine._resolve_corpus — same precedence rules."""
+    if corpus is not None:
+        return corpus
+    if document_content.strip():
+        return EphemeralCorpus(document_content)
+    if CORPUS_DIR.exists():
+        return FixedCorpus(CORPUS_DIR)
+    return None
 
 try:
     from llama_index.core import Document, Settings, VectorStoreIndex
@@ -50,33 +64,45 @@ class LlamaIndexEngine:
             chunk_size=pill.chunk_size, chunk_overlap=pill.chunk_overlap
         )
 
-    async def _build_index(self, pill: Pill, document_content: str):
+    async def _build_index(self, pill: Pill, corpus: Any):
         loop = asyncio.get_event_loop()
         self._configure(pill)
-        if document_content.strip():
-            docs = [Document(text=document_content, metadata={"source": "uploaded"})]
-        else:
-            docs = [
-                Document(text=p.read_text(), metadata={"source": p.stem})
-                for p in CORPUS_DIR.glob("*.md")
-            ]
+        docs = [
+            Document(
+                text=doc.text,
+                metadata={
+                    "source": doc.id.removesuffix(".md") or doc.id,
+                    "doc_id": doc.id,
+                },
+            )
+            for doc in corpus.iter_documents()
+        ]
         return await loop.run_in_executor(
             None, lambda: VectorStoreIndex.from_documents(docs)
         )
 
     async def execute(
-        self, pill: Pill, task: str, goal: str, document_content: str
+        self,
+        pill: Pill,
+        task: str,
+        goal: str,
+        document_content: str = "",
+        corpus: Any = None,
     ) -> str:
         self._configure(pill)
+        resolved = _resolve_corpus(document_content, corpus)
+        if resolved is None:
+            return "No documents available to search."
+
         key = (
             self.id,
             pill.embedder,
             pill.chunk_size,
             pill.chunk_overlap,
-            doc_hash(document_content),
+            resolved.version_hash,
         )
         index = await self._cache.get_or_build(
-            key, lambda: self._build_index(pill, document_content)
+            key, lambda: self._build_index(pill, resolved)
         )
 
         top_k = getattr(pill, "top_k", 3)
