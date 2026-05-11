@@ -20,7 +20,7 @@ import os
 from datetime import datetime
 from typing import Literal
 
-from fastapi import APIRouter, Depends, Header, HTTPException
+from fastapi import APIRouter, Depends, Header, HTTPException, Request
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel, Field, model_validator
 
@@ -544,14 +544,68 @@ async def create_session():
 # ---------------------------------------------------------------------------
 
 
-@router.post("/compare", response_model=CompareResponse)
-async def compare(body: CompareRequest):
+@router.post("/compare")
+async def compare(body: CompareRequest, request: Request):
     """
     Dispatch two MCP calls concurrently and return blind, sanitized results.
 
     Per UX-01: response contains ONLY mediated_result (as result_a/result_b).
     tool_id, raw_result, server name, and endpoint are NEVER exposed.
+
+    Content negotiation (Wave 6.8):
+      - Accept: text/event-stream → multiplexed SSE stream of per-side
+        progress events terminating in {type:'complete'}.
+      - default / application/json → CompareResponse (sync path).
     """
+    accept = request.headers.get("accept", "")
+    if "text/event-stream" in accept:
+        from backend.tool_arena.streaming import (
+            create_sse_response,
+            stream_compare,
+        )
+
+        dispatcher = MCPDispatcher()
+        try:
+            server_a, server_b = await dispatcher.pick_pair(task_type=body.task_type)
+        except InsufficientReadyServersError as exc:
+            return JSONResponse(
+                status_code=503,
+                content={
+                    "error": "tool_unavailable",
+                    "message": (
+                        "Not enough MCP tools are currently available to run a "
+                        "comparison. Please try again shortly."
+                    ),
+                    "ready_count": exc.ready_count,
+                },
+            )
+
+        effective_task = body.task
+        effective_goal = body.goal
+        if body.haystack == "benchmark":
+            assert body.evaluation_query_id is not None
+            eval_meta = _eval_catalog.get(body.evaluation_query_id)
+            if eval_meta is None:
+                return JSONResponse(
+                    status_code=422,
+                    content={
+                        "error": "unknown_evaluation_query_id",
+                        "evaluation_query_id": body.evaluation_query_id,
+                    },
+                )
+            effective_task = eval_meta.query_text
+            effective_goal = eval_meta.goal_text
+
+        return create_sse_response(
+            stream_compare(
+                server_a,
+                server_b,
+                task=effective_task,
+                goal=effective_goal,
+                document_content=body.document_content,
+            )
+        )
+
     session_hash = create_tool_session()
 
     # Benchmark mode: look up the canned query in the catalog and substitute

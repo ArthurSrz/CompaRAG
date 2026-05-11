@@ -58,27 +58,27 @@ MCP_CALL_RETRIES = int(os.environ.get("MCP_CALL_RETRIES", "1"))
 class MCPDispatcher:
     """Orchestrates two concurrent MCP calls and returns sanitized results."""
 
-    async def dispatch(
+    async def pick_pair(
         self,
-        task: str,
-        goal: str,
-        session_id: str,
-        document_content: str = "",
         task_type: str | None = None,
-    ) -> tuple[MCPToolCall, MCPToolCall]:
-        """Run full comparison pipeline: pick servers, call MCP, sanitize, return.
+    ) -> tuple["MCPServerConfig", "MCPServerConfig"]:
+        """Run the readiness-filtered, task_type-grouped, weighted selection
+        and return the two server configs that would race a comparison.
 
-        Args:
-            task: User's task description (what to do).
-            goal: User's goal description (what good looks like).
-            session_id: Unique session identifier for this comparison.
-            document_content: Optional uploaded document text.
-
-        Returns:
-            Tuple of two MCPToolCall objects, one per server.
+        Extracted from ``dispatch()`` so the streaming path (Wave 6.8) can
+        pick the pair without running the sync call+sanitize pipeline. The
+        sync ``dispatch()`` calls _pick_pair_inner() directly so it can
+        reuse the materialized server list for sanitize patterns — calling
+        registry.get_server twice would double the registry hit count and
+        break callers that mock get_server.
         """
-        # Filter the pool through the readiness registry. Servers in
-        # NEEDS_REAUTH / MISCONFIGURED / UPSTREAM_DOWN / UNKNOWN are excluded.
+        server_a, server_b, _ = await self._pick_pair_inner(task_type)
+        return server_a, server_b
+
+    async def _pick_pair_inner(
+        self,
+        task_type: str | None,
+    ) -> tuple["MCPServerConfig", "MCPServerConfig", list]:
         readiness = get_readiness_registry()
         all_servers = [registry.get_server(sid) for sid in registry.server_ids]
         ready = readiness.ready_servers(all_servers)
@@ -90,15 +90,6 @@ class MCPDispatcher:
             )
             raise InsufficientReadyServersError(len(ready), snapshot)
 
-        # Mirror the registry.pick_two contract on the filtered subset: pick
-        # two distinct READY servers at random, preserving their relative
-        # order in the ready list (so callers and tests see a stable A/B
-        # mapping when the pool is exactly 2).
-        #
-        # Pill-based fairness: if any READY server declares a task_type, group
-        # the pool by task_type and only pair within a group. Legacy entries
-        # (task_type=None) form their own group. This preserves the equifinality
-        # invariant — Task is constant, Tool is the variant.
         import random
         from collections import defaultdict
 
@@ -106,9 +97,6 @@ class MCPDispatcher:
         for srv in ready:
             groups[srv.task_type].append(srv)
 
-        # Honor the user's task_type selection (UI "Type de tâche") strictly.
-        # If the caller asked for "summary", we must not silently fall back to
-        # qa or to legacy entries — that would break the 1-1 contract.
         if task_type is not None:
             requested_pool = groups.get(task_type, [])
             if len(requested_pool) < 2:
@@ -131,18 +119,39 @@ class MCPDispatcher:
             pool = random.choice(eligible_groups)
 
         if len(pool) == 2:
-            server_a, server_b = pool[0], pool[1]
-        else:
-            # Weighted sampling without replacement: pick the first slot with
-            # per-server weights, then the second from the remainder using its
-            # renormalized weights. Collapses to uniform when weights are equal.
-            weights = [s.weight for s in pool]
-            first_idx = random.choices(range(len(pool)), weights=weights, k=1)[0]
-            remaining = [i for i in range(len(pool)) if i != first_idx]
-            rem_w = [weights[i] for i in remaining]
-            second_idx = random.choices(remaining, weights=rem_w, k=1)[0]
-            a, b = sorted([first_idx, second_idx])
-            server_a, server_b = pool[a], pool[b]
+            return pool[0], pool[1], all_servers
+        weights = [s.weight for s in pool]
+        first_idx = random.choices(range(len(pool)), weights=weights, k=1)[0]
+        remaining = [i for i in range(len(pool)) if i != first_idx]
+        rem_w = [weights[i] for i in remaining]
+        second_idx = random.choices(remaining, weights=rem_w, k=1)[0]
+        a, b = sorted([first_idx, second_idx])
+        return pool[a], pool[b], all_servers
+
+    async def dispatch(
+        self,
+        task: str,
+        goal: str,
+        session_id: str,
+        document_content: str = "",
+        task_type: str | None = None,
+    ) -> tuple[MCPToolCall, MCPToolCall]:
+        """Run full comparison pipeline: pick servers, call MCP, sanitize, return.
+
+        Args:
+            task: User's task description (what to do).
+            goal: User's goal description (what good looks like).
+            session_id: Unique session identifier for this comparison.
+            document_content: Optional uploaded document text.
+
+        Returns:
+            Tuple of two MCPToolCall objects, one per server.
+        """
+        # Selection extracted into pick_pair() so the streaming path
+        # (backend.tool_arena.streaming) can pick without running the
+        # call+sanitize pipeline. all_servers is returned alongside so
+        # we don't re-hit registry.get_server (callers mock its count).
+        server_a, server_b, all_servers = await self._pick_pair_inner(task_type)
         servers = [server_a, server_b]
 
         raw_results = await asyncio.gather(
