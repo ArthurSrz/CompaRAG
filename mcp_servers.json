@@ -125,6 +125,131 @@
     }
   },
   {
+    "id": "qa_broad__langchain",
+    "name": "LangChain",
+    "description": "Recherche large, top_k=8, rerank, temperature=0.2, LangChain + FAISS",
+    "endpoint": "http://localhost:8012/mcp",
+    "transport": "streamablehttp",
+    "tools": [
+      "rag_pill_query"
+    ],
+    "tool_args": {
+      "pill_id": "qa_broad",
+      "engine_id": "langchain"
+    },
+    "task_type": "qa",
+    "llm_id": "openrouter/mistralai/mistral-medium-3.1",
+    "sanitize": {
+      "url_patterns": [],
+      "metadata_keys": [],
+      "extra_terms": [
+        "LangChain",
+        "langchain",
+        "FAISS"
+      ]
+    }
+  },
+  {
+    "id": "qa_broad__llamaindex",
+    "name": "LlamaIndex",
+    "description": "Recherche large, top_k=8, rerank, temperature=0.2, LlamaIndex + VectorStoreIndex",
+    "endpoint": "http://localhost:8012/mcp",
+    "transport": "streamablehttp",
+    "tools": [
+      "rag_pill_query"
+    ],
+    "tool_args": {
+      "pill_id": "qa_broad",
+      "engine_id": "llamaindex"
+    },
+    "task_type": "qa",
+    "llm_id": "openrouter/mistralai/mistral-medium-3.1",
+    "sanitize": {
+      "url_patterns": [],
+      "metadata_keys": [],
+      "extra_terms": [
+        "LlamaIndex",
+        "llama-index",
+        "llama_index"
+      ]
+    }
+  },
+  {
+    "id": "qa_broad__haystack",
+    "name": "Haystack",
+    "description": "Recherche large, top_k=8, rerank, temperature=0.2, Haystack + InMemoryDocumentStore",
+    "endpoint": "http://localhost:8012/mcp",
+    "transport": "streamablehttp",
+    "tools": [
+      "rag_pill_query"
+    ],
+    "tool_args": {
+      "pill_id": "qa_broad",
+      "engine_id": "haystack"
+    },
+    "task_type": "qa",
+    "llm_id": "openrouter/mistralai/mistral-medium-3.1",
+    "sanitize": {
+      "url_patterns": [],
+      "metadata_keys": [],
+      "extra_terms": [
+        "Haystack",
+        "haystack",
+        "deepset"
+      ]
+    }
+  },
+  {
+    "id": "qa_broad__txtai",
+    "name": "txtai",
+    "description": "Recherche large, top_k=8, rerank, temperature=0.2, txtai Embeddings DB",
+    "endpoint": "http://localhost:8012/mcp",
+    "transport": "streamablehttp",
+    "tools": [
+      "rag_pill_query"
+    ],
+    "tool_args": {
+      "pill_id": "qa_broad",
+      "engine_id": "txtai"
+    },
+    "task_type": "qa",
+    "llm_id": "openrouter/mistralai/mistral-medium-3.1",
+    "sanitize": {
+      "url_patterns": [],
+      "metadata_keys": [],
+      "extra_terms": [
+        "txtai",
+        "TXTAI",
+        "NeuML"
+      ]
+    }
+  },
+  {
+    "id": "qa_broad__chroma_baseline",
+    "name": "Chroma (baseline)",
+    "description": "Recherche large, top_k=8, rerank, temperature=0.2, Chroma + naive retriever",
+    "endpoint": "http://localhost:8012/mcp",
+    "transport": "streamablehttp",
+    "tools": [
+      "rag_pill_query"
+    ],
+    "tool_args": {
+      "pill_id": "qa_broad",
+      "engine_id": "chroma_baseline"
+    },
+    "task_type": "qa",
+    "llm_id": "openrouter/mistralai/mistral-medium-3.1",
+    "sanitize": {
+      "url_patterns": [],
+      "metadata_keys": [],
+      "extra_terms": [
+        "Chroma",
+        "chroma",
+        "chromadb"
+      ]
+    }
+  },
+  {
     "id": "qa_precise__langchain",
     "name": "LangChain",
     "description": "Avec citations, top_k=3, temperature=0, LangChain + FAISS",
@@ -259,8 +384,10 @@
     "weight": 10.0,
     "auth_key": "clarifeye",
     "auth": {
-      "type": "bearer",
-      "token_env": "CLARIFEYE_API_KEY"
+      "type": "oauth2",
+      "client_id": "Zlq2o82F4VDm7CV-vue4l8h-nSHgoj-B8lt0_XM7chc",
+      "client_secret_env": "CLARIFEYE_CLIENT_SECRET",
+      "token_url": "https://env-3256.gcp.clarifeye.io/o/token/"
     },
     "sanitize": {
       "url_patterns": [
@@ -292,8 +419,10 @@
     "weight": 10.0,
     "auth_key": "clarifeye",
     "auth": {
-      "type": "bearer",
-      "token_env": "CLARIFEYE_API_KEY"
+      "type": "oauth2",
+      "client_id": "Zlq2o82F4VDm7CV-vue4l8h-nSHgoj-B8lt0_XM7chc",
+      "client_secret_env": "CLARIFEYE_CLIENT_SECRET",
+      "token_url": "https://env-3256.gcp.clarifeye.io/o/token/"
     },
     "sanitize": {
       "url_patterns": [
