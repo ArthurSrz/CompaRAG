@@ -15,6 +15,7 @@ from mcp_servers.rag_pill.corpus.ephemeral import EphemeralCorpus
 from mcp_servers.rag_pill.corpus.fixed import FixedCorpus
 from mcp_servers.rag_pill.engines.base import locate_span
 from mcp_servers.rag_pill.engines.result import EngineResult
+from mcp_servers.rag_pill.progress import NullEmitter, ProgressEmitter
 from mcp_servers.rag_pill.providers import EmbeddingConfig, LLMProvider
 from mcp_servers.rag_pill.providers.embedding_validator import (
     validate_document_embeddings,
@@ -107,10 +108,12 @@ class HaystackEngine:
         goal: str,
         document_content: str = "",
         corpus: Any = None,
+        progress: ProgressEmitter | None = None,
     ) -> str:
         """Back-compat thin wrapper — see chroma_baseline_engine.execute."""
         result = await self.execute_with_spans(
-            pill, task, goal, document_content=document_content, corpus=corpus
+            pill, task, goal, document_content=document_content, corpus=corpus,
+            progress=progress,
         )
         return result.answer
 
@@ -121,7 +124,9 @@ class HaystackEngine:
         goal: str,
         document_content: str = "",
         corpus: Any = None,
+        progress: ProgressEmitter | None = None,
     ) -> EngineResult:
+        emitter: ProgressEmitter = progress or NullEmitter()
         resolved = _resolve_corpus(document_content, corpus)
         if resolved is None:
             return EngineResult(
@@ -138,12 +143,15 @@ class HaystackEngine:
             pill.chunk_overlap,
             resolved.version_hash,
         )
+        emitter.emit("ingest_start")
         store = await self._cache.get_or_build(
             key, lambda: self._build_index(pill, resolved)
         )
+        emitter.emit("ingest_done")
 
         top_k = getattr(pill, "top_k", 3)
         query = f"{task} {goal}"
+        emitter.emit("retrieval_start")
 
         def _retrieve():
             text_embedder = OpenAITextEmbedder(
@@ -158,6 +166,7 @@ class HaystackEngine:
         t0 = time.perf_counter()
         docs = await asyncio.get_event_loop().run_in_executor(None, _retrieve)
         retrieval_latency_ms = int((time.perf_counter() - t0) * 1000)
+        emitter.emit("retrieval_done", took_ms=retrieval_latency_ms)
 
         spans: list = []
         unlocated = 0
@@ -172,9 +181,11 @@ class HaystackEngine:
 
         context = "\n\n---\n\n".join(d.content for d in docs)
         prompt = render_prompt(pill, context, task, goal)
+        emitter.emit("mediation_start")
         t1 = time.perf_counter()
         answer = await self._llm.invoke(pill, prompt)
         generation_latency_ms = int((time.perf_counter() - t1) * 1000)
+        emitter.emit("mediation_done", took_ms=generation_latency_ms)
 
         return EngineResult(
             answer=answer,

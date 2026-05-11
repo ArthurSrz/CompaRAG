@@ -16,6 +16,7 @@ from mcp_servers.rag_pill.corpus.ephemeral import EphemeralCorpus
 from mcp_servers.rag_pill.corpus.fixed import FixedCorpus
 from mcp_servers.rag_pill.engines.base import locate_span
 from mcp_servers.rag_pill.engines.result import EngineResult
+from mcp_servers.rag_pill.progress import NullEmitter, ProgressEmitter
 from mcp_servers.rag_pill.providers import EmbeddingConfig, LLMProvider
 from mcp_servers.rag_pill.schemas import Pill
 from mcp_servers.rag_pill.strategies import render_prompt
@@ -91,10 +92,12 @@ class LlamaIndexEngine:
         goal: str,
         document_content: str = "",
         corpus: Any = None,
+        progress: ProgressEmitter | None = None,
     ) -> str:
         """Back-compat thin wrapper — see chroma_baseline_engine.execute."""
         result = await self.execute_with_spans(
-            pill, task, goal, document_content=document_content, corpus=corpus
+            pill, task, goal, document_content=document_content, corpus=corpus,
+            progress=progress,
         )
         return result.answer
 
@@ -105,7 +108,9 @@ class LlamaIndexEngine:
         goal: str,
         document_content: str = "",
         corpus: Any = None,
+        progress: ProgressEmitter | None = None,
     ) -> EngineResult:
+        emitter: ProgressEmitter = progress or NullEmitter()
         self._configure(pill)
         resolved = _resolve_corpus(document_content, corpus)
         if resolved is None:
@@ -123,19 +128,23 @@ class LlamaIndexEngine:
             pill.chunk_overlap,
             resolved.version_hash,
         )
+        emitter.emit("ingest_start")
         index = await self._cache.get_or_build(
             key, lambda: self._build_index(pill, resolved)
         )
+        emitter.emit("ingest_done")
 
         top_k = getattr(pill, "top_k", 3)
         query = f"{task} {goal}"
         retriever = index.as_retriever(similarity_top_k=top_k)
 
+        emitter.emit("retrieval_start")
         t0 = time.perf_counter()
         nodes = await asyncio.get_event_loop().run_in_executor(
             None, lambda: retriever.retrieve(query)
         )
         retrieval_latency_ms = int((time.perf_counter() - t0) * 1000)
+        emitter.emit("retrieval_done", took_ms=retrieval_latency_ms)
 
         spans: list = []
         unlocated = 0
@@ -153,9 +162,11 @@ class LlamaIndexEngine:
 
         context = "\n\n---\n\n".join(n.get_content() for n in nodes)
         prompt = render_prompt(pill, context, task, goal)
+        emitter.emit("mediation_start")
         t1 = time.perf_counter()
         answer = await self._llm.invoke(pill, prompt)
         generation_latency_ms = int((time.perf_counter() - t1) * 1000)
+        emitter.emit("mediation_done", took_ms=generation_latency_ms)
 
         return EngineResult(
             answer=answer,
