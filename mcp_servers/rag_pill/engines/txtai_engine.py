@@ -6,6 +6,7 @@ the arena.
 """
 
 import asyncio
+import time
 from pathlib import Path
 from typing import Any
 
@@ -14,9 +15,14 @@ import numpy as np
 from mcp_servers.rag_pill.cache import IndexCache
 from mcp_servers.rag_pill.corpus.ephemeral import EphemeralCorpus
 from mcp_servers.rag_pill.corpus.fixed import FixedCorpus
+from mcp_servers.rag_pill.engines.base import locate_span
+from mcp_servers.rag_pill.engines.result import EngineResult
 from mcp_servers.rag_pill.providers import EmbeddingConfig, LLMProvider
 from mcp_servers.rag_pill.schemas import Pill
 from mcp_servers.rag_pill.strategies import render_prompt
+
+
+_DOC_ID_SEP = "::"  # txtai row id format: f"{doc_id}{SEP}{chunk_idx_in_doc}"
 
 CORPUS_DIR = Path(__file__).resolve().parent.parent.parent / "corpus"
 
@@ -65,13 +71,15 @@ class TxtaiEngine:
         loop = asyncio.get_event_loop()
 
         def _build():
-            rows: list[tuple[int, str, None]] = []
-            uid = 0
+            rows: list[tuple[str, str, None]] = []
             for doc in corpus.iter_documents():
+                chunk_idx = 0
                 for chunk in _chunk_text(doc.text, pill.chunk_size, pill.chunk_overlap):
                     if chunk.strip():
-                        rows.append((uid, chunk, None))
-                        uid += 1
+                        # Encode doc_id in the row id so retrieval can recover it
+                        # for span projection. Int uids would lose this mapping.
+                        rows.append((f"{doc.id}{_DOC_ID_SEP}{chunk_idx}", chunk, None))
+                        chunk_idx += 1
 
             # Use a transform callable so txtai never tries to load the model locally.
             # txtai's provider auto-detection only works for local HuggingFace models;
@@ -107,9 +115,28 @@ class TxtaiEngine:
         document_content: str = "",
         corpus: Any = None,
     ) -> str:
+        """Back-compat thin wrapper — see chroma_baseline_engine.execute."""
+        result = await self.execute_with_spans(
+            pill, task, goal, document_content=document_content, corpus=corpus
+        )
+        return result.answer
+
+    async def execute_with_spans(
+        self,
+        pill: Pill,
+        task: str,
+        goal: str,
+        document_content: str = "",
+        corpus: Any = None,
+    ) -> EngineResult:
         resolved = _resolve_corpus(document_content, corpus)
         if resolved is None:
-            return "No documents available to search."
+            return EngineResult(
+                answer="No documents available to search.",
+                retrieved_spans=(),
+                retrieval_latency_ms=0,
+                generation_latency_ms=0,
+            )
 
         key = (
             self.id,
@@ -125,12 +152,46 @@ class TxtaiEngine:
         top_k = getattr(pill, "top_k", 3)
         query = f"{task} {goal}"
 
+        t0 = time.perf_counter()
         results = await asyncio.get_event_loop().run_in_executor(
             None, lambda: embeddings.search(query, top_k)
         )
-        # txtai returns list[dict] with content=True, else list[(id, score)].
-        chunks = [r["text"] if isinstance(r, dict) else r[1] for r in results]
-        context = "\n\n---\n\n".join(chunks)
+        retrieval_latency_ms = int((time.perf_counter() - t0) * 1000)
 
+        # txtai returns list[dict] with content=True, else list[(id, score)].
+        chunks: list[str] = []
+        spans: list = []
+        unlocated = 0
+        for rank, r in enumerate(results):
+            if isinstance(r, dict):
+                chunk_text = r.get("text", "")
+                row_id = str(r.get("id", ""))
+                score = r.get("score")
+            else:
+                row_id, chunk_text = str(r[0]), str(r[1])
+                score = None
+            chunks.append(chunk_text)
+            doc_id = row_id.split(_DOC_ID_SEP, 1)[0] if _DOC_ID_SEP in row_id else ""
+            span = locate_span(
+                resolved, doc_id, chunk_text,
+                score=score if isinstance(score, (int, float)) else None,
+                rank=rank,
+            )
+            if span is None:
+                unlocated += 1
+            else:
+                spans.append(span)
+
+        context = "\n\n---\n\n".join(chunks)
         prompt = render_prompt(pill, context, task, goal)
-        return await self._llm.invoke(pill, prompt)
+        t1 = time.perf_counter()
+        answer = await self._llm.invoke(pill, prompt)
+        generation_latency_ms = int((time.perf_counter() - t1) * 1000)
+
+        return EngineResult(
+            answer=answer,
+            retrieved_spans=tuple(spans),
+            retrieval_latency_ms=retrieval_latency_ms,
+            generation_latency_ms=generation_latency_ms,
+            unlocated_span_count=unlocated,
+        )
