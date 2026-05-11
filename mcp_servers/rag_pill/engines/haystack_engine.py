@@ -7,8 +7,11 @@ of crashing on module load.
 
 import asyncio
 from pathlib import Path
+from typing import Any
 
-from mcp_servers.rag_pill.cache import IndexCache, doc_hash
+from mcp_servers.rag_pill.cache import IndexCache
+from mcp_servers.rag_pill.corpus.ephemeral import EphemeralCorpus
+from mcp_servers.rag_pill.corpus.fixed import FixedCorpus
 from mcp_servers.rag_pill.providers import EmbeddingConfig, LLMProvider
 from mcp_servers.rag_pill.providers.embedding_validator import (
     validate_document_embeddings,
@@ -18,6 +21,17 @@ from mcp_servers.rag_pill.schemas import Pill
 from mcp_servers.rag_pill.strategies import render_prompt
 
 CORPUS_DIR = Path(__file__).resolve().parent.parent.parent / "corpus"
+
+
+def _resolve_corpus(document_content: str, corpus: Any) -> Any | None:
+    """See chroma_baseline_engine._resolve_corpus — same precedence rules."""
+    if corpus is not None:
+        return corpus
+    if document_content.strip():
+        return EphemeralCorpus(document_content)
+    if CORPUS_DIR.exists():
+        return FixedCorpus(CORPUS_DIR)
+    return None
 
 try:
     from haystack import Document
@@ -49,18 +63,21 @@ class HaystackEngine:
         self._llm = llm
         self._embed = embedding_config
 
-    async def _build_index(self, pill: Pill, document_content: str):
+    async def _build_index(self, pill: Pill, corpus: Any):
         loop = asyncio.get_event_loop()
 
         def _build():
             store = InMemoryDocumentStore()
-            if document_content.strip():
-                raw_docs = [Document(content=document_content, meta={"source": "uploaded"})]
-            else:
-                raw_docs = [
-                    Document(content=p.read_text(), meta={"source": p.stem})
-                    for p in CORPUS_DIR.glob("*.md")
-                ]
+            raw_docs = [
+                Document(
+                    content=doc.text,
+                    meta={
+                        "source": doc.id.removesuffix(".md") or doc.id,
+                        "doc_id": doc.id,
+                    },
+                )
+                for doc in corpus.iter_documents()
+            ]
             splitter = DocumentSplitter(
                 split_by="word",
                 split_length=max(1, pill.chunk_size // 5),  # words ≈ chars/5
@@ -81,17 +98,26 @@ class HaystackEngine:
         return await loop.run_in_executor(None, _build)
 
     async def execute(
-        self, pill: Pill, task: str, goal: str, document_content: str
+        self,
+        pill: Pill,
+        task: str,
+        goal: str,
+        document_content: str = "",
+        corpus: Any = None,
     ) -> str:
+        resolved = _resolve_corpus(document_content, corpus)
+        if resolved is None:
+            return "No documents available to search."
+
         key = (
             self.id,
             pill.embedder,
             pill.chunk_size,
             pill.chunk_overlap,
-            doc_hash(document_content),
+            resolved.version_hash,
         )
         store = await self._cache.get_or_build(
-            key, lambda: self._build_index(pill, document_content)
+            key, lambda: self._build_index(pill, resolved)
         )
 
         top_k = getattr(pill, "top_k", 3)
