@@ -52,3 +52,28 @@ def test_concrete_engine_accepts_corpus_param(engine_cls) -> None:
     assert "corpus" in params, (
         f"{engine_cls.__name__}.execute missing 'corpus' param: {params}"
     )
+
+
+@pytest.mark.parametrize(
+    "engine_cls",
+    [
+        ChromaBaselineEngine,
+        HaystackEngine,
+        LangChainEngine,
+        LlamaIndexEngine,
+        TxtaiEngine,
+    ],
+)
+def test_concrete_engine_exposes_execute_with_spans(engine_cls) -> None:
+    """Slice 3.5-3.9 — each engine must expose execute_with_spans() returning
+    EngineResult so the arena can compute retrieval-quality metrics. Legacy
+    execute() -> str is preserved for back-compat with retry.py + server.py."""
+    method = getattr(engine_cls, "execute_with_spans", None)
+    assert callable(method), (
+        f"{engine_cls.__name__}.execute_with_spans missing or not callable"
+    )
+    sig = inspect.signature(method)
+    params = list(sig.parameters)
+    assert "corpus" in params, (
+        f"{engine_cls.__name__}.execute_with_spans missing 'corpus' param: {params}"
+    )

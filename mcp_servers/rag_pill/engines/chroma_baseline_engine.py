@@ -8,12 +8,15 @@ attributable to retrieval sophistication, not just framework choice.
 """
 
 import asyncio
+import time
 from pathlib import Path
 from typing import Any
 
 from mcp_servers.rag_pill.cache import IndexCache
 from mcp_servers.rag_pill.corpus.ephemeral import EphemeralCorpus
 from mcp_servers.rag_pill.corpus.fixed import FixedCorpus
+from mcp_servers.rag_pill.engines.base import locate_span
+from mcp_servers.rag_pill.engines.result import EngineResult
 from mcp_servers.rag_pill.providers import EmbeddingConfig, LLMProvider
 from mcp_servers.rag_pill.schemas import Pill
 from mcp_servers.rag_pill.strategies import render_prompt
@@ -114,9 +117,30 @@ class ChromaBaselineEngine:
         document_content: str = "",
         corpus: Any = None,
     ) -> str:
+        """Back-compat string-only return — calls execute_with_spans and
+        returns just the answer. Existing retry.py + server.py callers stay
+        green; arena callers use execute_with_spans for retrieval metrics."""
+        result = await self.execute_with_spans(
+            pill, task, goal, document_content=document_content, corpus=corpus
+        )
+        return result.answer
+
+    async def execute_with_spans(
+        self,
+        pill: Pill,
+        task: str,
+        goal: str,
+        document_content: str = "",
+        corpus: Any = None,
+    ) -> EngineResult:
         resolved = _resolve_corpus(document_content, corpus)
         if resolved is None:
-            return "No documents available to search."
+            return EngineResult(
+                answer="No documents available to search.",
+                retrieved_spans=(),
+                retrieval_latency_ms=0,
+                generation_latency_ms=0,
+            )
 
         key = (
             self.id,
@@ -133,15 +157,50 @@ class ChromaBaselineEngine:
         query = f"{task} {goal}"
         n_items = collection.count()
         if n_items == 0:
-            return "No documents available to search."
+            return EngineResult(
+                answer="No documents available to search.",
+                retrieved_spans=(),
+                retrieval_latency_ms=0,
+                generation_latency_ms=0,
+            )
+
+        t0 = time.perf_counter()
         result = await asyncio.get_event_loop().run_in_executor(
             None,
             lambda: collection.query(
                 query_texts=[query], n_results=min(top_k, n_items)
             ),
         )
-        chunks = result.get("documents", [[]])[0]
-        context = "\n\n---\n\n".join(chunks)
+        retrieval_latency_ms = int((time.perf_counter() - t0) * 1000)
 
+        chunks = result.get("documents", [[]])[0]
+        metas = result.get("metadatas", [[]])[0]
+        distances = result.get("distances", [[]])[0]
+        spans: list = []
+        unlocated = 0
+        for rank, chunk_text in enumerate(chunks):
+            meta = metas[rank] if rank < len(metas) else {}
+            dist = distances[rank] if rank < len(distances) else None
+            score = (1.0 - dist) if isinstance(dist, (int, float)) else None
+            doc_id = meta.get("doc_id", "")
+            span = locate_span(
+                resolved, doc_id, chunk_text, score=score, rank=rank
+            )
+            if span is None:
+                unlocated += 1
+            else:
+                spans.append(span)
+
+        context = "\n\n---\n\n".join(chunks)
         prompt = render_prompt(pill, context, task, goal)
-        return await self._llm.invoke(pill, prompt)
+        t1 = time.perf_counter()
+        answer = await self._llm.invoke(pill, prompt)
+        generation_latency_ms = int((time.perf_counter() - t1) * 1000)
+
+        return EngineResult(
+            answer=answer,
+            retrieved_spans=tuple(spans),
+            retrieval_latency_ms=retrieval_latency_ms,
+            generation_latency_ms=generation_latency_ms,
+            unlocated_span_count=unlocated,
+        )
