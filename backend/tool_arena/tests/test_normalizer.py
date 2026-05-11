@@ -3,7 +3,69 @@
 import json
 import pytest
 
-from backend.tool_arena.normalizer import NormalizedEnvelope, Source, normalize_output
+from backend.tool_arena.normalizer import (
+    NormalizedEnvelope,
+    RetrievedSpanEnvelope,
+    Source,
+    normalize_output,
+)
+
+
+def test_normalizer_passes_through_retrieved_spans():
+    """Slice 3.11 — when the MCP tool's raw envelope carries retrieved_spans
+    (Phase 13 / Wave 3 needle-in-haystack output), the normalizer preserves
+    them in NormalizedEnvelope.retrieved_spans. Score, char range, rank, and
+    text all survive intact for the RetrievalJudge (plan 13-05)."""
+    raw = json.dumps({
+        "answer": "Paris.",
+        "retrieved_spans": [
+            {
+                "source_doc_id": "geography_fr.md",
+                "char_start": 1245,
+                "char_end": 1389,
+                "text": "Paris est la capitale de la France.",
+                "score": 0.92,
+                "rank": 0,
+            },
+            {
+                "source_doc_id": "geography_fr.md",
+                "char_start": 2100,
+                "char_end": 2156,
+                "text": "Tour Eiffel.",
+                "score": 0.71,
+                "rank": 1,
+            },
+        ],
+        "retrieval_latency_ms": 42,
+        "generation_latency_ms": 1200,
+    })
+    result = normalize_output(raw, duration_ms=2000)
+
+    assert result.answer == "Paris."
+    assert len(result.retrieved_spans) == 2
+    first = result.retrieved_spans[0]
+    assert isinstance(first, RetrievedSpanEnvelope)
+    assert first.source_doc_id == "geography_fr.md"
+    assert (first.char_start, first.char_end) == (1245, 1389)
+    assert first.text.startswith("Paris est")
+    assert first.score == 0.92
+    assert first.rank == 0
+    assert result.retrieval_latency_ms == 42
+    assert result.generation_latency_ms == 1200
+    # retrieved_spans was supplied, so it must NOT be flagged as defaulted
+    assert "retrieved_spans" not in result.normalized_fields
+
+
+def test_normalizer_defaults_retrieved_spans_when_absent():
+    """Legacy tools that don't surface retrieved_spans get an empty list
+    and a 'retrieved_spans' entry in normalized_fields — the judge can
+    then distinguish 'tool retrieved 0 chunks' from 'tool doesn't surface
+    retrieval at all' (sandbox-only summary engines, third-party MCPs)."""
+    raw = json.dumps({"answer": "hi", "sources": [], "confidence": 0.5, "latency_ms": 10})
+    result = normalize_output(raw, duration_ms=10)
+
+    assert result.retrieved_spans == []
+    assert "retrieved_spans" in result.normalized_fields
 
 
 # --------------------------------------------------------------------------- #
@@ -24,7 +86,11 @@ def test_full_envelope_passes_through():
     assert result.sources[0].url == "https://example.com"
     assert result.confidence == 0.95
     assert result.latency_ms == 120
-    assert result.normalized_fields == []
+    # The pre-Phase-13 envelope didn't supply retrieved_spans /
+    # retrieval_latency_ms / generation_latency_ms — they're defaulted.
+    assert set(result.normalized_fields) == {
+        "retrieved_spans", "retrieval_latency_ms", "generation_latency_ms",
+    }
 
 
 def test_missing_confidence_defaulted():

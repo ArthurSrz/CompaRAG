@@ -25,6 +25,23 @@ class Source(BaseModel):
     page: int | None = None
 
 
+class RetrievedSpanEnvelope(BaseModel):
+    """Per-side retrieval span (Phase 13 needle-in-haystack arena).
+
+    Mirrors mcp_servers.rag_pill.engines.result.RetrievedSpan over the wire.
+    The arena keeps these separate from `Source` because Source is human-
+    facing citation metadata; RetrievedSpan is machine-comparable retrieval
+    output keyed on character intervals for Recall@K / MRR / NDCG.
+    """
+
+    source_doc_id: str
+    char_start: int
+    char_end: int
+    text: str
+    score: float | None = None
+    rank: int
+
+
 class NormalizedEnvelope(BaseModel):
     """Canonical output envelope for any RAG tool response.
 
@@ -37,6 +54,10 @@ class NormalizedEnvelope(BaseModel):
     confidence: float | None = None
     latency_ms: int = 0
     normalized_fields: list[str] = []  # fields that were defaulted (D-05)
+    # Phase 13 / Wave 3 additions — defaulted so legacy tools coexist.
+    retrieved_spans: list[RetrievedSpanEnvelope] = []
+    retrieval_latency_ms: int = 0
+    generation_latency_ms: int = 0
 
 
 def _parse_sources(raw_sources: Any) -> list[Source]:
@@ -88,13 +109,17 @@ def normalize_output(raw_text: str, duration_ms: int) -> NormalizedEnvelope:
 
     if parsed is None:
         # Plain text or JSON without "answer" key — treat entire raw_text as answer
-        normalized_fields.extend(["sources", "confidence", "latency_ms"])
+        normalized_fields.extend([
+            "sources", "confidence", "latency_ms",
+            "retrieved_spans", "retrieval_latency_ms", "generation_latency_ms",
+        ])
         return NormalizedEnvelope(
             answer=raw_text,
             sources=[],
             confidence=None,
             latency_ms=duration_ms,
             normalized_fields=normalized_fields,
+            retrieved_spans=[],
         )
 
     # Extract known fields from parsed JSON
@@ -121,10 +146,45 @@ def normalize_output(raw_text: str, duration_ms: int) -> NormalizedEnvelope:
         latency_ms = duration_ms
         normalized_fields.append("latency_ms")
 
+    # retrieved_spans (Phase 13 / Wave 3)
+    raw_spans = parsed.get("retrieved_spans")
+    if isinstance(raw_spans, list):
+        retrieved_spans = [
+            RetrievedSpanEnvelope(
+                source_doc_id=item.get("source_doc_id", ""),
+                char_start=int(item.get("char_start", 0)),
+                char_end=int(item.get("char_end", 0)),
+                text=item.get("text", ""),
+                score=item.get("score"),
+                rank=int(item.get("rank", i)),
+            )
+            for i, item in enumerate(raw_spans)
+            if isinstance(item, dict)
+        ]
+    else:
+        retrieved_spans = []
+        normalized_fields.append("retrieved_spans")
+
+    # retrieval_latency_ms / generation_latency_ms
+    if "retrieval_latency_ms" in parsed:
+        retrieval_latency_ms = int(parsed["retrieval_latency_ms"])
+    else:
+        retrieval_latency_ms = 0
+        normalized_fields.append("retrieval_latency_ms")
+
+    if "generation_latency_ms" in parsed:
+        generation_latency_ms = int(parsed["generation_latency_ms"])
+    else:
+        generation_latency_ms = 0
+        normalized_fields.append("generation_latency_ms")
+
     return NormalizedEnvelope(
         answer=answer,
         sources=sources,
         confidence=confidence,
         latency_ms=latency_ms,
         normalized_fields=normalized_fields,
+        retrieved_spans=retrieved_spans,
+        retrieval_latency_ms=retrieval_latency_ms,
+        generation_latency_ms=generation_latency_ms,
     )
