@@ -50,6 +50,15 @@ class ToolVoteRecord(BaseModel):
     vote_instructions_not_followed_a: bool = False
     vote_instructions_not_followed_b: bool = False
 
+    # Phase 13 — benchmark/sandbox discriminator + per-side retrieval-quality
+    # judgement payload (JSONB). Defaulted so legacy callers that don't
+    # supply these fields continue to work; sandbox votes leave the
+    # judgement_* columns NULL (the judge only runs in benchmark mode).
+    haystack_mode: str = "sandbox"
+    evaluation_query_id: str | None = None
+    judgement_a: dict | None = None
+    judgement_b: dict | None = None
+
 
 def save_tool_vote_to_db(data: dict) -> dict:
     """
