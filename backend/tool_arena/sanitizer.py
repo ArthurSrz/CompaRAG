@@ -85,11 +85,23 @@ def sanitize_envelope(envelope, servers: list[MCPServerConfig]):
                 if pattern:
                     answer_patterns.append(pattern)
 
-    if answer_patterns:
-        combined = "|".join(answer_patterns)
+    combined: str | None = "|".join(answer_patterns) if answer_patterns else None
+    if combined:
         answer = re.sub(combined, "⟨redacted⟩", answer, flags=re.IGNORECASE)
+
+    # Phase 13: redact the same per-server terms from retrieved_spans[].text
+    # so the blind-display layer doesn't leak vendor names through retrieval
+    # snippets. Char offsets are preserved (the redaction is in-place on text;
+    # span identity stays anchored on source_doc_id + char range).
+    sanitized_spans = []
+    for span in envelope.retrieved_spans:
+        new_text = span.text
+        if combined and new_text:
+            new_text = re.sub(combined, "⟨redacted⟩", new_text, flags=re.IGNORECASE)
+        sanitized_spans.append(span.model_copy(update={"text": new_text}))
 
     return envelope.model_copy(update={
         "sources": sanitized_sources,
         "answer": answer,
+        "retrieved_spans": sanitized_spans,
     })

@@ -3,7 +3,11 @@
 import pytest
 
 from backend.tool_arena.config import ApiKeyAuth, NoAuth, MCPServerConfig, SanitizeConfig
-from backend.tool_arena.normalizer import NormalizedEnvelope, Source
+from backend.tool_arena.normalizer import (
+    NormalizedEnvelope,
+    RetrievedSpanEnvelope,
+    Source,
+)
 from backend.tool_arena.sanitizer import sanitize_output, sanitize_envelope
 
 # --------------------------------------------------------------------------- #
@@ -169,6 +173,49 @@ def test_sanitize_envelope_applies_extra_terms(server_with_sanitize):
     assert "Clarifeye" not in result.answer
     assert "clarifeye" not in result.answer
     assert "⟨redacted⟩" in result.answer
+
+
+def test_sanitize_envelope_redacts_pii_in_span_text(server_with_sanitize):
+    """Slice 3.12 — retrieved_spans[].text carries raw corpus excerpts which
+    can include the same identifying terms the sanitizer redacts from
+    answer/source. Apply the same per-server extra_terms patterns to span
+    text so the blind-display layer doesn't leak vendor names via retrieval
+    snippets."""
+    envelope = NormalizedEnvelope(
+        answer="A summary.",
+        sources=[],
+        retrieved_spans=[
+            RetrievedSpanEnvelope(
+                source_doc_id="memo.md",
+                char_start=0,
+                char_end=42,
+                text="Clarifeye stores embeddings in clarifeye memory.",
+                score=0.91,
+                rank=0,
+            ),
+            RetrievedSpanEnvelope(
+                source_doc_id="memo.md",
+                char_start=42,
+                char_end=78,
+                text="Other passage with no vendor reference.",
+                score=0.42,
+                rank=1,
+            ),
+        ],
+    )
+    result = sanitize_envelope(envelope, [server_with_sanitize])
+
+    assert len(result.retrieved_spans) == 2
+    first = result.retrieved_spans[0]
+    assert "Clarifeye" not in first.text
+    assert "clarifeye" not in first.text
+    assert "⟨redacted⟩" in first.text
+    # Non-matching span untouched.
+    assert result.retrieved_spans[1].text == "Other passage with no vendor reference."
+    # Other fields preserved.
+    assert first.score == 0.91
+    assert first.rank == 0
+    assert (first.char_start, first.char_end) == (0, 42)
 
 
 def test_sanitize_envelope_applies_url_patterns(server_with_sanitize):
