@@ -10,6 +10,10 @@ from pathlib import Path
 
 from mcp_servers.rag_pill.cache import IndexCache, doc_hash
 from mcp_servers.rag_pill.providers import EmbeddingConfig, LLMProvider
+from mcp_servers.rag_pill.providers.embedding_validator import (
+    validate_document_embeddings,
+    validate_query_embedding,
+)
 from mcp_servers.rag_pill.schemas import Pill
 from mcp_servers.rag_pill.strategies import render_prompt
 
@@ -70,7 +74,7 @@ class HaystackEngine:
                 api_base_url=self._embed.base_url,
                 model=pill.embedder,
             )
-            embedded = embedder.run(documents=chunks)["documents"]
+            embedded = validate_document_embeddings(embedder.run(documents=chunks))["documents"]
             store.write_documents(embedded)
             return store
 
@@ -99,7 +103,7 @@ class HaystackEngine:
                 api_base_url=self._embed.base_url,
                 model=pill.embedder,
             )
-            q_emb = text_embedder.run(text=query)["embedding"]
+            q_emb = validate_query_embedding(text_embedder.run(text=query))["embedding"]
             retriever = InMemoryEmbeddingRetriever(document_store=store, top_k=top_k)
             return retriever.run(query_embedding=q_emb)["documents"]
 
