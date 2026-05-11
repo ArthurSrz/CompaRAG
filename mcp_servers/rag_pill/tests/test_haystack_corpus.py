@@ -8,10 +8,23 @@ earn the seam: FixedCorpus (curated benchmark) and EphemeralCorpus
 Tests below drive the module's contract (slices 2.1-2.8 of the TDD plan).
 """
 
+import dataclasses
+
+import pytest
+
 from mcp_servers.rag_pill.corpus.base import (
     CorpusDocument,
     compute_version_hash,
 )
+
+
+def test_corpus_document_is_frozen() -> None:
+    """CorpusDocument must be immutable — engines pass it through caches
+    and dicts; mutation would silently corrupt cache keys."""
+    d = CorpusDocument(id="a.md", text="hello")
+    assert dataclasses.is_dataclass(d)
+    with pytest.raises(dataclasses.FrozenInstanceError):
+        d.text = "tampered"  # type: ignore[misc]
 
 
 def test_compute_version_hash_stable_across_input_order() -> None:
