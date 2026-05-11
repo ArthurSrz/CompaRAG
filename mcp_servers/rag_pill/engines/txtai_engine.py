@@ -7,15 +7,29 @@ the arena.
 
 import asyncio
 from pathlib import Path
+from typing import Any
 
 import numpy as np
 
-from mcp_servers.rag_pill.cache import IndexCache, doc_hash
+from mcp_servers.rag_pill.cache import IndexCache
+from mcp_servers.rag_pill.corpus.ephemeral import EphemeralCorpus
+from mcp_servers.rag_pill.corpus.fixed import FixedCorpus
 from mcp_servers.rag_pill.providers import EmbeddingConfig, LLMProvider
 from mcp_servers.rag_pill.schemas import Pill
 from mcp_servers.rag_pill.strategies import render_prompt
 
 CORPUS_DIR = Path(__file__).resolve().parent.parent.parent / "corpus"
+
+
+def _resolve_corpus(document_content: str, corpus: Any) -> Any | None:
+    """See chroma_baseline_engine._resolve_corpus — same precedence rules."""
+    if corpus is not None:
+        return corpus
+    if document_content.strip():
+        return EphemeralCorpus(document_content)
+    if CORPUS_DIR.exists():
+        return FixedCorpus(CORPUS_DIR)
+    return None
 
 try:
     from txtai.embeddings import Embeddings
@@ -47,21 +61,14 @@ class TxtaiEngine:
         self._llm = llm
         self._embed = embedding_config
 
-    async def _build_index(self, pill: Pill, document_content: str):
+    async def _build_index(self, pill: Pill, corpus: Any):
         loop = asyncio.get_event_loop()
 
         def _build():
-            sources: list[tuple[str, str]] = []  # (source_id, text)
-            if document_content.strip():
-                sources.append(("uploaded", document_content))
-            else:
-                for p in CORPUS_DIR.glob("*.md"):
-                    sources.append((p.stem, p.read_text()))
-
             rows: list[tuple[int, str, None]] = []
             uid = 0
-            for src, text in sources:
-                for chunk in _chunk_text(text, pill.chunk_size, pill.chunk_overlap):
+            for doc in corpus.iter_documents():
+                for chunk in _chunk_text(doc.text, pill.chunk_size, pill.chunk_overlap):
                     if chunk.strip():
                         rows.append((uid, chunk, None))
                         uid += 1
@@ -93,17 +100,26 @@ class TxtaiEngine:
         return await loop.run_in_executor(None, _build)
 
     async def execute(
-        self, pill: Pill, task: str, goal: str, document_content: str
+        self,
+        pill: Pill,
+        task: str,
+        goal: str,
+        document_content: str = "",
+        corpus: Any = None,
     ) -> str:
+        resolved = _resolve_corpus(document_content, corpus)
+        if resolved is None:
+            return "No documents available to search."
+
         key = (
             self.id,
             pill.embedder,
             pill.chunk_size,
             pill.chunk_overlap,
-            doc_hash(document_content),
+            resolved.version_hash,
         )
         embeddings = await self._cache.get_or_build(
-            key, lambda: self._build_index(pill, document_content)
+            key, lambda: self._build_index(pill, resolved)
         )
 
         top_k = getattr(pill, "top_k", 3)
