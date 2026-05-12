@@ -3,6 +3,8 @@
   import { env as publicEnv } from '$env/dynamic/public'
   import { api } from '$lib/fastapi-client'
   import { ToolArenaForm, ToolResultCard, ToolRevealCard, ToolVoteArea } from './components'
+  import ProgressCard from './components/ProgressCard.svelte'
+  import { streamCompare, type SSEEvent } from './lib/sse-client'
   import { Button } from '$components/dsfr'
   import Header from '$components/header/Header.svelte'
   import SeoHead from '$components/SEOHead.svelte'
@@ -41,10 +43,21 @@
   let voteError = $state<string | null>(null)
   let voting = $state(false)
 
+  // Per-side latest SSE event during streaming. null = sync path or no event yet.
+  // Drives the ProgressCard render during the `loading` phase. Phase 13 / Wave 7.
+  let progressEventA = $state<SSEEvent | null>(null)
+  let progressEventB = $state<SSEEvent | null>(null)
+
   let secondHeader = $state<HTMLElement | undefined>(undefined)
   let secondHeaderSize = $derived(secondHeader?.offsetHeight ?? 0)
 
   const eitherFailed = $derived((!!errorA || !!errorB) && (!resultA || !resultB))
+
+  // Opt-in streaming via `?stream=1` query param. Defaults to the sync JSON
+  // path so existing production flows are untouched. Wave 7 / slice 7.x.
+  const streamingEnabled = $derived(
+    browser && new URLSearchParams(window.location.search).get('stream') === '1'
+  )
 
   async function handleCompare(
     task: string,
@@ -54,6 +67,50 @@
   ) {
     phase = 'loading'
     compareError = null
+    progressEventA = null
+    progressEventB = null
+
+    if (streamingEnabled) {
+      try {
+        const base = !browser
+          ? publicEnv.PUBLIC_API_LOCAL_URL || publicEnv.PUBLIC_API_URL || 'http://localhost:8001'
+          : dev || publicEnv.PUBLIC_API_DEV_MODE === 'true'
+            ? 'http://localhost:8001'
+            : publicEnv.PUBLIC_API_URL || window.location.origin || 'http://localhost:8001'
+        for await (const ev of streamCompare(
+          {
+            task,
+            goal,
+            document_content: documentContent,
+            haystack: 'sandbox',
+            task_type: taskType ?? undefined
+          },
+          { url: `${base}/tool-arena/compare` }
+        )) {
+          if (ev.type === 'complete') {
+            phase = 'results'
+            return
+          }
+          if (ev.pos === 'a') progressEventA = ev
+          else if (ev.pos === 'b') progressEventB = ev
+          if (ev.type === 'result') {
+            const r = ev.result as { answer?: string } | undefined
+            if (ev.pos === 'a') resultA = r?.answer ?? null
+            else if (ev.pos === 'b') resultB = r?.answer ?? null
+          } else if (ev.type === 'error') {
+            const msg = (ev.message as string) || 'Tool encountered an error'
+            if (ev.pos === 'a') errorA = msg
+            else if (ev.pos === 'b') errorB = msg
+          }
+        }
+        phase = 'results'
+        return
+      } catch (err) {
+        compareError = (err as Error).message || m['toolArena.errorFallback']()
+        phase = 'input'
+        return
+      }
+    }
 
     // Phase 2: detect 503 tool_unavailable from the backend's readiness gate
     // before falling back to the generic api.request error path. We intercept
@@ -138,6 +195,8 @@
     compareError = null
     voteError = null
     voting = false
+    progressEventA = null
+    progressEventB = null
   }
 </script>
 
@@ -229,6 +288,12 @@
             </div>
           </div>
           <p class="fr-text--sm text-grey">{m['toolArena.loading.subtitle']()}</p>
+          {#if streamingEnabled && (progressEventA || progressEventB)}
+            <div class="gap-4 md:grid-cols-2 grid mt-6 max-w-xl mx-auto">
+              <ProgressCard event={progressEventA} />
+              <ProgressCard event={progressEventB} />
+            </div>
+          {/if}
         </div>
       </div>
     </div>
