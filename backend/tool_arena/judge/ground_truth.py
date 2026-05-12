@@ -13,10 +13,11 @@ from __future__ import annotations
 
 import math
 
-from mcp_servers.rag_pill.corpus import ExpectedSpan
-from mcp_servers.rag_pill.engines.result import RetrievedSpan
-
-from backend.tool_arena.judge.base import JudgementScore
+from backend.tool_arena.judge.base import (
+    ExpectedSpan,
+    JudgementScore,
+    RetrievedSpan,
+)
 
 
 _K_VALUES: tuple[int, ...] = (1, 3, 5, 10)

@@ -5,8 +5,8 @@ The judge is the most numerically sensitive module in Phase 13; each metric
 has its own slice with a deterministic expectation.
 """
 
-from mcp_servers.rag_pill.corpus import ExpectedSpan
-from mcp_servers.rag_pill.engines.result import RetrievedSpan
+from backend.tool_arena.judge.base import ExpectedSpan
+from backend.tool_arena.judge.base import RetrievedSpan
 
 from backend.tool_arena.judge.base import JudgementScore
 from backend.tool_arena.judge.ground_truth import GroundTruthJudge

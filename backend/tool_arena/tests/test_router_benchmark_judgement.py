@@ -15,7 +15,7 @@ from fastapi.testclient import TestClient
 
 from backend.tool_arena.evaluation import EvaluationCatalog, EvaluationQueryMeta
 from backend.tool_arena.router import router
-from mcp_servers.rag_pill.corpus import ExpectedSpan
+from backend.tool_arena.judge.base import ExpectedSpan
 
 _app = FastAPI()
 _app.include_router(router)

@@ -18,7 +18,7 @@ from pathlib import Path
 
 import yaml
 
-from mcp_servers.rag_pill.corpus import ExpectedSpan
+from backend.tool_arena.judge.base import ExpectedSpan
 
 
 @dataclass(frozen=True)

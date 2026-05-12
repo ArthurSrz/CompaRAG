@@ -9,8 +9,28 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 from typing import Protocol
 
-from mcp_servers.rag_pill.corpus import ExpectedSpan
-from mcp_servers.rag_pill.engines.result import RetrievedSpan
+
+# Inlined to keep backend image free of mcp_servers/ — rag_pill is a sibling
+# Railway service with its own Dockerfile. Definitions MUST stay structurally
+# identical to mcp_servers.rag_pill.corpus.ExpectedSpan and
+# mcp_servers.rag_pill.engines.result.RetrievedSpan; if either grows fields,
+# mirror them here. The judge compares `[char_start, char_end)` intervals
+# scoped to source_doc_id — that's the contract Wave 6 wire-format relies on.
+@dataclass(frozen=True)
+class ExpectedSpan:
+    source_doc_id: str
+    char_start: int
+    char_end: int
+
+
+@dataclass(frozen=True)
+class RetrievedSpan:
+    source_doc_id: str
+    char_start: int
+    char_end: int
+    text: str
+    score: float | None
+    rank: int
 
 
 @dataclass(frozen=True)
