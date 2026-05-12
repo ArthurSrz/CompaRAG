@@ -32,6 +32,28 @@ try:
 except ImportError:
     _AVAILABLE = False
 
+# chromadb 1.x routes EphemeralClient through a process-global SharedSystemClient
+# cache keyed by 'ephemeral'. Two parallel arena sides each calling
+# `chromadb.EphemeralClient()` from different threadpool workers race that cache
+# and surface as either `'RustBindingsAPI' object has no attribute 'bindings'`
+# (system handed out before bindings finished initializing) or `KeyError:
+# 'ephemeral'` (cache evicted between lookup and use). One shared client +
+# serialized first-touch eliminates the race; collection names are already
+# namespaced by pill + corpus hash, so isolation is preserved.
+_CLIENT: Any = None
+_CLIENT_LOCK = asyncio.Lock()
+
+
+async def _get_shared_client() -> Any:
+    global _CLIENT
+    if _CLIENT is not None:
+        return _CLIENT
+    async with _CLIENT_LOCK:
+        if _CLIENT is None:
+            loop = asyncio.get_event_loop()
+            _CLIENT = await loop.run_in_executor(None, chromadb.EphemeralClient)
+    return _CLIENT
+
 
 def _chunk_text(text: str, chunk_size: int, chunk_overlap: int) -> list[str]:
     if chunk_size <= 0:
@@ -74,9 +96,9 @@ class ChromaBaselineEngine:
 
     async def _build_index(self, pill: Pill, corpus: Any):
         loop = asyncio.get_event_loop()
+        client = await _get_shared_client()
 
         def _build():
-            client = chromadb.EphemeralClient()
             embed_fn = OpenAIEmbeddingFunction(
                 api_key=self._embed.api_key,
                 api_base=self._embed.base_url,
