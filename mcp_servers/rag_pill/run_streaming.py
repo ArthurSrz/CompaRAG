@@ -18,6 +18,8 @@ import json
 from dataclasses import asdict, is_dataclass
 from typing import Any, AsyncIterator
 
+from mcp_servers.rag_pill.retry import execute_with_spans_with_retry
+
 
 class _QueueEmitter:
     """Pushes ProgressEvents onto an asyncio.Queue as the engine emits."""
@@ -67,9 +69,15 @@ async def build_ndjson_stream(
 
     async def _runner() -> None:
         try:
-            result = await engine.execute_with_spans(
-                pill, task, goal,
-                corpus=corpus, document_content=document_content,
+            # Streaming path's twin of execute_with_embedding_retry —
+            # OpenRouter occasionally returns 200 with None-valued
+            # embeddings; the matcher catches both the SDK's
+            # ValueError("No embedding data received") and its TypeError
+            # leak-through variant.
+            result = await execute_with_spans_with_retry(
+                engine, pill, task, goal,
+                document_content=document_content,
+                corpus=corpus,
                 progress=emitter,
             )
             await queue.put({"type": "result", "result": _engine_result_to_dict(result)})
