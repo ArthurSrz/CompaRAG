@@ -20,7 +20,13 @@
     onsubmit,
     disabled = false
   }: {
-    onsubmit: (task: string, goal: string, documentContent: string, taskType: TaskType) => void
+    onsubmit: (
+      task: string,
+      goal: string,
+      documentContent: string,
+      taskType: TaskType,
+      expectedAnswer: string
+    ) => void
     disabled?: boolean
   } = $props()
 
@@ -55,6 +61,11 @@
   let documentContent = $state('')
   let fileName = $state('')
   let fileError = $state('')
+  // Optional ground-truth answer the user expects; rendered alongside the
+  // blind A/B results so they can judge whether either engine found the
+  // needle. Only shown for QA. Whitespace-only submissions are dropped at
+  // the wire-format layer (see buildToolArenaRequest).
+  let expectedAnswer = $state('')
 
   // QA in sandbox mode also requires document_content (backend validator
   // enforces non-empty doc for haystack='sandbox'). Benchmark mode (no doc,
@@ -71,7 +82,13 @@
   function handleSubmit(e: SubmitEvent) {
     e.preventDefault()
     if (canSubmit) {
-      onsubmit(task.trim(), goal.trim(), documentContent, selectedTaskType)
+      onsubmit(
+        task.trim(),
+        goal.trim(),
+        documentContent,
+        selectedTaskType,
+        expectedAnswer
+      )
     }
   }
 
@@ -228,6 +245,26 @@
       </Button>
     </div>
   </div>
+
+  {#if selectedTaskType === 'qa'}
+    <div class="fr-input-group">
+      <label class="fr-label" for="tool-arena-expected-answer">
+        Réponse attendue (optionnel)
+        <span class="fr-hint-text">
+          Quelle réponse devriez-vous obtenir ? (Sert à comparer visuellement les deux outils)
+        </span>
+      </label>
+      <textarea
+        id="tool-arena-expected-answer"
+        data-testid="tool-arena-expected-answer"
+        class="fr-input cg-border rounded-md! bg-white! border-solid!"
+        rows="2"
+        bind:value={expectedAnswer}
+        placeholder="Ex : Paris est la capitale de la France."
+        {disabled}
+      ></textarea>
+    </div>
+  {/if}
 </form>
 
 <div class="mt-2">

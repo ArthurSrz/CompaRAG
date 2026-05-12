@@ -4,7 +4,9 @@
   import { api } from '$lib/fastapi-client'
   import { ToolArenaForm, ToolResultCard, ToolRevealCard, ToolVoteArea } from './components'
   import ProgressCard from './components/ProgressCard.svelte'
+  import ExpectedAnswerBanner from './components/ExpectedAnswerBanner.svelte'
   import { streamCompare, type SSEEvent } from './lib/sse-client'
+  import { shouldShowExpectedAnswerBanner } from './lib/build-request'
   import { Button } from '$components/dsfr'
   import Header from '$components/header/Header.svelte'
   import SeoHead from '$components/SEOHead.svelte'
@@ -48,6 +50,11 @@
   let progressEventA = $state<SSEEvent | null>(null)
   let progressEventB = $state<SSEEvent | null>(null)
 
+  // User-supplied ground-truth answer for the current QA question.
+  // Pure display — backend ignores it; we show it next to the blind A/B
+  // results so the user can judge whether either engine found the needle.
+  let expectedAnswer = $state<string | null>(null)
+
   let secondHeader = $state<HTMLElement | undefined>(undefined)
   let secondHeaderSize = $derived(secondHeader?.offsetHeight ?? 0)
 
@@ -63,12 +70,15 @@
     task: string,
     goal: string,
     documentContent: string = '',
-    taskType: 'summary' | 'qa' | null = null
+    taskType: 'summary' | 'qa' | null = null,
+    expectedAnswerInput: string = ''
   ) {
     phase = 'loading'
     compareError = null
     progressEventA = null
     progressEventB = null
+    const trimmedExpected = expectedAnswerInput.trim()
+    expectedAnswer = trimmedExpected.length > 0 ? trimmedExpected : null
 
     if (streamingEnabled) {
       try {
@@ -202,6 +212,7 @@
     voting = false
     progressEventA = null
     progressEventB = null
+    expectedAnswer = null
   }
 </script>
 
@@ -305,6 +316,9 @@
 
   {:else if phase === 'results'}
     <div class="fr-container py-8 md:py-12">
+      {#if shouldShowExpectedAnswerBanner('results', expectedAnswer)}
+        <ExpectedAnswerBanner {expectedAnswer} />
+      {/if}
       <div class="gap-10 md:grid-cols-2 md:gap-6 grid mb-8">
         <ToolResultCard label="A" result={resultA} error={errorA} />
         <ToolResultCard label="B" result={resultB} error={errorB} />
