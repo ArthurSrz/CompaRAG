@@ -26,10 +26,9 @@
 
   // Frontend-restricted subset of the backend's task_type Literal
   // (see backend/tool_arena/router.py::CompareRequest.task_type).
-  // Currently only "summary" is exposed — "qa" and "extraction" are
-  // hidden until end-to-end validation is in place. Backend Literal
-  // stays permissive so re-enabling either is a frontend-only change.
-  type TaskType = 'summary'
+  // Phase 13 enables "qa" alongside "summary"; both run in sandbox mode
+  // (document_content as ephemeral corpus). "extraction" stays hidden.
+  type TaskType = 'summary' | 'qa'
 
   const taskTypes: { value: TaskType; label: string; prompt: string; goalText: string }[] = [
     {
@@ -37,6 +36,12 @@
       label: m['toolArena.form.taskTypes.summary.label'](),
       prompt: m['toolArena.form.taskTypes.summary.prompt'](),
       goalText: m['toolArena.form.taskTypes.summary.goal']()
+    },
+    {
+      value: 'qa',
+      label: m['toolArena.form.taskTypes.qa.label'](),
+      prompt: m['toolArena.form.taskTypes.qa.prompt'](),
+      goalText: m['toolArena.form.taskTypes.qa.goal']()
     }
   ]
 
@@ -47,10 +52,10 @@
   let fileName = $state('')
   let fileError = $state('')
 
-  // Document is always required while only summary is exposed. The
-  // selectedTaskType comparison is preserved so re-enabling QA (which
-  // can run against the static corpus) is a one-line change.
-  const requiresDocument = $derived(selectedTaskType !== 'qa')
+  // QA in sandbox mode also requires document_content (backend validator
+  // enforces non-empty doc for haystack='sandbox'). Benchmark mode (no doc,
+  // canned eval_query) is a separate future toggle.
+  const requiresDocument = $derived(true)
 
   const canSubmit = $derived(
     task.trim().length > 0 &&
