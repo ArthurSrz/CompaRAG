@@ -8,9 +8,13 @@ attributable to retrieval sophistication, not just framework choice.
 """
 
 import asyncio
+import logging
 import time
+import weakref
 from pathlib import Path
 from typing import Any
+
+log = logging.getLogger(__name__)
 
 from mcp_servers.rag_pill.cache import IndexCache
 from mcp_servers.rag_pill.corpus.ephemeral import EphemeralCorpus
@@ -53,6 +57,41 @@ async def _get_shared_client() -> Any:
             loop = asyncio.get_event_loop()
             _CLIENT = await loop.run_in_executor(None, chromadb.EphemeralClient)
     return _CLIENT
+
+
+def _drop_collection(client: Any, name: str) -> None:
+    """weakref finalizer target — runs when IndexCache evicts the handle.
+
+    Without this, chromadb's shared client keeps every cached collection
+    alive after Python eviction (chromadb owns the canonical refs, not
+    IndexCache), so embeddings accumulate as a slow leak over the
+    server's lifetime.
+    """
+    try:
+        client.delete_collection(name)
+    except Exception as exc:  # pragma: no cover — defensive on shutdown
+        log.debug("chroma_baseline: delete_collection(%s) failed: %s", name, exc)
+
+
+class _CollectionHandle:
+    """Cached value held by IndexCache. Delegates to the underlying chromadb
+    collection while registering a weakref.finalize so eviction triggers
+    `client.delete_collection(name)`. Wrapping (rather than caching the
+    collection directly) is the only place the finalizer can fire reliably:
+    chromadb holds its own strong ref to the collection, so a finalizer on
+    the collection itself would never run."""
+
+    __slots__ = ("collection", "_finalizer", "__weakref__")
+
+    def __init__(self, collection: Any, client: Any, name: str) -> None:
+        self.collection = collection
+        self._finalizer = weakref.finalize(self, _drop_collection, client, name)
+
+    def count(self) -> int:
+        return self.collection.count()
+
+    def query(self, **kwargs: Any) -> Any:
+        return self.collection.query(**kwargs)
 
 
 def _chunk_text(text: str, chunk_size: int, chunk_overlap: int) -> list[str]:
@@ -98,6 +137,8 @@ class ChromaBaselineEngine:
         loop = asyncio.get_event_loop()
         client = await _get_shared_client()
 
+        collection_name = f"baseline_{pill.name}_{corpus.version_hash[:16]}"
+
         def _build():
             embed_fn = OpenAIEmbeddingFunction(
                 api_key=self._embed.api_key,
@@ -107,7 +148,7 @@ class ChromaBaselineEngine:
             # Idempotent build (see prior comment block): get_or_create +
             # upsert keep the build safe to repeat across retry attempts.
             collection = client.get_or_create_collection(
-                name=f"baseline_{pill.name}_{corpus.version_hash[:16]}",
+                name=collection_name,
                 embedding_function=embed_fn,
             )
 
@@ -126,7 +167,7 @@ class ChromaBaselineEngine:
                     metas.append({"source": src, "doc_id": doc.id})
 
             if not ids:
-                return collection
+                return _CollectionHandle(collection, client, collection_name)
             # chromadb's OpenAIEmbeddingFunction has no batch_size knob; it
             # sends each upsert call's full input list in one embedding
             # request. Split the upsert into batches manually so we don't
@@ -138,7 +179,7 @@ class ChromaBaselineEngine:
                     documents=docs[i : i + batch],
                     metadatas=metas[i : i + batch],
                 )
-            return collection
+            return _CollectionHandle(collection, client, collection_name)
 
         return await loop.run_in_executor(None, _build)
 
