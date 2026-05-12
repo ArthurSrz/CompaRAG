@@ -40,7 +40,11 @@
     {
       value: 'qa',
       label: m['toolArena.form.taskTypes.qa.label'](),
-      prompt: m['toolArena.form.taskTypes.qa.prompt'](),
+      // Blank so the user types their actual question; the static
+      // "Réponds à la question..." instruction was misread as a complete
+      // prompt and shipped verbatim, so the engine answered the document's
+      // title-line instead of the user's question.
+      prompt: '',
       goalText: m['toolArena.form.taskTypes.qa.goal']()
     }
   ]
@@ -199,7 +203,7 @@
       class="fr-input cg-border rounded-t-md! bg-white! rounded-b-none! border-solid!"
       rows="4"
       bind:value={task}
-      placeholder={m['toolArena.form.taskPlaceholder']()}
+      placeholder={selectedTaskType === 'qa' ? 'Posez votre question ici…' : m['toolArena.form.taskPlaceholder']()}
       {disabled}
     ></textarea>
   </div>

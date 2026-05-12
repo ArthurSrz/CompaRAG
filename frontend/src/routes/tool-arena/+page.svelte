@@ -87,6 +87,11 @@
           },
           { url: `${base}/tool-arena/compare` }
         )) {
+          if (ev.type === 'session') {
+            sessionHash = (ev.session_hash as string) ?? null
+            if (sessionHash) api.setSessionHash(sessionHash)
+            continue
+          }
           if (ev.type === 'complete') {
             phase = 'results'
             return

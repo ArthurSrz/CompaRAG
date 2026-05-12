@@ -596,6 +596,51 @@ async def compare(body: CompareRequest, request: Request):
             effective_task = eval_meta.query_text
             effective_goal = eval_meta.goal_text
 
+        # Create the session up-front so the SSE consumer can wire
+        # X-Session-Hash for vote/reveal. on_complete persists tool_a /
+        # tool_b dicts matching the sync path's payload shape, so the
+        # downstream /vote and /reveal endpoints work unchanged.
+        stream_session_hash = create_tool_session()
+
+        def _persist(results: dict, errors: dict) -> None:
+            tool_a_id = server_a.id
+            tool_b_id = server_b.id
+            llm_a = server_a.llm_id or ""
+            llm_b = server_b.llm_id or ""
+
+            def _payload(server, result: dict | None, error: str | None) -> dict:
+                if error is not None or result is None:
+                    return {
+                        "tool_id": server.id,
+                        "llm_id": server.llm_id or "",
+                        "mediated_result": "",
+                        "error": error or "Tool encountered an error",
+                        "duration_ms": 0,
+                    }
+                return {
+                    "tool_id": server.id,
+                    "llm_id": server.llm_id or "",
+                    "mediated_result": result.get("answer") or "",
+                    "error": None,
+                    "duration_ms": int(
+                        (result.get("retrieval_latency_ms") or 0)
+                        + (result.get("generation_latency_ms") or 0)
+                    ),
+                    "retrieved_spans": result.get("retrieved_spans", []),
+                }
+
+            payload = {
+                "session_hash": stream_session_hash,
+                "task": effective_task,
+                "goal": effective_goal,
+                "llm_id_a": llm_a,
+                "llm_id_b": llm_b,
+                "voted": False,
+                "tool_a": _payload(server_a, results.get("a"), errors.get("a")),
+                "tool_b": _payload(server_b, results.get("b"), errors.get("b")),
+            }
+            store_tool_session(stream_session_hash, payload)
+
         return create_sse_response(
             stream_compare(
                 server_a,
@@ -603,6 +648,8 @@ async def compare(body: CompareRequest, request: Request):
                 task=effective_task,
                 goal=effective_goal,
                 document_content=body.document_content,
+                session_hash=stream_session_hash,
+                on_complete=_persist,
             )
         )
 

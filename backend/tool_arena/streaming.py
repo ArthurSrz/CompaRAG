@@ -97,14 +97,25 @@ async def stream_compare(
     task: str,
     goal: str,
     document_content: str,
+    session_hash: str | None = None,
+    on_complete=None,
 ) -> AsyncIterator[str]:
     """Async generator yielding SSE-formatted lines for the /compare endpoint.
 
     Runs both rag-pill streams concurrently. Events are drained
     sequentially as they arrive so order reflects wall-clock arrival
     (not pos-a-then-pos-b). Terminates with a single {type:'complete'}.
+
+    If ``session_hash`` is provided, emits a ``{type:'session', session_hash}``
+    event first so the frontend can wire X-Session-Hash for the vote/reveal
+    flow. ``on_complete`` is invoked with ``({"a": result_dict_or_none,
+    "b": result_dict_or_none}, errors_dict)`` after both sides terminate so
+    the caller can persist the session to Redis with sync-path-compatible
+    tool_a / tool_b payloads.
     """
     queue: asyncio.Queue[dict | None] = asyncio.Queue()
+    results: dict[str, dict | None] = {"a": None, "b": None}
+    errors: dict[str, str | None] = {"a": None, "b": None}
 
     async def _drain(server, pos: str) -> None:
         try:
@@ -114,11 +125,19 @@ async def stream_compare(
                 ),
                 pos,
             ):
+                if event.get("type") == "result":
+                    results[pos] = event.get("result")
+                elif event.get("type") == "error":
+                    errors[pos] = str(event.get("message") or "unknown error")
                 await queue.put(event)
         except Exception as exc:  # noqa: BLE001 — surface as terminal error event
+            errors[pos] = str(exc)
             await queue.put({"type": "error", "pos": pos, "message": str(exc)})
         finally:
             await queue.put({"__done__": pos})
+
+    if session_hash is not None:
+        yield format_sse_event({"type": "session", "session_hash": session_hash})
 
     drain_a = asyncio.create_task(_drain(server_a, "a"))
     drain_b = asyncio.create_task(_drain(server_b, "b"))
@@ -131,6 +150,11 @@ async def stream_compare(
                 done[event["__done__"]] = True
                 continue
             yield format_sse_event(event)
+        if on_complete is not None:
+            try:
+                on_complete(results, errors)
+            except Exception:  # noqa: BLE001 — persistence failure must not crash the stream
+                logger.exception("stream_compare on_complete callback failed")
         yield format_sse_event({"type": "complete"})
     finally:
         for t in (drain_a, drain_b):
