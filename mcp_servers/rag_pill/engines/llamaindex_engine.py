@@ -59,10 +59,14 @@ class LlamaIndexEngine:
         self._embed = embedding_config
 
     def _configure(self, pill: Pill) -> None:
+        # embed_batch_size caps inputs per API call; the default (10) is
+        # small but not low enough on degraded OpenRouter. Use the shared
+        # EmbeddingConfig.batch_size knob so the operator can dial it.
         Settings.embed_model = OpenAILikeEmbedding(
             model_name=pill.embedder,
             api_base=self._embed.base_url,
             api_key=self._embed.api_key,
+            embed_batch_size=self._embed.batch_size,
         )
         Settings.node_parser = SentenceSplitter(
             chunk_size=pill.chunk_size, chunk_overlap=pill.chunk_overlap

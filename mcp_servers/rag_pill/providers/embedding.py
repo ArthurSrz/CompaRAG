@@ -5,6 +5,23 @@ from dataclasses import dataclass
 
 OPENROUTER_BASE_URL = "https://openrouter.ai/api/v1"
 OPENAI_BASE_URL = "https://api.openai.com/v1"
+# OpenRouter degrades unpredictably on big embedding batches (typical
+# symptom: 200 OK with empty `data` array). 16 is the operating-point sweet
+# spot — small enough that a single bad batch doesn't tank an indexing job
+# and per-batch retry has a real chance of recovering, big enough that a
+# 70-chunk doc fans out in ~5 sequential calls instead of 70.
+DEFAULT_EMBED_BATCH_SIZE = 16
+
+
+def _resolve_batch_size() -> int:
+    raw = os.environ.get("RAG_PILL_EMBED_BATCH_SIZE", "").strip()
+    if not raw:
+        return DEFAULT_EMBED_BATCH_SIZE
+    try:
+        parsed = int(raw)
+    except ValueError:
+        return DEFAULT_EMBED_BATCH_SIZE
+    return parsed if parsed > 0 else DEFAULT_EMBED_BATCH_SIZE
 
 
 @dataclass(frozen=True)
@@ -12,6 +29,7 @@ class EmbeddingConfig:
     api_key: str
     base_url: str = OPENROUTER_BASE_URL
     provider_label: str = "openrouter"
+    batch_size: int = DEFAULT_EMBED_BATCH_SIZE
 
     @classmethod
     def from_env(cls) -> "EmbeddingConfig":
@@ -40,10 +58,16 @@ class EmbeddingConfig:
                     "(checked EMBEDDING_API_KEY, OPENAI_API_KEY, OPENROUTER_API_KEY)."
                 )
             label = "openai" if override_url.rstrip("/").endswith("api.openai.com/v1") else "custom"
-            return cls(api_key=api_key, base_url=override_url, provider_label=label)
+            return cls(
+                api_key=api_key,
+                base_url=override_url,
+                provider_label=label,
+                batch_size=_resolve_batch_size(),
+            )
 
         return cls(
             api_key=os.environ["OPENROUTER_API_KEY"],
             base_url=OPENROUTER_BASE_URL,
             provider_label="openrouter",
+            batch_size=_resolve_batch_size(),
         )

@@ -87,14 +87,25 @@ class TxtaiEngine:
             # for API-backed embeddings the safest path is an explicit transform.
             import openai as _openai
 
+            from mcp_servers.rag_pill.providers.batched_embed import batched_embed
+
             _client = _openai.OpenAI(
                 api_key=self._embed.api_key,
                 base_url=self._embed.base_url or None,
             )
+            _batch_size = self._embed.batch_size
 
             def _embed_fn(inputs: list[str]) -> np.ndarray:
-                resp = _client.embeddings.create(model=pill.embedder, input=inputs)
-                return np.array([e.embedding for e in resp.data], dtype=np.float32)
+                # Fan inputs over batched calls with per-batch retry — see
+                # providers/batched_embed.py for the OpenRouter degradation
+                # this defends against. The old "send all 70 chunks at once"
+                # path was the worst offender of the five engines.
+                return batched_embed(
+                    _client,
+                    model=pill.embedder,
+                    inputs=inputs,
+                    batch_size=_batch_size,
+                )
 
             # method=external is required: without it txtai ignores `transform`
             # and falls back to the default transformers backend, which tries

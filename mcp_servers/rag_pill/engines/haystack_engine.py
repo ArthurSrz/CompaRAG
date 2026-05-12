@@ -90,10 +90,14 @@ class HaystackEngine:
             splitter.warm_up()
             chunks = splitter.run(documents=raw_docs)["documents"]
 
+            # batch_size caps inputs per API call; default 32 is too
+            # aggressive on degraded OpenRouter (empty-data flake). Use the
+            # shared EmbeddingConfig.batch_size knob so operators can dial it.
             embedder = OpenAIDocumentEmbedder(
                 api_key=Secret.from_token(self._embed.api_key),
                 api_base_url=self._embed.base_url,
                 model=pill.embedder,
+                batch_size=self._embed.batch_size,
             )
             embedded = validate_document_embeddings(embedder.run(documents=chunks))["documents"]
             store.write_documents(embedded)

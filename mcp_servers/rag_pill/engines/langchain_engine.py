@@ -65,10 +65,14 @@ class LangChainEngine:
         )
 
     def _embeddings(self, pill: Pill):
+        # chunk_size caps inputs per API call; default is 1000 which is
+        # disastrous on OpenRouter (empty-data flake). Use the shared
+        # EmbeddingConfig.batch_size knob so the operator can dial it.
         return OpenAIEmbeddings(
             model=pill.embedder,
             base_url=self._embed.base_url,
             openai_api_key=self._embed.api_key,
+            chunk_size=self._embed.batch_size,
         )
 
     async def _build_index(self, pill: Pill, corpus: Any):

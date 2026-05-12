@@ -105,7 +105,17 @@ class ChromaBaselineEngine:
 
             if not ids:
                 return collection
-            collection.upsert(ids=ids, documents=docs, metadatas=metas)
+            # chromadb's OpenAIEmbeddingFunction has no batch_size knob; it
+            # sends each upsert call's full input list in one embedding
+            # request. Split the upsert into batches manually so we don't
+            # hand OpenRouter a 70-input call (empty-data flake territory).
+            batch = self._embed.batch_size
+            for i in range(0, len(ids), batch):
+                collection.upsert(
+                    ids=ids[i : i + batch],
+                    documents=docs[i : i + batch],
+                    metadatas=metas[i : i + batch],
+                )
             return collection
 
         return await loop.run_in_executor(None, _build)

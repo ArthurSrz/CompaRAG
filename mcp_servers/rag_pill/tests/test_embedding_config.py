@@ -22,6 +22,7 @@ _ENV_VARS = (
     "EMBEDDING_API_KEY",
     "OPENAI_API_KEY",
     "OPENROUTER_API_KEY",
+    "RAG_PILL_EMBED_BATCH_SIZE",
 )
 
 
@@ -72,6 +73,32 @@ def test_override_without_any_key_raises(monkeypatch):
     monkeypatch.setenv("EMBEDDING_BASE_URL", OPENAI_BASE_URL)
     with pytest.raises(RuntimeError, match="EMBEDDING_BASE_URL"):
         EmbeddingConfig.from_env()
+
+
+def test_batch_size_defaults_to_16(monkeypatch):
+    """OpenRouter degrades on big embedding batches; 16 is a small enough
+    default that one bad batch doesn't tank an indexing job, big enough that
+    a typical 70-chunk doc still fans out in ~5 calls."""
+    monkeypatch.setenv("OPENROUTER_API_KEY", "or-key")
+    cfg = EmbeddingConfig.from_env()
+    assert cfg.batch_size == 16
+
+
+def test_batch_size_reads_env_override(monkeypatch):
+    """Operators must be able to dial the batch size down when upstream is
+    degraded without redeploying. Env wins over the default."""
+    monkeypatch.setenv("OPENROUTER_API_KEY", "or-key")
+    monkeypatch.setenv("RAG_PILL_EMBED_BATCH_SIZE", "4")
+    cfg = EmbeddingConfig.from_env()
+    assert cfg.batch_size == 4
+
+
+def test_batch_size_invalid_env_falls_back_to_default(monkeypatch):
+    """A malformed env value must not crash startup."""
+    monkeypatch.setenv("OPENROUTER_API_KEY", "or-key")
+    monkeypatch.setenv("RAG_PILL_EMBED_BATCH_SIZE", "not-a-number")
+    cfg = EmbeddingConfig.from_env()
+    assert cfg.batch_size == 16
 
 
 def test_blank_embedding_base_url_falls_back_to_default(monkeypatch):
