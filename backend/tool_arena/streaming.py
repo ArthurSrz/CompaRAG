@@ -90,6 +90,11 @@ async def _tag_with_pos(
         yield {**event, "pos": pos}
 
 
+# Keep-alive interval (seconds). Module-level so tests can monkey-patch
+# without waiting wall-clock time. See docstring inside stream_compare.
+_SSE_HEARTBEAT_S = 10.0
+
+
 async def stream_compare(
     server_a,
     server_b,
@@ -143,9 +148,23 @@ async def stream_compare(
     drain_b = asyncio.create_task(_drain(server_b, "b"))
     done = {"a": False, "b": False}
 
+    # Keep-alive: see module-level _SSE_HEARTBEAT_S. Browsers and edge
+    # proxies drop SSE connections that go silent for long periods
+    # (Railway/Vercel default ~30s idle timeout). Long engine phases —
+    # chroma's first-time index of a 1MB doc takes ~60s with no per-event
+    # progress emitted — would otherwise have the connection killed
+    # mid-stream and the browser surface the drop as
+    # `TypeError: Failed to fetch`. SSE comments (lines starting with
+    # `:`) are ignored by the EventSource parser, so this is a pure
+    # liveness signal that doesn't pollute the client event stream.
+
     try:
         while not (done["a"] and done["b"]):
-            event = await queue.get()
+            try:
+                event = await asyncio.wait_for(queue.get(), timeout=_SSE_HEARTBEAT_S)
+            except asyncio.TimeoutError:
+                yield ": keep-alive\n\n"
+                continue
             if isinstance(event, dict) and "__done__" in event:
                 done[event["__done__"]] = True
                 continue

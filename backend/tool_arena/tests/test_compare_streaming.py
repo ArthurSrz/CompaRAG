@@ -190,3 +190,46 @@ async def test_compare_sync_path_unchanged_without_sse_accept():
     assert set(body.keys()) >= {"session_hash", "result_a", "result_b", "error_a", "error_b"}
     assert body["result_a"] == "Paris."
     assert body["result_b"] == "Paris."
+
+
+async def test_stream_emits_keep_alive_during_quiet_phases(monkeypatch):
+    """When both rag-pill streams go silent for longer than the heartbeat
+    interval, stream_compare must emit `: keep-alive\n\n` SSE comment frames
+    so browsers/edge proxies don't kill the connection mid-stream and surface
+    the drop as `TypeError: Failed to fetch` on the client.
+
+    Repro condition: chroma_baseline's first-time index of a 1MB doc takes
+    ~60s emitting no per-event progress. Without keep-alive, Railway's edge
+    closes the SSE connection at ~30s of idle.
+    """
+    import asyncio as _asyncio
+
+    from backend.tool_arena import streaming
+    monkeypatch.setattr(streaming, "_SSE_HEARTBEAT_S", 0.05)
+
+    async def _slow_stream():
+        # Yield one event, then sleep long enough to provoke ≥2 heartbeats,
+        # then yield a final result so the stream terminates cleanly.
+        yield {"type": "ingest_start", "engine_id": "e", "pill_id": "p"}
+        await _asyncio.sleep(0.18)
+        yield {"type": "result", "result": {"answer": "x"}}
+
+    server_a = _make_fake_server("srv-a", "p", "e")
+    server_b = _make_fake_server("srv-b", "p", "e")
+
+    with patch(
+        "backend.tool_arena.streaming.open_rag_pill_stream",
+        side_effect=lambda *a, **kw: _slow_stream(),
+    ):
+        out: list[str] = []
+        async for chunk in streaming.stream_compare(
+            server_a, server_b,
+            task="t", goal="g", document_content="d",
+            session_hash="sh-test",
+        ):
+            out.append(chunk)
+
+    keep_alives = [c for c in out if c.startswith(": keep-alive")]
+    assert len(keep_alives) >= 1, f"expected ≥1 keep-alive frame, got {len(keep_alives)} (chunks: {out!r})"
+    # Final completion event must still arrive.
+    assert any('"type": "complete"' in c for c in out), out

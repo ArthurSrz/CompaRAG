@@ -45,9 +45,13 @@ logger = logging.getLogger("languia")
 
 # Default MCP call timeout in seconds. Configurable globally via env var, and
 # overridable per-server via MCPServerConfig.timeout_seconds. The previous 30s
+# default was bumped to 90s, then to 180s on 2026-05-13 after a 1.3MB Proust
+# upload had chroma's first-time index killed at 90s (cache cold path; warm
+# path runs in <10s). 180s gives indexing room without making transient
+# upstream stalls feel infinite — the bigger fix is pre-warming on upload.
 # default was too aggressive for agentic tools (e.g. Clarifeye's call_agent
 # does multi-step reasoning + internal LLM calls).
-MCP_CALL_TIMEOUT = float(os.environ.get("MCP_CALL_TIMEOUT", "90"))
+MCP_CALL_TIMEOUT = float(os.environ.get("MCP_CALL_TIMEOUT", "180"))
 
 # Number of retry attempts on transient connection errors (NOT on timeout).
 # A timeout retry would double the user's wait without adding signal; a
