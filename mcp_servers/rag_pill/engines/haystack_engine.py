@@ -68,7 +68,7 @@ class HaystackEngine:
         self._embed = embedding_config
 
     async def _build_index(self, pill: Pill, corpus: Any):
-        loop = asyncio.get_event_loop()
+        loop = asyncio.get_running_loop()
 
         def _build():
             store = InMemoryDocumentStore()
@@ -169,7 +169,7 @@ class HaystackEngine:
             return retriever.run(query_embedding=q_emb)["documents"]
 
         t0 = time.perf_counter()
-        docs = await asyncio.get_event_loop().run_in_executor(None, _retrieve)
+        docs = await asyncio.get_running_loop().run_in_executor(None, _retrieve)
         retrieval_latency_ms = int((time.perf_counter() - t0) * 1000)
         emitter.emit("retrieval_done", took_ms=retrieval_latency_ms)
 

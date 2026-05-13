@@ -18,6 +18,7 @@ from mcp_servers.rag_pill.engines.base import locate_span
 from mcp_servers.rag_pill.engines.result import EngineResult
 from mcp_servers.rag_pill.progress import NullEmitter, ProgressEmitter
 from mcp_servers.rag_pill.providers import EmbeddingConfig, LLMProvider
+from mcp_servers.rag_pill.providers.embedding_validator import validate_vector_list
 from mcp_servers.rag_pill.schemas import Pill
 from mcp_servers.rag_pill.strategies import render_prompt
 
@@ -76,7 +77,7 @@ class LangChainEngine:
         )
 
     async def _build_index(self, pill: Pill, corpus: Any):
-        loop = asyncio.get_event_loop()
+        loop = asyncio.get_running_loop()
         splitter = self._splitter(pill)
         embeddings = self._embeddings(pill)
 
@@ -92,9 +93,25 @@ class LangChainEngine:
         ]
         chunks = splitter.split_documents(docs)
 
-        return await loop.run_in_executor(
-            None, lambda: FAISS.from_documents(chunks, embeddings)
-        )
+        # Pre-embed + validate at the seam so a None-valued embedding from a
+        # degraded OpenRouter response raises the retry-marker ValueError here,
+        # not deep inside FAISS where it would surface as an opaque
+        # `'NoneType' object is not subscriptable`.
+        def _build() -> Any:
+            if not chunks:
+                return FAISS.from_texts(["__empty__"], embeddings)  # FAISS chokes on 0 docs
+            texts = [c.page_content for c in chunks]
+            metadatas = [c.metadata for c in chunks]
+            raw = embeddings.embed_documents(texts)
+            vectors = validate_vector_list(raw)
+            text_embedding_pairs = list(zip(texts, vectors))
+            return FAISS.from_embeddings(
+                text_embeddings=text_embedding_pairs,
+                embedding=embeddings,
+                metadatas=metadatas,
+            )
+
+        return await loop.run_in_executor(None, _build)
 
     async def execute(
         self,

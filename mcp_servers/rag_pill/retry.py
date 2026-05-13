@@ -23,10 +23,11 @@ import os
 
 log = logging.getLogger("rag_pill")
 
-# Default 2 retries (3 total attempts) with 1s, 2s backoff. Tunable via env
-# for ops to dial down under quota pressure or up while a provider is
-# flapping.
-EMBEDDING_RETRIES = int(os.environ.get("RAG_PILL_EMBEDDING_RETRIES", "2"))
+# Default 4 retries (5 total attempts) with 1+2+4+8+16 = 31s window.
+# Tunable via env for ops to dial down under quota pressure or up while a
+# provider is flapping. The retries only fire on the marker errors below,
+# so steady-state cost is zero — only flaky upstream pays.
+EMBEDDING_RETRIES = int(os.environ.get("RAG_PILL_EMBEDDING_RETRIES", "4"))
 _EMBEDDING_EMPTY_DATA_MARKER = "No embedding data received"
 
 
@@ -34,28 +35,37 @@ _NONETYPE_SUBSCRIPT_MARKER = "'NoneType' object is not subscriptable"
 
 
 def _is_empty_embedding_data_error(exc: BaseException) -> bool:
-    """True when the exception is the OpenAI SDK's empty-data ValueError
-    OR its TypeError leak-through variant.
+    """True when the exception (or any of its __cause__/__context__ links)
+    carries one of the OpenRouter-degradation marker strings.
 
     Two production traces share the same root cause (OpenRouter routes
     embedding traffic to a degraded provider that returns 200 with
     None-valued embeddings):
 
-      - ``ValueError("No embedding data received")`` — the OpenAI SDK
-        raises this from openai/resources/embeddings.py:116 when the
-        ``data`` array is empty.
-      - ``TypeError("'NoneType' object is not subscriptable")`` — when
-        a None embedding leaks past the SDK and downstream code (e.g.
-        haystack's retriever, llamaindex embedding fetch) subscripts it.
+      - ``"No embedding data received"`` — the OpenAI SDK raises a
+        ``ValueError`` with this message from openai/resources/embeddings.py
+        when the ``data`` array is empty.
+      - ``"'NoneType' object is not subscriptable"`` — when a None
+        embedding leaks past the SDK and downstream code (haystack's
+        retriever, llamaindex embedding fetch, langchain/FAISS subscript)
+        indexes into it.
 
-    Both signal the same transient upstream flake; both should retry.
-    We match by class + message rather than ``isinstance`` against the
-    SDK types so we stay decoupled from openai package versions.
+    We match by **message substring across any exception class** and walk
+    the cause chain. Frameworks (haystack components, langchain runnables,
+    llamaindex callbacks) sometimes wrap the original error in their own
+    class while preserving the message verbatim — a class-strict matcher
+    would miss those and turn one transient flake into a user-visible
+    failure. The marker strings are specific enough that false positives
+    are implausible.
     """
-    if isinstance(exc, ValueError) and _EMBEDDING_EMPTY_DATA_MARKER in str(exc):
-        return True
-    if isinstance(exc, TypeError) and _NONETYPE_SUBSCRIPT_MARKER in str(exc):
-        return True
+    seen: set[int] = set()
+    cur: BaseException | None = exc
+    while cur is not None and id(cur) not in seen:
+        seen.add(id(cur))
+        msg = str(cur)
+        if _EMBEDDING_EMPTY_DATA_MARKER in msg or _NONETYPE_SUBSCRIPT_MARKER in msg:
+            return True
+        cur = cur.__cause__ or cur.__context__
     return False
 
 

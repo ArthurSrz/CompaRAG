@@ -18,7 +18,7 @@ code paths and the retry machinery stay untouched.
 
 from __future__ import annotations
 
-from typing import Any
+from typing import Any, Iterable
 
 # Must match retry._EMBEDDING_EMPTY_DATA_MARKER so the existing retry
 # wrapper picks up these synthesized errors.
@@ -43,6 +43,38 @@ def validate_document_embeddings(result: Any) -> dict:
     for doc in _require(payload.get("documents")):
         _require(getattr(doc, "embedding", None))
     return result
+
+
+def validate_vector_list(vectors: Any) -> list:
+    """Materialize ``vectors`` into a list and raise the empty-data marker
+    if any entry is None or empty.
+
+    Used by engines that do their own pre-embedding step (langchain,
+    llamaindex, chroma) before handing vectors to a framework constructor
+    that would otherwise subscript a None deep inside its vector ops and
+    raise an opaque TypeError. Routing the failure through this single
+    marker means the existing retry wrapper picks it up and the engine
+    surfaces the same friendly retry behavior the haystack/txtai paths
+    already have.
+
+    Returns the materialized list (top-level only) with the original
+    inner vectors preserved as-is. Chromadb's `OpenAIEmbeddingFunction`
+    returns `list[np.float32]`-shaped inner vectors and rejects anything
+    cast through Python `float`, so the inner type must round-trip
+    untouched.
+    """
+    out: list = []
+    for vec in vectors:
+        if vec is None:
+            raise ValueError(EMBEDDING_EMPTY_DATA_MARKER)
+        try:
+            n = len(vec)
+        except TypeError as exc:
+            raise ValueError(EMBEDDING_EMPTY_DATA_MARKER) from exc
+        if n == 0:
+            raise ValueError(EMBEDDING_EMPTY_DATA_MARKER)
+        out.append(vec)
+    return out
 
 
 def validate_query_embedding(result: Any) -> dict:

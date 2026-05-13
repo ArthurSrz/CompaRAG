@@ -72,8 +72,13 @@ def test_marker_rejects_unrelated_value_error():
     assert not _is_empty_embedding_data_error(ValueError("invalid model"))
 
 
-def test_marker_rejects_non_value_error():
-    assert not _is_empty_embedding_data_error(RuntimeError("No embedding data received"))
+def test_marker_matches_marker_message_regardless_of_class():
+    """Framework wraps (haystack ComponentError, langchain ChainError, etc.)
+    re-raise the marker message under a different class. Since
+    e579b024-followup we widened the matcher to message-substring across
+    any exception class — see test_retry_streaming.py for cause-chain
+    coverage."""
+    assert _is_empty_embedding_data_error(RuntimeError("No embedding data received"))
 
 
 # --- execute_with_embedding_retry ------------------------------------------

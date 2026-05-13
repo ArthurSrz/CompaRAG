@@ -18,6 +18,7 @@ from mcp_servers.rag_pill.engines.base import locate_span
 from mcp_servers.rag_pill.engines.result import EngineResult
 from mcp_servers.rag_pill.progress import NullEmitter, ProgressEmitter
 from mcp_servers.rag_pill.providers import EmbeddingConfig, LLMProvider
+from mcp_servers.rag_pill.providers.embedding_validator import validate_vector_list
 from mcp_servers.rag_pill.schemas import Pill
 from mcp_servers.rag_pill.strategies import render_prompt
 
@@ -73,7 +74,7 @@ class LlamaIndexEngine:
         )
 
     async def _build_index(self, pill: Pill, corpus: Any):
-        loop = asyncio.get_event_loop()
+        loop = asyncio.get_running_loop()
         self._configure(pill)
         docs = [
             Document(
@@ -85,9 +86,22 @@ class LlamaIndexEngine:
             )
             for doc in corpus.iter_documents()
         ]
-        return await loop.run_in_executor(
-            None, lambda: VectorStoreIndex.from_documents(docs)
-        )
+
+        # Probe the embed model on a tiny sample before handing off to
+        # VectorStoreIndex.from_documents. If OpenRouter is returning
+        # None-valued embeddings, the probe raises the retry-marker
+        # ValueError here — instead of bubbling up as an opaque
+        # `'NoneType' object is not subscriptable` from deep inside the
+        # llamaindex vector-store build.
+        def _build() -> Any:
+            if docs:
+                probe = Settings.embed_model.get_text_embedding_batch(
+                    [docs[0].text[:512] or "probe"]
+                )
+                validate_vector_list(probe)
+            return VectorStoreIndex.from_documents(docs)
+
+        return await loop.run_in_executor(None, _build)
 
     async def execute(
         self,
@@ -145,7 +159,7 @@ class LlamaIndexEngine:
 
         emitter.emit("retrieval_start")
         t0 = time.perf_counter()
-        nodes = await asyncio.get_event_loop().run_in_executor(
+        nodes = await asyncio.get_running_loop().run_in_executor(
             None, lambda: retriever.retrieve(query)
         )
         retrieval_latency_ms = int((time.perf_counter() - t0) * 1000)

@@ -17,6 +17,7 @@ import pytest
 from mcp_servers.rag_pill.providers.embedding_validator import (
     validate_document_embeddings,
     validate_query_embedding,
+    validate_vector_list,
 )
 
 
@@ -67,3 +68,37 @@ def test_validators_raise_retry_marker_when_whole_result_is_none():
         validate_document_embeddings(None)
     with pytest.raises(ValueError, match="No embedding data received"):
         validate_query_embedding(None)
+
+
+def test_validate_vector_list_returns_top_level_list_with_inner_vectors_intact():
+    """The function materializes the outer iterable but preserves inner
+    vectors by identity — chromadb's OpenAIEmbeddingFunction returns
+    list[np.float32] inside, and casting through Python float breaks
+    chromadb's accepted-types check."""
+    a = [0.1, 0.2]
+    b = (0.3, 0.4)
+    out = validate_vector_list([a, b])
+    assert isinstance(out, list)
+    assert out[0] is a
+    assert out[1] is b
+
+
+def test_validate_vector_list_raises_on_none_entry():
+    with pytest.raises(ValueError, match="No embedding data received"):
+        validate_vector_list([[0.1, 0.2], None, [0.5, 0.6]])
+
+
+def test_validate_vector_list_raises_on_empty_vector():
+    with pytest.raises(ValueError, match="No embedding data received"):
+        validate_vector_list([[0.1, 0.2], []])
+
+
+def test_validate_vector_list_raises_on_non_sized_entry():
+    """A scalar leaking through (no __len__) is degenerate — surface as
+    the same marker so the retry wrapper catches it."""
+    with pytest.raises(ValueError, match="No embedding data received"):
+        validate_vector_list([[0.1, 0.2], 42])
+
+
+def test_validate_vector_list_handles_empty_input():
+    assert validate_vector_list([]) == []

@@ -54,6 +54,44 @@ def test_other_typeerror_not_retried() -> None:
     ) is False
 
 
+def test_matcher_walks_cause_chain_for_framework_wrapped_marker() -> None:
+    """Frameworks (haystack components, langchain runnables, llamaindex
+    callbacks) sometimes re-raise the original TypeError as their own
+    class while preserving the marker via ``raise … from original``. The
+    matcher must walk ``__cause__`` so the same transient flake stays
+    retry-eligible no matter who wraps it."""
+    original = TypeError("'NoneType' object is not subscriptable")
+    try:
+        try:
+            raise original
+        except TypeError as exc:
+            raise RuntimeError("haystack component failed") from exc
+    except RuntimeError as wrapped:
+        assert _is_empty_embedding_data_error(wrapped) is True
+
+
+def test_matcher_walks_context_chain_for_implicit_wrap() -> None:
+    """Implicit-chain variant: ``raise X`` inside an except without
+    ``from`` populates ``__context__`` (not ``__cause__``). Same root
+    cause; same retry decision."""
+    try:
+        try:
+            raise TypeError("'NoneType' object is not subscriptable")
+        except TypeError:
+            raise RuntimeError("framework re-raise")
+    except RuntimeError as wrapped:
+        assert _is_empty_embedding_data_error(wrapped) is True
+
+
+def test_matcher_handles_self_referential_cause_without_recursion() -> None:
+    """Defensive: pathological exception graphs (cause loop) must not
+    blow the stack. The matcher tracks visited ids and returns False
+    when no marker is found along the chain."""
+    e1 = RuntimeError("boring")
+    e1.__cause__ = e1  # self-loop
+    assert _is_empty_embedding_data_error(e1) is False
+
+
 class _StubEngine:
     """Engine that fails N times with the production trace, then succeeds."""
 

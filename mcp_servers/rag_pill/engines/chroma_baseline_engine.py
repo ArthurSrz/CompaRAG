@@ -23,6 +23,7 @@ from mcp_servers.rag_pill.engines.base import locate_span
 from mcp_servers.rag_pill.engines.result import EngineResult
 from mcp_servers.rag_pill.progress import NullEmitter, ProgressEmitter
 from mcp_servers.rag_pill.providers import EmbeddingConfig, LLMProvider
+from mcp_servers.rag_pill.providers.embedding_validator import validate_vector_list
 from mcp_servers.rag_pill.schemas import Pill
 from mcp_servers.rag_pill.strategies import render_prompt
 
@@ -33,6 +34,18 @@ try:
     from chromadb.utils.embedding_functions import OpenAIEmbeddingFunction
 
     _AVAILABLE = True
+
+    class _ValidatedOpenAIEmbeddingFunction(OpenAIEmbeddingFunction):  # type: ignore[misc]
+        """OpenAIEmbeddingFunction that re-raises None-valued embeddings as
+        the retry-marker ValueError. Without this, chromadb's `upsert`
+        passes the None down into the Rust bindings where the failure
+        surfaces as `'NoneType' object is not subscriptable` from inside
+        the chromadb internals — opaque to the retry wrapper.
+        """
+
+        def __call__(self, input):  # type: ignore[override]
+            vectors = super().__call__(input)
+            return validate_vector_list(vectors)
 except ImportError:
     _AVAILABLE = False
 
@@ -54,7 +67,7 @@ async def _get_shared_client() -> Any:
         return _CLIENT
     async with _CLIENT_LOCK:
         if _CLIENT is None:
-            loop = asyncio.get_event_loop()
+            loop = asyncio.get_running_loop()
             _CLIENT = await loop.run_in_executor(None, chromadb.EphemeralClient)
     return _CLIENT
 
@@ -134,13 +147,13 @@ class ChromaBaselineEngine:
         self._embed = embedding_config
 
     async def _build_index(self, pill: Pill, corpus: Any):
-        loop = asyncio.get_event_loop()
+        loop = asyncio.get_running_loop()
         client = await _get_shared_client()
 
         collection_name = f"baseline_{pill.name}_{corpus.version_hash[:16]}"
 
         def _build():
-            embed_fn = OpenAIEmbeddingFunction(
+            embed_fn = _ValidatedOpenAIEmbeddingFunction(
                 api_key=self._embed.api_key,
                 api_base=self._embed.base_url,
                 model_name=pill.embedder,
@@ -247,7 +260,7 @@ class ChromaBaselineEngine:
             )
 
         t0 = time.perf_counter()
-        result = await asyncio.get_event_loop().run_in_executor(
+        result = await asyncio.get_running_loop().run_in_executor(
             None,
             lambda: collection.query(
                 query_texts=[query], n_results=min(top_k, n_items)

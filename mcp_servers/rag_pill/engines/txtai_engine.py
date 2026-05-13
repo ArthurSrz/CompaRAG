@@ -69,7 +69,7 @@ class TxtaiEngine:
         self._embed = embedding_config
 
     async def _build_index(self, pill: Pill, corpus: Any):
-        loop = asyncio.get_event_loop()
+        loop = asyncio.get_running_loop()
 
         def _build():
             rows: list[tuple[str, str, None]] = []
@@ -173,7 +173,7 @@ class TxtaiEngine:
 
         emitter.emit("retrieval_start")
         t0 = time.perf_counter()
-        results = await asyncio.get_event_loop().run_in_executor(
+        results = await asyncio.get_running_loop().run_in_executor(
             None, lambda: embeddings.search(query, top_k)
         )
         retrieval_latency_ms = int((time.perf_counter() - t0) * 1000)
