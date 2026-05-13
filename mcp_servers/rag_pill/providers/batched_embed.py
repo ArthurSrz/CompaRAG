@@ -20,6 +20,7 @@ own batch_size knob and rely on the same per-batch retry there).
 from __future__ import annotations
 
 import logging
+import os
 import time
 from typing import Any
 
@@ -28,6 +29,12 @@ import numpy as np
 # Same marker the retry wrapper recognizes (retry._EMBEDDING_EMPTY_DATA_MARKER)
 # so this module's failures classify identically to the SDK's.
 _EMPTY_DATA_MARKER = "No embedding data received"
+
+# Default 4 retries per batch (5 attempts with 1+2+4+8 = 15s backoff).
+# Combined with the outer execute_with_embedding_retry (5 attempts,
+# 31s backoff) a single transient OpenRouter degradation has a
+# multi-minute survival window before reaching the user.
+_DEFAULT_BATCH_RETRIES = int(os.environ.get("RAG_PILL_BATCH_RETRIES", "4"))
 
 log = logging.getLogger("rag_pill")
 
@@ -59,7 +66,7 @@ def batched_embed(
     model: str,
     inputs: list[str],
     batch_size: int,
-    max_retries_per_batch: int = 2,
+    max_retries_per_batch: int | None = None,
     backoff_base: float = 1.0,
 ) -> np.ndarray:
     """Embed ``inputs`` in groups of ``batch_size``; retry each failing batch.
@@ -74,10 +81,11 @@ def batched_embed(
     if not inputs:
         return np.zeros((0, 0), dtype=np.float32)
 
+    retries = _DEFAULT_BATCH_RETRIES if max_retries_per_batch is None else max_retries_per_batch
     rows: list[list[float]] = []
     for start in range(0, len(inputs), batch_size):
         chunk = inputs[start : start + batch_size]
-        for attempt in range(max_retries_per_batch + 1):
+        for attempt in range(retries + 1):
             try:
                 resp = client.embeddings.create(model=model, input=chunk)
                 vectors = _embeddings_or_raise(resp, expected_count=len(chunk))
@@ -86,12 +94,12 @@ def batched_embed(
             except ValueError as exc:
                 if _EMPTY_DATA_MARKER not in str(exc):
                     raise
-                if attempt >= max_retries_per_batch:
+                if attempt >= retries:
                     raise
                 wait = backoff_base * (2 ** attempt)
                 log.warning(
                     "batched_embed.empty_data batch_start=%d size=%d attempt=%d/%d backoff_s=%s",
-                    start, len(chunk), attempt + 1, max_retries_per_batch + 1, wait,
+                    start, len(chunk), attempt + 1, retries + 1, wait,
                 )
                 time.sleep(wait)
 
