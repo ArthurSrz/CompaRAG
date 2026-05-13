@@ -152,16 +152,16 @@
     "datasets": {
       "questions": {
         "1": {
-          "desc": "<p>Les données de comparaison servent à évaluer les outils MCP sur des tâches réelles.</p><p>En comparant à l’aveugle les résultats de deux outils MCP, les utilisateurs de CompaRAG expriment leurs préférences, indiquant ainsi quels résultats sont les plus pertinents. Ces données de comparaison peuvent être utilisées pour évaluer la performance relative des outils MCP sur différents types de tâches.</p><p>Il s’agit d’un processus continu, où les préférences des utilisateurs permettent de mieux comprendre les forces et faiblesses de chaque outil MCP.</p>",
+          "desc": "<p>Les données de comparaison servent à évaluer les outils RAG sur des tâches réelles.</p><p>En comparant à l’aveugle les résultats de deux outils RAG, les utilisateurs de CompaRAG expriment leurs préférences, indiquant ainsi quels résultats sont les plus pertinents. Ces données de comparaison peuvent être utilisées pour évaluer la performance relative des outils RAG sur différents types de tâches.</p><p>Il s’agit d’un processus continu, où les préférences des utilisateurs permettent de mieux comprendre les forces et faiblesses de chaque outil RAG.</p>",
           "title": "Les données de préférence ont-elles un effet immédiat pour améliorer les modèles?"
         },
         "2": {
-          "desc": "<p>La spécificité des données collectées sur la plateforme CompaRAG est qu’elles correspondent à des tâches réelles des utilisateurs. Ces données reflètent des préférences humaines dans des contextes métier précis. Elles permettent d’évaluer les outils MCP sur leur capacité à répondre aux besoins concrets des utilisateurs.</p>",
+          "desc": "<p>La spécificité des données collectées sur la plateforme CompaRAG est qu’elles correspondent à des tâches réelles des utilisateurs. Ces données reflètent des préférences humaines dans des contextes métier précis. Elles permettent d’évaluer les outils RAG sur leur capacité à répondre aux besoins concrets des utilisateurs.</p>",
           "title": "Pourquoi les données de comparaison collectées sur CompaRAG ont-elles de la valeur ?"
         },
         "3": {
-          "desc": "<p>CompaRAG se positionne comme un outil d’évaluation comparative des outils MCP, axé sur la performance réelle mesurée par les préférences des utilisateurs, se distinguant ainsi d’autres outils d’évaluation MCP par son approche en aveugle et sa mesure centrée sur les cas d’usage réels.</p>",
-          "title": "Quelle est la spécificité de CompaRAG par rapport à d’autres outils d’évaluation MCP ?"
+          "desc": "<p>CompaRAG se positionne comme un outil d’évaluation comparative des outils RAG, axé sur la performance réelle mesurée par les préférences des utilisateurs, se distinguant ainsi d’autres outils d’évaluation RAG par son approche en aveugle et sa mesure centrée sur les cas d’usage réels.</p>",
+          "title": "Quelle est la spécificité de CompaRAG par rapport à d’autres outils d’évaluation RAG ?"
         }
       },
       "title": "Jeu de données"
@@ -169,16 +169,16 @@
     "ecology": {
       "questions": {
         "1": {
-          "title": "Pourquoi la latence des outils MCP varie-t-elle ?",
-          "desc": "<p>Chaque outil MCP appelle des services externes (bases de données, API, modèles d’embedding) avec des temps de réponse variables selon la charge et l’infrastructure du fournisseur.</p>"
+          "title": "Pourquoi la latence des outils RAG varie-t-elle ?",
+          "desc": "<p>Chaque outil RAG appelle des services externes (bases de données, API, modèles d’embedding) avec des temps de réponse variables selon la charge et l’infrastructure du fournisseur.</p>"
         },
         "2": {
           "title": "Comment évaluer le risque de dépendance fournisseur ?",
-          "desc": "<p>CompaRAG vous permet de tester plusieurs outils MCP sur la même tâche et de comparer leur fiabilité. Un outil performant sur vos cas d’usage réels réduit le risque de dépendance à un fournisseur unique.</p>"
+          "desc": "<p>CompaRAG vous permet de tester plusieurs outils RAG sur la même tâche et de comparer leur fiabilité. Un outil performant sur vos cas d’usage réels réduit le risque de dépendance à un fournisseur unique.</p>"
         }
       },
-      "title": "Performance et fiabilité des outils MCP",
-      "desc": "CompaRAG mesure la performance relative des outils MCP selon les préférences des utilisateurs : latence de réponse, fiabilité et variance des résultats selon les tâches."
+      "title": "Performance et fiabilité des outils RAG",
+      "desc": "CompaRAG mesure la performance relative des outils RAG selon les préférences des utilisateurs : latence de réponse, fiabilité et variance des résultats selon les tâches."
     },
     "models": {
       "questions": {
@@ -1315,7 +1315,7 @@
     }
   },
   "header": {
-    "banner": "🏆 Comparez vos outils MCP en aveugle — votez et consultez le classement !",
+    "banner": "🏆 Comparez vos outils RAG en aveugle — votez et consultez le classement !",
     "chatbot": {
       "newDiscussion": "Nouvelle discussion",
       "step": "Étape",
@@ -1325,7 +1325,7 @@
       },
       "stepTwo": {
         "description": "Découvrez l’impact environnemental de vos discussions avec chaque modèle",
-        "title": "Les modèles sont démasqués !"
+        "title": "Les outils sont démasqués !"
       }
     },
     "help": {
@@ -1344,7 +1344,7 @@
       "count": "{count} votes",
       "legend": "Légende",
       "objective": "Obj : {count}",
-      "tooltip": "Discutez, votez et aidez-nous à atteindre cet objectif !<br /><strong>Vos votes sont importants</strong> : ils alimentent le jeu de données CompaRAG mis à disposition librement pour évaluer les outils MCP.<br />Ce commun numérique contribue à une meilleure <strong>évaluation objective des outils MCP.</strong>"
+      "tooltip": "Discutez, votez et aidez-nous à atteindre cet objectif !<br /><strong>Vos votes sont importants</strong> : ils alimentent le jeu de données CompaRAG mis à disposition librement pour évaluer les outils RAG.<br />Ce commun numérique contribue à une meilleure <strong>évaluation objective des outils RAG.</strong>"
     }
   },
   "home": {
@@ -1353,24 +1353,24 @@
       "title": "Vos questions les plus courantes"
     },
     "intro": {
-      "desc": "Comparez deux outils MCP à l’aveugle et évaluez leurs résultats",
+      "desc": "Comparez deux outils RAG à l’aveugle et évaluez leurs résultats",
       "steps": {
-        "a11yDesc": "1. Je discute avec deux IA anonymes : échangez aussi longtemps que vous le souhaitez. 2. Je donne mon avis : vous contribuez ainsi à l'amélioration des modèles d’IA. 3. Les modèles sont démasqués : apprenez-en plus sur les modèles d’IA et leurs caractéristiques.",
+        "a11yDesc": "1. Je compare deux outils RAG anonymes : échangez aussi longtemps que vous le souhaitez. 2. Je donne mon avis : vous contribuez ainsi à l'amélioration des modèles d’IA. 3. Les outils sont démasqués : apprenez-en plus sur les modèles d’IA et leurs caractéristiques.",
         "one": {
-          "desc": "Échangez aussi longtemps que vous le souhaitez",
-          "title": "Je discute avec deux IA anonymes"
+          "desc": "Soumettez la même tâche aux deux outils",
+          "title": "Je compare deux outils RAG anonymes"
         },
         "three": {
-          "desc": "Apprenez en plus sur les modèles d’IA et leurs caractéristiques",
-          "title": "Les modèles sont démasqués !"
+          "desc": "Apprenez en plus sur les outils RAG et leurs caractéristiques",
+          "title": "Les outils sont démasqués !"
         },
         "title": "Comment ça marche",
         "two": {
-          "desc": "Vous contribuez ainsi à l'amélioration des modèles d’IA",
+          "desc": "Vous contribuez ainsi à l’évaluation des outils RAG",
           "title": "Je donne mon avis"
         }
       },
-      "title": "Ne vous fiez pas aux résultats <span {props}>d’un seul outil MCP</span>",
+      "title": "Ne vous fiez pas aux résultats <span {props}>d’un seul outil RAG</span>",
       "tos": {
         "accept": "J'accepte les <a {linkProps}>conditions générales d’utilisation</a>",
         "error": "Vous devez accepter les modalités d'utilisation pour continuer",
@@ -1399,7 +1399,7 @@
       },
       "title": "Les usages spécifiques de CompaRAG",
       "use": {
-        "desc": "Développeurs, architectes, équipes produit… accédez aux données de comparaison CompaRAG pour évaluer les outils MCP sur vos propres critères.",
+        "desc": "Développeurs, architectes, équipes produit… accédez aux données de comparaison CompaRAG pour évaluer les outils RAG sur vos propres critères.",
         "title": "Exploiter les données"
       }
     },
@@ -1407,9 +1407,9 @@
       "compare": {
         "alt": "Comparer",
         "desc": "Soumettez la même tâche à deux outils et choisissez le meilleur résultat",
-        "title": "Comparer les résultats de différents outils MCP"
+        "title": "Comparer les résultats de différents outils RAG"
       },
-      "desc": "CompaRAG est un outil gratuit qui permet de comparer objectivement les outils MCP et de découvrir leurs forces respectives.",
+      "desc": "CompaRAG est un outil gratuit qui permet de comparer objectivement les outils RAG et de découvrir leurs forces respectives.",
       "measure": {
         "alt": "Mesurer",
         "desc": "Découvrez quel outil répond le mieux à vos besoins métier",
@@ -1417,8 +1417,8 @@
       },
       "test": {
         "alt": "Tester",
-        "desc": "Testez différents outils MCP, quel que soit leur fournisseur, sur vos propres cas d’usage.",
-        "title": "Tester au même endroit les outils MCP de l’écosystème"
+        "desc": "Testez différents outils RAG, quel que soit leur fournisseur, sur vos propres cas d’usage.",
+        "title": "Tester au même endroit les outils RAG de l’écosystème"
       },
       "title": "À quoi sert CompaRAG ?"
     },
@@ -1636,15 +1636,15 @@
     "comparator": {
       "challenges": {
         "bias": {
-          "desc": "Comparer objectivement les outils MCP sur des tâches réelles pour identifier les outils les plus fiables selon les cas d’usage.",
-          "title": "Fiabilité variable selon les fournisseurs d’outils MCP"
+          "desc": "Comparer objectivement les outils RAG sur des tâches réelles pour identifier les outils les plus fiables selon les cas d’usage.",
+          "title": "Fiabilité variable selon les fournisseurs d’outils RAG"
         },
         "impacts": {
-          "desc": "Évaluer plusieurs outils MCP sur la même tâche pour réduire le risque de dépendance à un fournisseur unique et faciliter la portabilité.",
+          "desc": "Évaluer plusieurs outils RAG sur la même tâche pour réduire le risque de dépendance à un fournisseur unique et faciliter la portabilité.",
           "title": "Dépendance fournisseur et portabilité des outils"
         },
         "pluralism": {
-          "desc": "Mesurer la variance de performance des outils MCP selon les types de tâches pour choisir l’outil le mieux adapté à chaque besoin.",
+          "desc": "Mesurer la variance de performance des outils RAG selon les types de tâches pour choisir l’outil le mieux adapté à chaque besoin.",
           "title": "Variance de performance selon les cas d’usage"
         },
         "thinking": {
@@ -1832,7 +1832,7 @@
   },
   "ranking": {
     "energy": {
-      "desc": "Classement des outils MCP selon leur performance mesurée sur les tâches soumises par les utilisateurs. Inclut la latence médiane et le taux de fiabilité.",
+      "desc": "Classement des outils RAG selon leur performance mesurée sur les tâches soumises par les utilisateurs. Inclut la latence médiane et le taux de fiabilité.",
       "tabLabel": "Performance",
       "title": "Performance des outils",
       "views": {
@@ -2000,7 +2000,7 @@
       "totalVotes": "Total votes :"
     },
     "title": "Des votes… au classement des modèles",
-    "desc": "Merci pour vos contributions !<br> Le classement <strong>CompaRAG</strong> repose sur l’ensemble des votes issus de la <strong>comparaison à l’aveugle</strong> des outils MCP.<br> Construit pour évaluer objectivement les outils MCP, le classement est établi en fonction du <strong>score de satisfaction</strong> calculé à partir du modèle statistique <strong>Bradley Terry</strong>.<br> Le classement CompaRAG reflète les <strong>préférences des utilisateurs</strong> sur leurs propres tâches."
+    "desc": "Merci pour vos contributions !<br> Le classement <strong>CompaRAG</strong> repose sur l’ensemble des votes issus de la <strong>comparaison à l’aveugle</strong> des outils RAG.<br> Construit pour évaluer objectivement les outils RAG, le classement est établi en fonction du <strong>score de satisfaction</strong> calculé à partir du modèle statistique <strong>Bradley Terry</strong>.<br> Le classement CompaRAG reflète les <strong>préférences des utilisateurs</strong> sur leurs propres tâches."
   },
   "reveal": {
     "equivalent": {
@@ -2073,8 +2073,8 @@
     }
   },
   "seo": {
-    "desc": "CompaRAG est un outil permettant de comparer à l’aveugle différents outils MCP pour évaluer leur performance sur une même tâche.",
-    "title": "CompaRAG, le comparateur d’outils MCP",
+    "desc": "CompaRAG est un outil permettant de comparer à l’aveugle différents outils RAG pour évaluer leur performance sur une même tâche.",
+    "title": "CompaRAG, le comparateur d’outils RAG",
     "titles": {
       "accessibilite": "Déclaration d’accessibilité",
       "arene": "Discussion",
@@ -2186,7 +2186,7 @@
     "tryAgain": "Réessayer",
     "unavailable": {
       "title": "Outils temporairement indisponibles",
-      "message": "Les outils MCP sont en cours de démarrage. Veuillez réessayer dans quelques instants."
+      "message": "Les outils RAG sont en cours de démarrage. Veuillez réessayer dans quelques instants."
     }
   },
   "vote": {
@@ -2236,7 +2236,7 @@
     "privacy": "Ne communiquez pas d’informations personnelles comme votre nom, prénom ou adresse.",
     "title": "Bienvenue sur CompaRAG !",
     "tos": {
-      "desc": "Les comparaisons et les votes que vous effectuez sur CompaRAG sont utilisés de manière anonyme pour constituer des données de performance des outils MCP.",
+      "desc": "Les comparaisons et les votes que vous effectuez sur CompaRAG sont utilisés de manière anonyme pour constituer des données de performance des outils RAG.",
       "moreInfos": "En savoir plus sur le projet."
     },
     "use": "N’utilisez pas l’arène à des fins illégales ou nuisibles."

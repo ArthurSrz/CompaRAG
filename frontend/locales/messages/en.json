@@ -161,7 +161,7 @@
         },
         "3": {
           "desc": "<p> CompaRAG positions itself as a low-ressourced language assessment and alignment tool for language models, focused on response quality and preference data collection, thus distinguishing itself from the global ranking approach of <a href='https://lmarena.ai/' target='_blank'> chatbot arena </a> developed by <a href='http://lmsys.org' target='_blank'> lmsys.org </a> and the ethical alignment of AI models of <a href='https://hannahkirk.github.io/prism-alignment/' target='_blank'> Prism Alignment Project </a> . </p>",
-          "title": "What makes CompaRAG different from other MCP evaluation tools?"
+          "title": "What makes CompaRAG different from other RAG evaluation tools?"
         }
       },
       "title": "Dataset"
@@ -169,16 +169,16 @@
     "ecology": {
       "questions": {
         "1": {
-          "title": "Why does MCP tool latency vary?",
-          "desc": "<p>Each MCP tool calls external services (databases, APIs, embedding models) with variable response times depending on provider load and infrastructure.</p>"
+          "title": "Why does RAG tool latency vary?",
+          "desc": "<p>Each RAG tool calls external services (databases, APIs, embedding models) with variable response times depending on provider load and infrastructure.</p>"
         },
         "2": {
           "title": "How can I assess vendor lock-in risk?",
-          "desc": "<p>CompaRAG lets you test multiple MCP tools on the same task and compare their reliability. A tool that performs well on your real use cases reduces the risk of dependence on a single vendor.</p>"
+          "desc": "<p>CompaRAG lets you test multiple RAG tools on the same task and compare their reliability. A tool that performs well on your real use cases reduces the risk of dependence on a single vendor.</p>"
         }
       },
-      "title": "MCP tool performance and reliability",
-      "desc": "CompaRAG measures the relative performance of MCP tools based on user preferences: response latency, reliability and variance of results across tasks."
+      "title": "RAG tool performance and reliability",
+      "desc": "CompaRAG measures the relative performance of RAG tools based on user preferences: response latency, reliability and variance of results across tasks."
     },
     "models": {
       "questions": {
@@ -1164,7 +1164,7 @@
     }
   },
   "header": {
-    "banner": "🏆 Compare your MCP tools blind — vote and see the ranking!",
+    "banner": "🏆 Compare your RAG tools blind — vote and see the ranking!",
     "chatbot": {
       "newDiscussion": "New chat",
       "step": "Step",
@@ -1187,7 +1187,7 @@
     "logoAlt": "French Republic",
     "menu": "Menu",
     "startDiscussion": "New chat",
-    "subtitle": "The MCP tool arena",
+    "subtitle": "The RAG tool arena",
     "title": "CompaRAG",
     "votes": {
       "count": "{count} votes",
@@ -1202,24 +1202,24 @@
       "title": "Your frequently asked questions"
     },
     "intro": {
-      "desc": "Compare two MCP tools blind and evaluate their results",
+      "desc": "Compare two RAG tools blind and evaluate their results",
       "steps": {
-        "a11yDesc": "1. I chat with two hidden AIs: Chat for as long as you like. 2. I give my preference: By doing so, you'll help improve the AI models. 3. The model identities are revealed: Learn more about them and their characteristics.",
+        "a11yDesc": "1. I compare two hidden RAG tools: Chat for as long as you like. 2. I give my preference: By doing so, you contribute to RAG tool evaluation. 3. The tool identities are revealed: Learn more about them and their characteristics.",
         "one": {
-          "desc": "Chat as long as you like",
-          "title": "I chat with two hidden AIs"
+          "desc": "Submit the same task to both tools",
+          "title": "I compare two hidden RAG tools"
         },
         "three": {
-          "desc": "Learn more about AI models and their characteristics",
-          "title": "The model identities are revealed!"
+          "desc": "Learn more about RAG tools and their characteristics",
+          "title": "The tool identities are revealed!"
         },
         "title": "How it works",
         "two": {
-          "desc": "By doing so, you'll help improve the AI models",
+          "desc": "By doing so, you contribute to RAG tool evaluation",
           "title": "I give my preference"
         }
       },
-      "title": "Don't rely on the results <span {props}>of a single MCP tool</span>",
+      "title": "Don't rely on the results <span {props}>of a single RAG tool</span>",
       "tos": {
         "accept": "I accept the <a {linkProps}>terms of use</a>",
         "error": "You must accept the terms of use to continue",
@@ -1248,7 +1248,7 @@
       },
       "title": "Specific uses of CompaRAG",
       "use": {
-        "desc": "Developers, architects, product teams... access CompaRAG comparison data to evaluate MCP tools on your own criteria.",
+        "desc": "Developers, architects, product teams... access CompaRAG comparison data to evaluate RAG tools on your own criteria.",
         "title": "Reuse the data"
       }
     },
@@ -1256,9 +1256,9 @@
       "compare": {
         "alt": "Compare",
         "desc": "Submit the same task to two tools and choose the best result",
-        "title": "Compare results from different MCP tools"
+        "title": "Compare results from different RAG tools"
       },
-      "desc": "CompaRAG is a free tool for objectively comparing MCP tools and discovering their respective strengths.",
+      "desc": "CompaRAG is a free tool for objectively comparing RAG tools and discovering their respective strengths.",
       "measure": {
         "alt": "Measure",
         "desc": "Discover which tool best meets your business needs",
@@ -1266,8 +1266,8 @@
       },
       "test": {
         "alt": "Test",
-        "desc": "Test different MCP tools, regardless of provider, on your own use cases.",
-        "title": "Test MCP tools from the ecosystem in one place"
+        "desc": "Test different RAG tools, regardless of provider, on your own use cases.",
+        "title": "Test RAG tools from the ecosystem in one place"
       },
       "title": "What is CompaRAG for?"
     },
@@ -1919,8 +1919,8 @@
     }
   },
   "seo": {
-    "desc": "CompaRAG enables blind comparison of MCP tools to evaluate which best achieves a given task.",
-    "title": "CompaRAG, the MCP tool arena",
+    "desc": "CompaRAG enables blind comparison of RAG tools to evaluate which best achieves a given task.",
+    "title": "CompaRAG, the RAG tool arena",
     "titles": {
       "accessibilite": "Accessibility statement",
       "arene": "Chat",
@@ -2082,7 +2082,7 @@
     "privacy": "Do not share personal information such as your name, surname or address.",
     "title": "Welcome to CompaRAG!",
     "tos": {
-      "desc": "Comparisons and votes you submit on CompaRAG are used anonymously to build MCP tool performance data.",
+      "desc": "Comparisons and votes you submit on CompaRAG are used anonymously to build RAG tool performance data.",
       "moreInfos": "Learn more about the project."
     },
     "use": "Do not use the comparator for illegal or harmful purposes"
