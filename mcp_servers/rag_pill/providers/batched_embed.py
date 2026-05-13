@@ -19,9 +19,12 @@ own batch_size knob and rely on the same per-batch retry there).
 
 from __future__ import annotations
 
+import hashlib
 import logging
 import os
+import threading
 import time
+from collections import OrderedDict
 from typing import Any
 
 import numpy as np
@@ -35,6 +38,60 @@ _EMPTY_DATA_MARKER = "No embedding data received"
 # 31s backoff) a single transient OpenRouter degradation has a
 # multi-minute survival window before reaching the user.
 _DEFAULT_BATCH_RETRIES = int(os.environ.get("RAG_PILL_BATCH_RETRIES", "4"))
+
+# Process-global LRU cache of successful per-input embeddings, keyed by
+# (model, sha256(input)). Purpose: when the outer execute_with_embedding_retry
+# re-runs an engine.execute() after one bad batch, the rebuild reuses the
+# vectors we already computed for the good batches. Without this, a 1000-chunk
+# document with a single late-failing batch wastes its first 999 batches of
+# embedding work on every outer retry — geometric cost amplification that
+# surfaces in production as "Engine X failed: No embedding data received"
+# even after retries technically completed.
+#
+# Bounded by RAG_PILL_EMBED_CACHE_SIZE (default 10000 entries — ~60MB for
+# 1536-dim float32 vectors). LRU eviction on overflow.
+_CACHE_MAX = int(os.environ.get("RAG_PILL_EMBED_CACHE_SIZE", "10000"))
+_CACHE: "OrderedDict[tuple[str, str], list[float]]" = OrderedDict()
+_CACHE_LOCK = threading.Lock()
+
+
+def _cache_key(model: str, text: str) -> tuple[str, str]:
+    h = hashlib.sha256(text.encode("utf-8")).hexdigest()
+    return (model, h)
+
+
+def _cache_get_many(model: str, texts: list[str]) -> list[list[float] | None]:
+    """Look up vectors for ``texts``; returns a list aligned to ``texts``
+    with None for misses. Touches LRU order on hits."""
+    out: list[list[float] | None] = []
+    with _CACHE_LOCK:
+        for text in texts:
+            key = _cache_key(model, text)
+            if key in _CACHE:
+                _CACHE.move_to_end(key)
+                out.append(_CACHE[key])
+            else:
+                out.append(None)
+    return out
+
+
+def _cache_put_many(model: str, texts: list[str], vectors: list[list[float]]) -> None:
+    """Store ``texts`` → ``vectors`` in the cache, evicting LRU entries
+    on overflow. Assumes len(texts) == len(vectors)."""
+    with _CACHE_LOCK:
+        for text, vec in zip(texts, vectors):
+            key = _cache_key(model, text)
+            _CACHE[key] = vec
+            _CACHE.move_to_end(key)
+        while len(_CACHE) > _CACHE_MAX:
+            _CACHE.popitem(last=False)
+
+
+def clear_embed_cache() -> None:
+    """Test helper — wipe the process-global cache."""
+    with _CACHE_LOCK:
+        _CACHE.clear()
+
 
 log = logging.getLogger("rag_pill")
 
@@ -85,11 +142,23 @@ def batched_embed(
     rows: list[list[float]] = []
     for start in range(0, len(inputs), batch_size):
         chunk = inputs[start : start + batch_size]
+
+        # Reuse cached vectors from prior calls (e.g. an outer-retry
+        # rebuild that's redoing the same chunk inputs). Only the
+        # actually-uncached entries get re-embedded — the rest assemble
+        # back into the output in original order.
+        cached = _cache_get_many(model, chunk)
+        missing_idx = [i for i, v in enumerate(cached) if v is None]
+        if not missing_idx:
+            rows.extend(v for v in cached if v is not None)
+            continue
+
+        missing_inputs = [chunk[i] for i in missing_idx]
+        fresh_vectors: list[list[float]] | None = None
         for attempt in range(retries + 1):
             try:
-                resp = client.embeddings.create(model=model, input=chunk)
-                vectors = _embeddings_or_raise(resp, expected_count=len(chunk))
-                rows.extend(vectors)
+                resp = client.embeddings.create(model=model, input=missing_inputs)
+                fresh_vectors = _embeddings_or_raise(resp, expected_count=len(missing_inputs))
                 break
             except ValueError as exc:
                 if _EMPTY_DATA_MARKER not in str(exc):
@@ -98,9 +167,24 @@ def batched_embed(
                     raise
                 wait = backoff_base * (2 ** attempt)
                 log.warning(
-                    "batched_embed.empty_data batch_start=%d size=%d attempt=%d/%d backoff_s=%s",
-                    start, len(chunk), attempt + 1, retries + 1, wait,
+                    "batched_embed.empty_data batch_start=%d size=%d missing=%d attempt=%d/%d backoff_s=%s",
+                    start, len(chunk), len(missing_inputs),
+                    attempt + 1, retries + 1, wait,
                 )
                 time.sleep(wait)
+
+        # Populate cache for the freshly-fetched vectors so subsequent
+        # outer retries (or sibling engines using the same model) skip
+        # re-embedding identical inputs.
+        assert fresh_vectors is not None  # would have raised above
+        _cache_put_many(model, missing_inputs, fresh_vectors)
+
+        # Reassemble in original chunk order — cache hits where present,
+        # fresh vectors filled into the missing slots.
+        out_chunk: list[list[float] | None] = list(cached)
+        for i, vec in zip(missing_idx, fresh_vectors):
+            out_chunk[i] = vec
+        # All slots are populated now; the cast is safe.
+        rows.extend(v for v in out_chunk if v is not None)
 
     return np.array(rows, dtype=np.float32)
