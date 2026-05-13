@@ -9,7 +9,13 @@ const disabledLocaleCodes = env.PUBLIC_DISABLED_LOCALES
 
 export type LocaleOption = { code: Locale; short: string; long: string; host: string }
 
-const DEFAULT_HOST = dev ? 'localhost:5173' : 'comparia.beta.gouv.fr'
+// Hosts the FR/EN/LT/SV locales serve from. Was 'comparia.beta.gouv.fr'
+// pre-rebrand; CompaRAG isn't tied to a single canonical FR-locale host
+// yet, so resolve at render time from `window.location.host` and only
+// fall back to a placeholder when running server-side or in tests.
+const DEFAULT_HOST = dev
+  ? 'localhost:5173'
+  : (typeof window !== 'undefined' ? window.location.host : 'comparag.local')
 export const HOST_TO_LOCALE = dev
   ? {
       '127.0.0.1:8080': 'da'
@@ -53,7 +59,9 @@ export function setI18nContext() {
         'https://ec.europa.eu/eurostat/fr/web/products-eurostat-news/w/ddn-20251216-3'
     },
     fr: {
-      contact: 'contact@comparia.beta.gouv.fr',
+      // No public contact email for CompaRAG yet — point users at the
+      // GitHub issues tracker so feedback still has a home.
+      contact: 'https://github.com/ArthurSrz/CompaRAG/issues',
       peopleUsingAIDataLink:
         'https://www.credoc.fr/publications/barometre-du-numerique-2026-rapport'
     }

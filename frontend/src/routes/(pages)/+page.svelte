@@ -12,7 +12,7 @@
 
   const locale = getLocale()
   const i18nData = getI18nContext()
-  const acceptTos = useLocalStorage('comparia:tos', false)
+  const acceptTos = useLocalStorage('comparag:tos', false)
   let tosError = $state<string>()
 
   let PUBLIC_GIT_COMMIT = $state<string | null>((env as any).PUBLIC_GIT_COMMIT ?? null)
@@ -54,33 +54,6 @@
       alt: m[`home.use.${i18nKey}.alt`]()
     }))
   )
-
-  const europeCards = [
-    {
-      title: '/compar:IA',
-      link: 'https://comparia.beta.gouv.fr/arene',
-      desc: m['home.europe.languages.fr'](),
-      flag: '🇫🇷'
-    },
-    {
-      title: '/palyginti:AI',
-      link: 'https://comparia.beta.gouv.fr/arene',
-      desc: m['home.europe.languages.lt'](),
-      flag: '🇱🇹'
-    },
-    {
-      title: '/jämföra:AI',
-      link: 'https://comparia.beta.gouv.fr/arene',
-      desc: m['home.europe.languages.sv'](),
-      flag: '🇸🇪'
-    },
-    {
-      title: '/xxxxxx:AI',
-      link: 'https://comparia.beta.gouv.fr/arene',
-      desc: m['home.europe.languages.da'](),
-      flag: '🇩🇰'
-    }
-  ]
 
   const whyVoteCards = (
     [
@@ -204,61 +177,6 @@
             </div>
           </div>
         {/each}
-      </div>
-    </div>
-  </section>
-
-  <!-- TODO remove hidden -->
-  <section
-    id="european"
-    class="fr-container--fluid bg-light-info pb-18 lg:pb-25 pt-10 lg:pt-20 hidden"
-  >
-    <div class="fr-container gap-8 lg:flex-row lg:items-center flex max-w-[1150px]! flex-col">
-      <div class="lg:max-w-[360px]">
-        <h3 class="fr-h2 mb-4! max-w-[320px]">
-          {@html sanitize(m['home.europe.title']({ props: 'class="text-primary"' }))}
-        </h3>
-        <p class="mb-2!">{m['home.europe.desc']()}</p>
-        <p><strong class="block">{m['home.europe.question']()}</strong></p>
-
-        <Link
-          button
-          size="lg"
-          href="mailto:{i18nData.contact}"
-          text={m['actions.contactUs']()}
-          class="sm:w-auto! w-full!"
-        />
-      </div>
-
-      <div
-        class="py-15 gap-8 rounded-xl bg-white px-9 xl:flex-row flex w-full flex-col justify-center"
-      >
-        <img
-          src="/home/comparia-stars.png"
-          aria-hidden="true"
-          alt=""
-          class="xl:m-0 m-auto max-w-[180px] object-contain"
-        />
-
-        <div class="gap-4 sm:grid-cols-2 xl:gap-8 grid">
-          {#each europeCards as card, i (i)}
-            <div class="cg-border bg-very-light-grey gap-4 px-4 py-5 flex items-center">
-              <div class="bg-light-info rounded-md p-2 leading-none">
-                {card.flag}
-              </div>
-              <div>
-                <Link
-                  href={card.link}
-                  variant="primary"
-                  native={false}
-                  text={card.title}
-                  size="sm"
-                />
-                <p class="fr-message mb-0!">{card.desc}</p>
-              </div>
-            </div>
-          {/each}
-        </div>
       </div>
     </div>
   </section>

@@ -121,7 +121,7 @@
           "desc": "Interaktyvus pokalbių vizualizavimas, kur kiekviena grupė atspindi pasikartojančią temą, kurią aptaria vartotojai (pavyzdžiui, švietimas, sveikata, aplinka ar net filosofija).",
           "title": "Ištyrinėkite duomenų vizualizaciją"
         },
-        "desc": "Bunka.ai komanda atliko išsamų tyrimą apie Compar:IA platformos naudotojų ir AI modelių sąveiką, nagrinėdama populiariausias temas, pagrindines užduotis ir nustatydama, ar šie modeliai veikia pirmiausia kaip automatizavimo ar žmogaus gebėjimų didinimo įrankiai. Ši analizė pagrįsta dideliu 25 000 pokalbių imties dydžiu.",
+        "desc": "Bunka.ai komanda atliko išsamų tyrimą apie CompaRAG platformos naudotojų ir AI modelių sąveiką, nagrinėdama populiariausias temas, pagrindines užduotis ir nustatydama, ar šie modeliai veikia pirmiausia kaip automatizavimo ar žmogaus gebėjimų didinimo įrankiai. Ši analizė pagrįsta dideliu 25 000 pokalbių imties dydžiu.",
         "method": "Sužinokite daugiau apie metodiką"
       },
       "desc": "Pavyzdžiai, kaip pakartotinai naudojami CompaRAG duomenų rinkiniai",

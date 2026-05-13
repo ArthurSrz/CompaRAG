@@ -33,24 +33,6 @@
     desc: m[`datasets.access.repos.${i18nKey}.desc`]()
   }))
 
-  const bunkaCards = (
-    [
-      {
-        i18nKey: 'conversations',
-        img: '/datasets/bunka-visualisation.png',
-        link: 'https://app.bunka.ai/datasets/569'
-      },
-      {
-        i18nKey: 'analyze',
-        img: '/datasets/bunka-analyse.png',
-        link: 'https://monitor.bunka.ai/compar-ia-dashboard'
-      }
-    ] as const
-  ).map(({ i18nKey, ...card }) => ({
-    ...card,
-    linkTitle: m[`datasets.reuse.bunka.${i18nKey}.title`](),
-    desc: m[`datasets.reuse.bunka.${i18nKey}.desc`]()
-  }))
 </script>
 
 <SeoHead title={m['seo.titles.datasets']()} />

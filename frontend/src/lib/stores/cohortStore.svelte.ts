@@ -5,7 +5,7 @@
 import { browser } from '$app/environment'
 import { getContext, setContext } from 'svelte'
 
-export const COHORT_STORAGE_KEY = 'comparia-cohorts'
+export const COHORT_STORAGE_KEY = 'comparag-cohorts'
 
 // for now possible cohort are just an hardcoded Array here - move to db ?
 const EXISTING_COHORTS = ['pix']

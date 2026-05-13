@@ -13,18 +13,11 @@
     { href: '/product', label: m['seo.titles.product']() },
     { href: '/tool-arena/leaderboard', label: m['seo.titles.ranking']() },
     { href: '/tool-arena', label: m['seo.titles.tool-arena']() },
-    { href: '/datasets', label: m['seo.titles.datasets']() },
-    { href: '/news', label: m['seo.titles.news']() }
-  ].filter((link) => {
-    if (link.href.includes('/news') && !['fr', 'en'].includes(locale)) {
-      return false
-    }
-    return true
-  })
+    { href: '/datasets', label: m['seo.titles.datasets']() }
+  ]
 
   function isCurrentPage(path: string, href: string) {
     if (path.includes('product')) return href.includes('product')
-    if (path.includes('news')) return href.includes('news')
     return path === href
   }
 </script>

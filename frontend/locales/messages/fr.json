@@ -126,7 +126,7 @@
           "desc": "Visualisation interactive des conversations où chaque point représente un cluster de discussions évoqué par les utilisateurs (comme l’éducation, la santé, l’environnement, ou encore la philosophie).",
           "title": "Explorer la visualisation de données"
         },
-        "desc": "L'équipe Bunka.ai a mené une étude approfondie sur les interactions entre les utilisateurs de la plateforme Compar:IA et les modèles d'IA, examinant les thématiques privilégiées, les tâches principales et déterminant si ces modèles fonctionnent avant tout comme des outils d'automatisation ou d'augmentation des capacités humaines. Cette analyse repose sur un large échantillon de 25 000 conversations.",
+        "desc": "L'équipe Bunka.ai a mené une étude approfondie sur les interactions entre les utilisateurs de la plateforme CompaRAG et les modèles d'IA, examinant les thématiques privilégiées, les tâches principales et déterminant si ces modèles fonctionnent avant tout comme des outils d'automatisation ou d'augmentation des capacités humaines. Cette analyse repose sur un large échantillon de 25 000 conversations.",
         "method": "En savoir plus sur la méthodologie"
       },
       "desc": "Exemples de réutilisation des jeux de données CompaRAG",
@@ -256,7 +256,7 @@
   },
   "general": {
     "a11y": {
-      "desc": "Cette déclaration d’accessibilité s’applique au site <strong>comparia.beta.gouv.fr</strong>.",
+      "desc": "Cette déclaration d’accessibilité s’applique au site <strong>le site CompaRAG</strong>.",
       "disclaimer": "<strong>CompaRAG</strong> s’engage à rendre ses services numériques accessibles, conformément à l’article 47 de la loi n° 2005-102 du 11 février 2005.",
       "improveAdress": "Adresse : DINUM, 20 avenue de Ségur 75007 Paris",
       "improveDelay": "Nous essayons de répondre dans les 2 jours ouvrés.",
@@ -269,7 +269,7 @@
       "remedyDesc": "Cette procédure est à utiliser dans le cas suivant : vous avez signalé au responsable du site internet un défaut d’accessibilité qui vous empêche d’accéder à un contenu ou à un des services du portail et vous n’avez pas obtenu de réponse satisfaisante.",
       "remedyList": "Vous pouvez :",
       "remedyTitle": "Voie de recours",
-      "stateDesc": "Le site comparia.beta.gouv.fr est non conforme avec le RGAA 4.1. Le site n’a <strong>pas encore été audité</strong>. Il a cependant été conçu pour être accessible au plus grand nombre. Vous devriez donc pouvoir :",
+      "stateDesc": "Le site le site CompaRAG est non conforme avec le RGAA 4.1. Le site n’a <strong>pas encore été audité</strong>. Il a cependant été conçu pour être accessible au plus grand nombre. Vous devriez donc pouvoir :",
       "stateNavigate": "naviguer sur toutes les pages du site en utilisant un clavier",
       "statePrefs": "adapter le site à votre préférences (taille de la police, zoom écran, changement de typographie…) sans perte de contenu",
       "stateScreenReader": "consulter le site web avec un lecteur d’écran.",
@@ -334,7 +334,7 @@
     "rgesn": {
       "1": {
         "1": "Le site CompaRAG permet de donner accès simplement et gratuitement à une très grande diversité de modèles d'IA conversationnelle et ainsi de sensibiliser les citoyens aux divers enjeux des IA génératives : diversité, biais, impact environnemental. Par ailleurs, les jeux de données de questions et de préférences constitués sont partagés en open source sous licence MIT/Etalab 2.0.",
-        "2": "Les cibles utilisatrices du service Compar:IA ont été identifiées en procédant à des entretiens utilisateurs et une phase préalable d'investigation des besoins.",
+        "2": "Les cibles utilisatrices du service CompaRAG ont été identifiées en procédant à des entretiens utilisateurs et une phase préalable d'investigation des besoins.",
         "3": "Ainsi, tous les citoyens sont concernés comme utilisateurs potentiels, mais particulièrement les professeurs, élèves, étudiants, médiateurs numériques, formateurs IA, ainsi que chercheurs (computer sciences, IA, SHS) et entreprises intéressées par l'analyse ou l’utilisation des jeux de données partagés en open source.<br> En cohérence, le service numérique répond à leurs besoins grâce aux fonctionnalités suivantes : tester et comparer gratuitement les modèles, utiliser les données partagées en open source.",
         "4": "Le service CompaRAG s’inscrit dans une démarche d’écoconception visant à réduire les impacts environnementaux. À cette fin, la déclaration a été rédigée dans le cadre de la mise en œuvre du référentiel général de l’écoconception des services numériques (RGESN, version 2024).<br> Le RGESN, réalisé par l’Arcep et l’Arcom, en collaboration avec l’ADEME, la DINUM, la CNIL et l’Inria, est disponible sur le <a {linkProps}>site web de l’Arcep</a>.",
         "title": "Raison d’être de ce service"
@@ -360,7 +360,7 @@
       },
       "3": {
         "1": {
-          "1": "Simplification de l’expérience utilisateur : les parcours de navigation sont optimisés et centrés autour des fonctionnalités essentielles du service Compar:IA (arène de modèles à tester, jeux de données, classement) avec des tests utilisateurs réguliers.",
+          "1": "Simplification de l’expérience utilisateur : les parcours de navigation sont optimisés et centrés autour des fonctionnalités essentielles du service CompaRAG (arène de modèles à tester, jeux de données, classement) avec des tests utilisateurs réguliers.",
           "2": "Sensibilisation auprès des utilisateurs sur l’empreinte écologique du service : mise en avant d’indicateurs d’impact énergétique sur les questions posées aux IA ; valorisation des usages « frugaux », avec un mode dédié à l’interrogation de « petits » modèles d’IA conversationnelles dont l’impact environnemental est moindre.",
           "3": "Utilisation des composants d’interfaces du Système de Design de l’État (DSFR) : ils sont accessibles et leur empreinte est minimale.",
           "4": "Navigation la plus intuitive possible pour réduire le temps passé à trouver une information.",
@@ -453,12 +453,6 @@
       "featuresVote": "L’utilisateur peut consulter la liste des modèles intégrés au comparateur et accéder à une liste d’informations sur ces modèles.",
       "featuresVoteMore": "Partage, mise à disposition et valorisation des jeux de données issus de la collecte des préférences des utilisateurs.",
       "licenceCode": "Le code source de la plateforme est libre et disponible ici : <a {linkProps}>https://github.com/betagouv/languia</a>",
-      "licenceLLM": "Les LLM utilisés pour alimenter les services sont régis par les licences suivantes :",
-      "licenceLLMEvolution": "La liste des modèles de langage intégrés à la plateforme est susceptible d’évoluer au cours du temps et est mise à jour à chaque modification.",
-      "licenceLLMLicence": "Licence",
-      "licenceLLMModel": "Modèle d’IA conversationnelle",
-      "licenceLLMNoticeLink": "Lien vers la notice des modèles",
-      "licenceLLMUnavailable": "Non disponible",
       "licenceTitle": "6. Code et licences",
       "respEditor": "De manière générale, l’éditeur se dégage de toute responsabilité en cas d’utilisationnon-conforme aux modalités d’utilisation.",
       "respLegal": "La plateforme n’a pas vocation à être utilisée pour générer des contenus illicites ou contraires à l’ordre public et plus généralement toute génération de contenu contrevenant au cadre juridique en vigueur.",
@@ -469,7 +463,13 @@
       "respUser": "L’utilisateur est responsable des données ou contenus qu'il ou elle saisit dans l’invite offert par la plateforme.",
       "scopeDesc": "L’accès à la plateforme est gratuit, sans inscription et entraîne l’application de conditions spécifiques, listées dans les présentes modalités d’utilisation.",
       "scopeTitle": "1. Champ d’application",
-      "title": "Modalités d’utilisation"
+      "title": "Modalités d’utilisation",
+      "licenceTools": "Les outils RAG utilisés pour alimenter les services sont régis par les licences suivantes :",
+      "licenceToolsEvolution": "La liste des outils RAG intégrés à la plateforme est susceptible d’évoluer au cours du temps et est mise à jour à chaque modification.",
+      "licenceToolsLicence": "Licence",
+      "licenceToolsTool": "Outil RAG",
+      "licenceToolsNoticeLink": "Lien vers la notice des outils",
+      "licenceToolsUnavailable": "Non disponible"
     }
   },
   "generated": {
@@ -1348,17 +1348,6 @@
     }
   },
   "home": {
-    "europe": {
-      "desc": "La Lituanie, la Suède et le Danemark rejoignent la France en adoptant le comparateur dans le but d’affiner les futurs modèles d’IA dans leurs langues nationales.",
-      "languages": {
-        "da": "en danois",
-        "fr": "en français",
-        "lt": "en lituanien",
-        "sv": "en suédois"
-      },
-      "question": "Vous souhaitez également disposer du comparateur dans votre langue ?",
-      "title": "Le comparateur <span {props}>devient européen !</span>"
-    },
     "faq": {
       "discover": "Découvrir les autres questions",
       "title": "Vos questions les plus courantes"
@@ -1720,7 +1709,7 @@
             "4": {
               "date": "Février 2025",
               "desc": "Plus de 300 personnes dans le cadre de conférences et d’ateliers dédiés aux enjeux éthiques, culturels et environnementaux des systèmes d'IA conversationnelle.",
-              "title": "<a {linkProps}>Journée comparIA à la BnF</a> pendant le sommet pour l’action sur l’IA"
+              "title": "<a {linkProps}>Journée CompaRAG à la BnF</a> pendant le sommet pour l’action sur l’IA"
             }
           },
           "tag": "Construction"
@@ -1817,7 +1806,7 @@
         "english": {
           "a": "Les données de préférence sont couteuses à produire car <strong>elles nécessitent du travail humain qualifié pour chaque exemple</strong>. Des plateformes telles que https://chat.lmsys.org/ permettent de constituer ces jeux de données de préférence mais peu d’utilisateurs s’en servent dans leur langue d’origine.",
           "b": "Les jeux de données de préférence sont rares, voire inexistants dans les langues européennes. La part des questions posées en français dans le jeu de données de LMSYS est par exemple inférieure à 1%.",
-          "c": "comparIA est un exemple de dispositif permettant de collecter des conversations dans de multiples langues, incluant des références culturelles spécifiques à chaque région ou pays : tâches courantes, traditions culinaires locales, systèmes éducatifs, références historiques ou littéraires, etc.",
+          "c": "CompaRAG est un exemple de dispositif permettant de collecter des conversations dans de multiples langues, incluant des références culturelles spécifiques à chaque région ou pays : tâches courantes, traditions culinaires locales, systèmes éducatifs, références historiques ou littéraires, etc.",
           "title": "Peu de données de préférence en langues européennes"
         },
         "title": "Comment réduire les biais culturels et linguistiques de ces modèles ?"

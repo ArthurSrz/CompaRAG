@@ -73,14 +73,14 @@
         })
       )}
     </p>
-    <p>{m['general.tos.licenceLLM']()}</p>
+    <p>{m['general.tos.licenceTools']()}</p>
 
     <table class="fr-table fr-table__wrapper fr-table__container fr-table__content">
       <thead>
         <tr>
-          <th>{m['general.tos.licenceLLMModel']()}</th>
-          <th>{m['general.tos.licenceLLMNoticeLink']()}</th>
-          <th>{m['general.tos.licenceLLMLicence']()}</th>
+          <th>{m['general.tos.licenceToolsTool']()}</th>
+          <th>{m['general.tos.licenceToolsNoticeLink']()}</th>
+          <th>{m['general.tos.licenceToolsLicence']()}</th>
         </tr>
       </thead>
       <tbody>
@@ -93,7 +93,7 @@
                   {model.url}
                 </a>
               {:else}
-                {m['general.tos.licenceLLMUnavailable']()}
+                {m['general.tos.licenceToolsUnavailable']()}
               {/if}
             </td>
             <td>{model['license']}</td>
@@ -101,7 +101,7 @@
         {/each}
       </tbody>
     </table>
-    <p>{m['general.tos.licenceLLMEvolution']()}</p>
+    <p>{m['general.tos.licenceToolsEvolution']()}</p>
 
     <h2 id="7-disponibilite-des-services">{m['general.tos.dispoTitle']()}</h2>
     <p>{m['general.tos.dispoDesc']()}</p>

@@ -31,7 +31,7 @@
 
   const workshopSteps = [
     {
-      desc: 'Présentation rapide de l’IA générative et de la plateforme compar:IA pour que tout le monde parte du même point, même sans connaissance préalable.',
+      desc: 'Présentation rapide des outils RAG et de la plateforme CompaRAG pour que tout le monde parte du même point, même sans connaissance préalable.',
       duration: '(10min)',
       title: 'Introduction'
     },
@@ -94,7 +94,7 @@
 
           <Link
             button
-            href="https://comparia.getgrist.com/forms/h2i36mSYhJsAyb5r4Bee5c/29"
+            href="https://github.com/ArthurSrz/CompaRAG/issues/new?labels=facilitator-kit&title=Demande+de+kit+facilitateur"
             text="Recevoir le kit facilitateur"
             size="lg"
             class="w-full!"
@@ -105,7 +105,7 @@
           <img
             src="/duel/workshop.jpg"
             class="fr-responsive-img rounded-xl shadow-md"
-            alt="Présentation publique de compar:ia dans une salle bondée"
+            alt="Présentation publique de CompaRAG dans une salle bondée"
           />
         </div>
       </div>
@@ -124,7 +124,7 @@
         </h2>
 
         <ul class="m-0! p-0! md:ms-auto! my-auto">
-          {#each ['Durée : 45min à 1h30', 'Format présentiel ou en ligne', 'Accès à compar:IA et des supports fournis', 'Atelier clé en main, accessible et interactif'] as text, i (i)}
+          {#each ['Durée : 45min à 1h30', 'Format présentiel ou en ligne', 'Accès à CompaRAG et des supports fournis', 'Atelier clé en main, accessible et interactif'] as text, i (i)}
             <li class="p-0! not-last:mb-4 md:text-lg list-none">
               <Icon icon="i-ri-checkbox-circle-line" class="text-primary" />
               {text}
@@ -202,7 +202,7 @@
 
           <Link
             button
-            href="https://comparia.getgrist.com/forms/h2i36mSYhJsAyb5r4Bee5c/29"
+            href="https://github.com/ArthurSrz/CompaRAG/issues/new?labels=facilitator-kit&title=Demande+de+kit+facilitateur"
             text="Recevoir le kit facilitateur"
             size="lg"
           />

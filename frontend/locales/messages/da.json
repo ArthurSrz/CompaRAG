@@ -463,13 +463,7 @@
       "featuresTitle": "4. Funktioner",
       "featuresVote": "Når afstemningen er afsluttet, kan brugeren se listen over modeller, der er integreret i AI Arenaen, og få adgang til en liste med oplysninger om disse modeller. Oplysningerne om modellerne er hentet fra forskellige kilder.",
       "featuresVoteMore": "Deling og adgang til datasæt, der er resultatet af indsamling af brugerpræferencer.",
-      "licenceCode": "Platformens kildekode er åben og tilgængelig her: <a {linkProps}>https://github.com/betagouv/ComparIA</a>",
-      "licenceLLM": "De LLM'er, der bruges til at drive tjenesterne, er underlagt følgende licenser:",
-      "licenceLLMEvolution": "Listen over sprogmodeller, der er integreret i platformen, kan ændres over tid og opdateres ved hver ændring.",
-      "licenceLLMLicence": "Licens",
-      "licenceLLMModel": "Samtale AI-model",
-      "licenceLLMNoticeLink": "Link til model-licenserne",
-      "licenceLLMUnavailable": "Ikke tilgængelig",
+      "licenceCode": "Platformens kildekode er åben og tilgængelig her: <a {linkProps}>https://github.com/ArthurSrz/CompaRAG</a>",
       "licenceTitle": "6. Kode og licenser",
       "respEditor": "Generelt fraskriver udgiveren sig ethvert ansvar i tilfælde af manglende overholdelse af brugsbetingelserne.",
       "respLegal": "Platformen er ikke beregnet til at blive brugt til at generere ulovligt indhold eller indhold, der strider mod den offentlige orden, og mere generelt til generering, der overtræder den gældende lovgivning.",
@@ -480,7 +474,13 @@
       "respUser": "Brugeren er ansvarlig for de data eller det indhold, som vedkommende indtaster i den prompt, som platformen stiller til rådighed.",
       "scopeDesc": "Adgang til platformen er gratis, kræver ikke registrering og indebærer anvendelse af specifikke betingelser, der er angivet i disse brugsbetingelser.",
       "scopeTitle": "1. Anvendelsesområde",
-      "title": "Brugsbetingelser"
+      "title": "Brugsbetingelser",
+      "licenceTools": "De RAG-værktøjer, der bruges til at drive tjenesterne, er underlagt følgende licenser:",
+      "licenceToolsEvolution": "Listen over RAG-værktøjer, der er integreret i platformen, kan ændres over tid og opdateres ved hver ændring.",
+      "licenceToolsLicence": "Licens",
+      "licenceToolsTool": "RAG-værktøj",
+      "licenceToolsNoticeLink": "Link til værktøjsdokumentationen",
+      "licenceToolsUnavailable": "Ikke tilgængelig"
     }
   },
   "generated": {
@@ -1213,17 +1213,6 @@
     }
   },
   "home": {
-    "europe": {
-      "desc": "Litauen, Sverige og Danmark slutter sig til Frankrig i at indføre sammenligningsværktøjet for at forbedre fremtidige AI-modeller på deres nationale sprog.",
-      "languages": {
-        "da": "på dansk",
-        "fr": "på fransk",
-        "lt": "på litauisk",
-        "sv": "på svensk"
-      },
-      "question": "Vil du gerne have AI Arenaen på dit sprog?",
-      "title": "Sammenligneren <span {props}>bliver europæisk!</span>"
-    },
     "faq": {
       "discover": "Se andre spørgsmål",
       "title": "Ofte stillede spørgsmål"
@@ -1504,7 +1493,7 @@
               "job": "Produktchef - tidligere deployment-ansvarlig"
             }
           },
-          "title": "Compar:IA-teamet - Frankrig"
+          "title": "CompaRAG-teamet - Frankrig"
         }
       },
       "title": "Partnerne"
@@ -1536,7 +1525,7 @@
         "desc": "Arenaen er nu tilgængelig for deres borgere på nationale sprog med en central mission: at opbygge præferencedatasæt for at forbedre fremtidige AI-modellers ydeevne på sprog med begrænsede ressourcer.",
         "title": "Arenaen <span {props}>bliver europæisk</span>!"
       },
-      "screenshotAlt": "Skærmbillede af compar:ia-arenaen, med det indledende spørgsmål, de to modelsvar og afstemningsknapperne.",
+      "screenshotAlt": "Skærmbillede af CompaRAG-arenaen, med det indledende spørgsmål, de to modelsvar og afstemningsknapperne.",
       "tabLabel": "Arenaen",
       "title": "Arenaen gør det muligt at oprette <span {props}>præference-datasæt</span> med fokus på <span {props}>reel brug</span> i <span {props}>europæiske sprog</span>."
     },
@@ -1585,7 +1574,7 @@
             "4": {
               "date": "Februar 2025",
               "desc": "Mere end 300 personer i forbindelse med konferencer og workshops dedikeret til etiske, kulturelle og miljømæssige udfordringer ved konverserende AI-systemer.",
-              "title": "<a {linkProps}>comparIA-dag på BnF</a> under topmødet for handling om AI"
+              "title": "<a {linkProps}>CompaRAG-dag på BnF</a> under topmødet for handling om AI"
             }
           },
           "tag": "Konstruktion"

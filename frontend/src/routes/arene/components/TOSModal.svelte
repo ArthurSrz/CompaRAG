@@ -4,7 +4,7 @@
   import { m } from '$lib/i18n/messages'
   import { propsToAttrs } from '$lib/utils/commons'
 
-  const acceptTos = useLocalStorage('comparia:tos', false)
+  const acceptTos = useLocalStorage('comparag:tos', false)
   let showModal = $state(!acceptTos.value)
   let tosError = $state<string>()
 

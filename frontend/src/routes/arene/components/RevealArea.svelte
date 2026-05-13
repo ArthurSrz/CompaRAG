@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { browser } from '$app/environment'
   import { Button, Link } from '$components/dsfr'
   import type { RevealData } from '$lib/chatService.svelte'
   import { scrollTo } from '$lib/helpers/attachments'
@@ -6,6 +7,11 @@
   import { m } from '$lib/i18n/messages'
   import { getLocale } from '$lib/i18n/runtime'
   import { RevealCard } from '.'
+
+  // Share URLs were hard-coded to the old comparia.beta.gouv.fr host.
+  // Derive from the current origin so the link works on whatever host
+  // CompaRAG is deployed to (Vercel preview, prod, self-hosted).
+  const shareOrigin = $derived(browser ? window.location.origin : '')
 
   let { data }: { data: RevealData } = $props()
 
@@ -78,7 +84,7 @@
                     type="text"
                     id="share-link"
                     class="fr-col-md-8 fr-col-12 fr-input inline"
-                    value="https://comparia.beta.gouv.fr/share?i={shareB64Data}"
+                    value="{shareOrigin}/share?i={shareB64Data}"
                   />
                   <Button
                     icon="links-fill"

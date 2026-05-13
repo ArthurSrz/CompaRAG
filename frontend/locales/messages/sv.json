@@ -270,7 +270,7 @@
   },
   "general": {
     "a11y": {
-      "desc": "Denna tillgänglighetspolicy gäller webbplatsen <strong>comparia.beta.gouv.fr</strong>.",
+      "desc": "Denna tillgänglighetspolicy gäller webbplatsen <strong>CompaRAG-webbplatsen</strong>.",
       "disclaimer": "<strong> CompaRAG </strong> åtar sig att göra sina digitala tjänster tillgängliga, i enlighet med artikel 47 i lag nr 2005-102 av den 11 februari 2005.",
       "improveAdress": "Adress: DINUM, 20 avenue de Ségur, 75007 Paris",
       "improveDelay": "Vi försöker svara inom 2 arbetsdagar.",
@@ -283,7 +283,7 @@
       "remedyDesc": "Denna procedur ska användas i följande fall: Du har rapporterat ett tillgänglighetsfel till webbplatsansvarig som hindrar dig från att komma åt innehåll eller en av portalens tjänster och du inte har fått ett tillfredsställande svar.",
       "remedyList": "Du kan:",
       "remedyTitle": "Överklaga",
-      "stateDesc": "Webbplatsen comparia.beta.gouv.fr uppfyller inte RGAA 4.1. Webbplatsen har ännu inte granskats. <strong>Den har dock utformats för att vara tillgänglig för så många som möjligt</strong>. Du bör därför kunna:",
+      "stateDesc": "Webbplatsen CompaRAG-webbplatsen uppfyller inte RGAA 4.1. Webbplatsen har ännu inte granskats. <strong>Den har dock utformats för att vara tillgänglig för så många som möjligt</strong>. Du bör därför kunna:",
       "stateNavigate": "navigera på alla sidor på webbplatsen med hjälp av ett tangentbord",
       "statePrefs": "anpassa webbplatsen efter dina preferenser (teckenstorlek, skärmzoom, ändring av typsnitt etc.) utan att innehåll förloras",
       "stateScreenReader": "visa webbplatsen med en skärmläsare.",
@@ -371,12 +371,6 @@
       "featuresVote": "Efter valprocessen kan användaren se listan över modeller som ingår i jämförelseverktyget och få tillgång till en lista med information om dessa modeller. Informationen som dokumenterar modellerna är hämtad från källor.",
       "featuresVoteMore": "Dela och tillgängliggöra datamängder som är resultatet av insamling av användarpreferenser.",
       "licenceCode": "Plattformens källkod är öppen och fritt tillgänglig här: <a {linkProps}>https://github.com/betagouv/languia</a>",
-      "licenceLLM": "De språkmodeller som används för att driva tjänsterna regleras av följande licenser:",
-      "licenceLLMEvolution": "Listan över språkmodeller som ingår i plattformen kan förändras över tid och uppdateras med varje modifiering.",
-      "licenceLLMLicence": "Licens",
-      "licenceLLMModel": "Konversationsbaserad AI-modell",
-      "licenceLLMNoticeLink": "Länk till modellernas licenser",
-      "licenceLLMUnavailable": "Inte tillgänglig",
       "licenceTitle": "6. Kod och licenser",
       "respEditor": "Generellt sett frånsäger sig utgivaren allt ansvar vid användning som inte överensstämmer med användarvillkoren.",
       "respLegal": "Plattformen är inte avsedd att användas för att generera olagligt innehåll eller innehåll som strider mot allmän ordning, eller mer generellt, för någon generering som strider mot gällande rättsliga ramar.",
@@ -387,7 +381,13 @@
       "respUser": "Användaren ansvarar för de uppgifter och det innehåll som denne anger i den prompt som plattformen erbjuder.",
       "scopeDesc": "Åtkomst till plattformen är gratis, utan registrering, och medför tillämpning av specifika förbehåll, som anges i dessa användarvillkor.",
       "scopeTitle": "1. Tillämpningsområde",
-      "title": "Användarvillkor"
+      "title": "Användarvillkor",
+      "licenceTools": "De RAG-verktyg som används för att driva tjänsterna regleras av följande licenser:",
+      "licenceToolsEvolution": "Listan över RAG-verktyg som ingår i plattformen kan förändras över tid och uppdateras med varje modifiering.",
+      "licenceToolsLicence": "Licens",
+      "licenceToolsTool": "RAG-verktyg",
+      "licenceToolsNoticeLink": "Länk till verktygsdokumentationen",
+      "licenceToolsUnavailable": "Inte tillgänglig"
     }
   },
   "generated": {
@@ -945,17 +945,6 @@
     }
   },
   "home": {
-    "europe": {
-      "desc": "Litauen, Sverige och Danmark ansluter sig till Frankrike genom att använda jämförelseprogrammet för att förfina framtida AI-modeller på sina nationella språk.",
-      "languages": {
-        "da": "på danska",
-        "fr": "på franska",
-        "lt": "på litauiska",
-        "sv": "på svenska"
-      },
-      "question": "Skulle du också vilja ha jämförelseverktyget på ditt språk?",
-      "title": "Jämföraren <span {props}>blir europeisk!</span>"
-    },
     "faq": {
       "discover": "Upptäck andra frågor",
       "title": "Era vanligaste frågor"
@@ -1247,7 +1236,7 @@
         "english": {
           "a": "Preferensdata är dyra att producera eftersom det kräver <strong>kvalificerad mänsklig arbetskraft</strong> för varje exempel. Plattformar som https://chat.lmsys.org/ tillåter skapandet av dessa preferensdataset, men få användare använder dem på sitt modersmål.",
           "b": "Preferensdataset är sällsynta, om inte obefintliga, på europeiska språk. Andelen frågor som ställs på franska i LMSYS-datasetet är till exempel mindre än 1%.",
-          "c": "comparIA kan samla in samtal på flera språk, och kulturella referenser specifika för varje region eller land – vanliga uppgifter, lokala kulinariska traditioner, utbildningssystem, historiska eller litterära referenser, etc.",
+          "c": "CompaRAG kan samla in samtal på flera språk, och kulturella referenser specifika för varje region eller land – vanliga uppgifter, lokala kulinariska traditioner, utbildningssystem, historiska eller litterära referenser, etc.",
           "title": "Bristande preferensdata för europeiska språk"
         },
         "title": "Hur kan vi minska kulturella och språkliga bias i dessa modeller?"
