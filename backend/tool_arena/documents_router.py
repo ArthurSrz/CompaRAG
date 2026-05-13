@@ -23,15 +23,17 @@ documents_router = APIRouter()
 
 _DOCUMENTS_CACHE_CONTROL = "public, max-age=3600, stale-while-revalidate=86400"
 
-# Per-extension upload size caps (bytes). Text stays at the legacy 500 KB
-# frontend limit; binary formats are denser, so they get 5 MB.
-_TEXT_MAX_BYTES = 500 * 1024
-_BINARY_MAX_BYTES = 5 * 1024 * 1024
+# Unified upload cap (bytes). Every format gets the same 5 MB raw-upload
+# budget; the prior 500 KB / 5 MB split conflated raw upload size with
+# post-extraction text size. A 5 MB PDF typically extracts to <500 KB of
+# text, while a 500 KB .txt is all text — so the two limits were
+# inconsistent for users who think in "document size".
+_UPLOAD_MAX_BYTES = 5 * 1024 * 1024
 _SIZE_LIMITS = {
-    ".txt": _TEXT_MAX_BYTES,
-    ".md": _TEXT_MAX_BYTES,
-    ".pdf": _BINARY_MAX_BYTES,
-    ".docx": _BINARY_MAX_BYTES,
+    ".txt": _UPLOAD_MAX_BYTES,
+    ".md": _UPLOAD_MAX_BYTES,
+    ".pdf": _UPLOAD_MAX_BYTES,
+    ".docx": _UPLOAD_MAX_BYTES,
 }
 
 

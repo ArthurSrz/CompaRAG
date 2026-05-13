@@ -12,8 +12,12 @@
     return publicEnv.PUBLIC_API_URL || window.location.origin || 'http://localhost:8001'
   }
 
-  const TEXT_MAX = 500 * 1024
-  const BINARY_MAX = 5 * 1024 * 1024
+  // Unified upload cap across all supported formats. The previous 500KB/5MB
+  // split conflated "raw upload bytes" with "extracted text size": a 5MB PDF
+  // typically extracts to <500KB of text, while a 500KB .txt is ALL text.
+  // Now every format gets the same 5MB raw-upload budget; the per-format
+  // experience is consistent ("upload up to 5MB").
+  const UPLOAD_MAX = 5 * 1024 * 1024
   const BINARY_EXTENSIONS = new Set(['pdf', 'docx'])
 
   let {
@@ -111,10 +115,8 @@
     }
     const ext = file.name.split('.').pop()?.toLowerCase() ?? ''
     const isBinary = BINARY_EXTENSIONS.has(ext)
-    const limit = isBinary ? BINARY_MAX : TEXT_MAX
-    if (file.size > limit) {
-      const human = isBinary ? '5 Mo' : '500 Ko'
-      fileError = `Le fichier est trop volumineux (max ${human}).`
+    if (file.size > UPLOAD_MAX) {
+      fileError = `Le fichier est trop volumineux (max 5 Mo).`
       documentContent = ''
       fileName = ''
       return
@@ -184,7 +186,7 @@
     <div class="fr-upload-group" class:fr-upload-group--error={!!fileError}>
       <label class="fr-label" for="tool-arena-document">
         Document à analyser
-        <span class="fr-hint-text">Formats acceptés : .txt, .md (500 Ko max), .pdf, .docx (5 Mo max)</span>
+        <span class="fr-hint-text">Formats acceptés : .txt, .md, .pdf, .docx (5 Mo max)</span>
       </label>
       <input
         id="tool-arena-document"

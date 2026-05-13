@@ -46,7 +46,10 @@ def test_extract_rejects_oversized_binary(client: TestClient) -> None:
 
 
 def test_extract_rejects_oversized_text(client: TestClient) -> None:
-    oversized = b"a" * (600 * 1024)
+    # Unified 5MB cap (2026-05-13) — text formats no longer have the legacy
+    # 500KB-only limit; they get the same 5MB budget as .pdf/.docx so the
+    # per-format UX matches the user's mental model of "document size".
+    oversized = b"a" * (6 * 1024 * 1024)
     resp = client.post(
         "/tool-arena/documents/extract",
         files={"file": ("big.txt", oversized, "text/plain")},
