@@ -105,14 +105,26 @@ async def single_mcp_call(
                 tool_name = server.tools[0]
 
             if tool_name == "call_agent":
+                # call_agent has no separate document_content field, so the
+                # doc must travel inside `message` or be lost. Clarifeye and
+                # similar agent-style servers consume this format.
                 message = f"Task: {task}\nGoal: {goal}"
                 if document_content:
                     message += f"\n\nDocument:\n{document_content}"
                 arguments = {"message": message, **server.tool_args}
             else:
-                task_prompt = _build_task_prompt(task, document_content)
+                # rag_pill (and any tool that takes `document_content` as a
+                # dedicated parameter) already receives the doc via the
+                # `document_content` kwarg below. Embedding the doc inside
+                # `task` too duplicates it into the LLM mediation prompt:
+                # rag_pill's render_prompt() lays the task verbatim under
+                # "Question:", so a 400KB doc lands inline alongside the
+                # retrieved top-k chunks and the LLM call busts its
+                # 131072-token context window. Pass the raw task here; the
+                # equifinality contract still holds because Tool A and Tool
+                # B see the same (task, document_content) tuple.
                 arguments = {
-                    "task": task_prompt,
+                    "task": task,
                     "goal": goal,
                     "document_content": document_content,
                     **server.tool_args,
