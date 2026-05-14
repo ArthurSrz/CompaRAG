@@ -15,12 +15,12 @@ from pathlib import PurePosixPath
 
 from fastapi import APIRouter, File, HTTPException, Response, UploadFile
 
-from backend.tool_arena.documents import (
+from backend.tool_arena.document.list_documents import (
     DocumentDetail,
     DocumentSummary,
     document_registry,
 )
-from backend.tool_arena.extractors import (
+from backend.tool_arena.document.read_uploaded_file_as_text import (
     UnsupportedDocumentType,
     extract_text,
 )

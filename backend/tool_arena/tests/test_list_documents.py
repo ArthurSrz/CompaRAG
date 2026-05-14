@@ -5,7 +5,7 @@ from pathlib import Path
 
 import pytest
 
-from backend.tool_arena.documents import (
+from backend.tool_arena.document.list_documents import (
     DocumentConfig,
     DocumentRegistry,
     load_documents,

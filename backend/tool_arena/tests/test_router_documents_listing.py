@@ -12,7 +12,7 @@ Per 11-02-PLAN:
 from fastapi import FastAPI, HTTPException
 from fastapi.testclient import TestClient
 
-from backend.tool_arena.documents import (
+from backend.tool_arena.document.list_documents import (
     DocumentDetail,
     DocumentSummary,
     document_registry,

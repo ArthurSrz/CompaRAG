@@ -16,8 +16,8 @@ from pathlib import Path
 
 from pydantic import BaseModel
 
-# backend/tool_arena/ -> CompaRAG/
-ROOT_DIR = Path(__file__).parent.parent.parent
+# backend/tool_arena/document/ -> CompaRAG/
+ROOT_DIR = Path(__file__).parent.parent.parent.parent
 DOCUMENTS_INDEX_PATH = ROOT_DIR / "documents_index.json"
 
 

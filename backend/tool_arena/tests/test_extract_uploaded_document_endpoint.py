@@ -11,7 +11,7 @@ import pytest
 from fastapi import FastAPI
 from fastapi.testclient import TestClient
 
-from backend.tool_arena.documents_router import documents_router
+from backend.tool_arena.document.serve_document_endpoint import documents_router
 
 FIXTURES = Path(__file__).parent / "fixtures"
 SENTENCE = "The marmot inspects the equifinality of every tool."

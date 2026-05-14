@@ -49,7 +49,7 @@ from backend.tool_arena.judge.ground_truth import GroundTruthJudge
 from backend.tool_arena.normalizer import normalize_output
 from backend.tool_arena.readiness import get_readiness_registry, probe_server
 from backend.tool_arena.sanitizer import sanitize_envelope
-from backend.tool_arena.documents_router import documents_router
+from backend.tool_arena.document.serve_document_endpoint import documents_router
 from utils.storage.redis import REDIS_TOOL_RANKING_KEY, get_redis_client
 from backend.tool_arena.models import save_tool_call_to_db, ToolCallRecord
 from backend.tool_arena.persistence import ToolVoteRecord, save_tool_vote_to_db

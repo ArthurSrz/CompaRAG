@@ -4,7 +4,7 @@ from pathlib import Path
 
 import pytest
 
-from backend.tool_arena.extractors import (
+from backend.tool_arena.document.read_uploaded_file_as_text import (
     UnsupportedDocumentType,
     extract_text,
 )
