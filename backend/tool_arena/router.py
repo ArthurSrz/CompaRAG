@@ -258,9 +258,13 @@ async def admin_ranking_diag(_: None = Depends(_require_admin_token)) -> dict:
 
 
 class CompareRequest(BaseModel):
-    task: str = ""
-    goal: str = ""
-    document_content: str = ""
+    # Canonical vocabulary (cf. backend/tool_arena/vocabulary.py) :
+    #   task + goal sont les deux moitiés de la `question` du domaine.
+    #   La fusion `question` <- (task, goal) sera faite en Phase D
+    #   conjointement avec une mise à jour du frontend.
+    task: str = Field(default="", description="canonical: question (intent)")
+    goal: str = Field(default="", description="canonical: question (success criterion)")
+    document_content: str = Field(default="", description="canonical: document")
     # Optional task taxonomy from the UI's "Type de tâche" picker. When set,
     # the dispatcher restricts pairing to entries whose task_type matches —
     # equifinality fairness invariant. Legacy clients (no task_type) get the
@@ -295,11 +299,15 @@ class CompareResponse(BaseModel):
     """
     Blind comparison result.
     CRITICAL per UX-01: NO tool_id, NO server name, NO raw_result, NO endpoint.
+
+    Canonical vocabulary (cf. backend/tool_arena/vocabulary.py) :
+      session_hash       -> comparison_id (à renommer en Phase E avec migration DB)
+      result_a / result_b -> answer_a / answer_b (à renommer en Phase D avec frontend)
     """
 
-    session_hash: str
-    result_a: str | None   # mediated_result or None on error
-    result_b: str | None
+    session_hash: str = Field(description="canonical: comparison_id")
+    result_a: str | None = Field(description="canonical: answer_a")
+    result_b: str | None = Field(description="canonical: answer_b")
     error_a: str | None    # "Tool encountered an error" or None
     error_b: str | None
 
@@ -340,15 +348,17 @@ class ToolVoteBody(BaseModel):
 
 
 class ToolRevealInfo(BaseModel):
+    # Canonical : rag_tool. ToolRevealInfo = identité d'un RAGTool une fois
+    # le BlindReveal terminé.
     pos: str              # "a" or "b"
-    name: str             # MCPServerConfig.name
-    description: str      # MCPServerConfig.description
+    name: str             # MCPServerConfig.name -> canonical: rag_tool.name
+    description: str      # MCPServerConfig.description -> canonical: rag_tool.goal
     duration_ms: int      # from MCPToolCall.duration_ms (0 if error)
     error: str | None     # if tool failed
 
 
 class ToolRevealResponse(BaseModel):
-    chosen: str           # "a" | "b" | "tie"
+    chosen: str           # "a" | "b" | "tie"  -> canonical: vote.choice
     tool_a: ToolRevealInfo
     tool_b: ToolRevealInfo
 
