@@ -10,7 +10,7 @@ Tests drive the catalog's contract — slices 4.1, 4.2, 4.3.
 
 from pathlib import Path
 
-from backend.tool_arena.evaluation import EvaluationCatalog
+from backend.tool_arena.question.list_questions_with_known_answers import EvaluationCatalog
 
 
 def test_catalog_loads_queries_from_yaml(tmp_path: Path) -> None:

@@ -5,11 +5,11 @@ The judge is the most numerically sensitive module in Phase 13; each metric
 has its own slice with a deterministic expectation.
 """
 
-from backend.tool_arena.judge.base import ExpectedSpan
-from backend.tool_arena.judge.base import RetrievedSpan
+from backend.tool_arena.judge_verdict.base import ExpectedSpan
+from backend.tool_arena.judge_verdict.base import RetrievedSpan
 
-from backend.tool_arena.judge.base import JudgementScore
-from backend.tool_arena.judge.ground_truth import GroundTruthJudge
+from backend.tool_arena.judge_verdict.base import JudgementScore
+from backend.tool_arena.judge_verdict.score_against_ground_truth import GroundTruthJudge
 
 
 def _span(doc: str, start: int, end: int, *, rank: int, score: float = 0.0) -> RetrievedSpan:

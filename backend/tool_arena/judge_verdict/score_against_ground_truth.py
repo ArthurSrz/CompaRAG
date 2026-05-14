@@ -21,7 +21,7 @@ from __future__ import annotations
 
 import math
 
-from backend.tool_arena.judge.base import (
+from backend.tool_arena.judge_verdict.base import (
     ExpectedSpan,
     JudgementScore,
     RetrievedSpan,

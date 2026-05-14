@@ -27,7 +27,7 @@ from pathlib import Path
 
 import yaml
 
-from backend.tool_arena.judge.base import ExpectedSpan
+from backend.tool_arena.judge_verdict.base import ExpectedSpan
 
 
 @dataclass(frozen=True)

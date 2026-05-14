@@ -13,9 +13,9 @@ from unittest.mock import AsyncMock, MagicMock, patch
 from fastapi import FastAPI
 from fastapi.testclient import TestClient
 
-from backend.tool_arena.evaluation import EvaluationCatalog, EvaluationQueryMeta
+from backend.tool_arena.question.list_questions_with_known_answers import EvaluationCatalog, EvaluationQueryMeta
 from backend.tool_arena.router import router
-from backend.tool_arena.judge.base import ExpectedSpan
+from backend.tool_arena.judge_verdict.base import ExpectedSpan
 
 _app = FastAPI()
 _app.include_router(router)

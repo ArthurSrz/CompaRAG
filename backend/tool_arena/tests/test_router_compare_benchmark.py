@@ -16,7 +16,7 @@ from fastapi import FastAPI
 from fastapi.testclient import TestClient
 
 from backend.tool_arena.dispatcher import MCPDispatcher
-from backend.tool_arena.evaluation import EvaluationCatalog, EvaluationQueryMeta
+from backend.tool_arena.question.list_questions_with_known_answers import EvaluationCatalog, EvaluationQueryMeta
 from backend.tool_arena.router import router
 
 _app = FastAPI()

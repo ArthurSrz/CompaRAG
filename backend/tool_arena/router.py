@@ -44,8 +44,8 @@ from backend.tool_arena.dispatcher import (
     InsufficientReadyServersError,
     MCPDispatcher,
 )
-from backend.tool_arena.evaluation import EvaluationCatalog
-from backend.tool_arena.judge.ground_truth import GroundTruthJudge
+from backend.tool_arena.question.list_questions_with_known_answers import EvaluationCatalog
+from backend.tool_arena.judge_verdict.score_against_ground_truth import GroundTruthJudge
 from backend.tool_arena.normalizer import normalize_output
 from backend.tool_arena.readiness import get_readiness_registry, probe_server
 from backend.tool_arena.sanitizer import sanitize_envelope
