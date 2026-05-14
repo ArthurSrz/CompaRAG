@@ -1,4 +1,10 @@
-"""Credential Module — single dispatch seam for MCP server auth.
+"""
+BUT : juste avant d'appeler un RAGTool, fabriquer les en-têtes HTTP
+d'authentification appropriés à cet outil (rien, API-key, ou OAuth). Le
+reste du code ne sait plus quel type d'auth chaque outil utilise — il demande
+simplement à la "credential" de produire ses headers.
+
+Credential Module — single dispatch seam for MCP server auth.
 
 Phase 1 of the OAuth refactor: collapse per-call auth-type branching in
 ``client.py`` into a small Adapter family behind a uniform ``Credential``

@@ -1,4 +1,16 @@
-"""ReadinessRegistry — first-class arena state for MCP server health.
+"""
+BUT : surveiller en continu quels outils RAG sont prêts à répondre, pour
+qu'une Comparison n'aille jamais interroger un outil qu'on sait en panne. Si
+moins de deux outils sont prêts, l'endpoint /compare renvoie 503 plutôt que
+deux cartes d'erreur côte à côte.
+
+Future home (cf. knowledge-graph/code-ontology.yaml) :
+    backend/tool_arena/rag_tool/readiness/
+        probe_one_tool.py
+        watch_tools_continuously.py
+        store_readiness.py
+
+ReadinessRegistry — first-class arena state for MCP server health.
 
 Phase 2 of the OAuth refactor. Auth/upstream failure is no longer a runtime
 exception that surfaces as a generic "Tool encountered an error" card. Instead,

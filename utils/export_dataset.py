@@ -1,4 +1,16 @@
 """
+BUT : publier périodiquement les Votes enregistrés sous forme d'un dataset
+ouvert sur Hugging Face Hub. C'est le DatasetExport de l'ontologie.
+Cinq étapes du pipeline : filtrer (anti-spam, PII), lire (DB), transformer,
+formater (parquet/jsonl/tsv), publier.
+
+Sera découpé en Phase E (cf. knowledge-graph/code-ontology.yaml) en :
+    utils/dataset_export/keep_only_real_conversations.py
+    utils/dataset_export/read_comparisons_from_database.py
+    utils/dataset_export/publish_dataset_to_huggingface.py
+    utils/dataset_export/run_one_dataset.py
+    utils/dataset_export/__main__.py
+
 Export ComparIA datasets from PostgreSQL to HuggingFace Hub.
 
 This script:

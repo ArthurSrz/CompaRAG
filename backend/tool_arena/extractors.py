@@ -1,4 +1,12 @@
-"""Convert uploaded document bytes into plain text.
+"""
+BUT : transformer un fichier uploadé par l'utilisateur (PDF, DOCX, MD, TXT…)
+en texte brut, pour que les outils RAG puissent répondre à des questions
+dessus. Le reste de la chaîne ne manipule que des chaînes de caractères.
+
+Future home (cf. knowledge-graph/code-ontology.yaml) :
+    backend/tool_arena/document/read_uploaded_file_as_text.py
+
+Convert uploaded document bytes into plain text.
 
 Keeps the rest of the tool-arena stack on its existing
 ``document_content: str`` contract: callers extract here, then hand the

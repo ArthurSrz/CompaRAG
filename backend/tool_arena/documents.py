@@ -1,4 +1,12 @@
-"""Document library registry for CompaRAG Tool Arena.
+"""
+BUT : tenir la liste des Documents disponibles dans le corpus statique de
+l'arène (ceux que l'utilisateur peut sélectionner sans uploader son propre
+fichier). Comme registry.py mais pour les Documents au lieu des RAGTool.
+
+Future home (cf. knowledge-graph/code-ontology.yaml) :
+    backend/tool_arena/document/list_documents.py
+
+Document library registry for CompaRAG Tool Arena.
 
 Mirrors MCPRegistry pattern: manifest-driven in-memory singleton loaded at import time.
 """

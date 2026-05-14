@@ -1,4 +1,11 @@
 """
+BUT : se rappeler qui était de quel côté pendant une Comparison.
+Stocke en Redis le mapping {comparison_id -> (outil_a, outil_b, question,
+réponses)} pour pouvoir révéler les identités après le vote.
+
+Future home (cf. knowledge-graph/code-ontology.yaml) :
+    backend/tool_arena/blind_reveal/remember_who_was_which.py
+
 Tool arena session management for comparison state in Redis.
 
 Handles creating, storing, and retrieving tool arena sessions during blind comparison.

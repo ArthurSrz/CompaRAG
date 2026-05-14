@@ -1,4 +1,13 @@
-"""LlamaIndex RAG MCP Server — FastMCP on port 8011 (or $PORT)."""
+"""
+BUT : un RAGTool basé sur LlamaIndex — répond à une Question sur un Document
+uploadé OU sur le Corpus statique, et renvoie sa réponse texte via le
+protocole MCP. C'est l'autre outil historique de l'arène.
+
+Sera déplacé en Phase F sous mcp_servers/_legacy_standalone_servers/ une fois
+que rag_pill (qui wrappe déjà LlamaIndex comme moteur) aura prouvé sa stabilité.
+
+LlamaIndex RAG MCP Server — FastMCP on port 8011 (or $PORT).
+"""
 
 import asyncio
 import json

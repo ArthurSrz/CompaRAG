@@ -1,4 +1,12 @@
-"""RetrievalJudge Protocol + JudgementScore dataclass.
+"""
+BUT : définir un contrat commun pour scorer une réponse contre une vérité
+de référence — qu'on utilise la vérité connue (v1), un humain, ou un autre
+LLM. Tous les juges plug-in derrière la même interface JudgementScore.
+
+Future home (cf. knowledge-graph/code-ontology.yaml) :
+    backend/tool_arena/judge_verdict/score_against_ground_truth.py
+
+RetrievalJudge Protocol + JudgementScore dataclass.
 
 Single seam — v1 has one adapter (GroundTruthJudge). Future HumanJudge /
 LLMJudge plug in here without disturbing the dispatcher.

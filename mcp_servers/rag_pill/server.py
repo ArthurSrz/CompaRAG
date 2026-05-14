@@ -1,4 +1,11 @@
-"""rag_pill MCP server — single endpoint dispatching (pill_id, engine_id) pairs."""
+"""
+BUT : un RAGTool unifié qui peut être configuré à chaud comme cinq RAGEngine
+différents (LangChain, LlamaIndex, Haystack, Txtai, Chroma) — chaque "pilule"
+(pill_id, engine_id) est une combinaison testable. C'est l'outil cible
+qui remplacera à terme les serveurs standalone langchain_rag et llamaindex_rag.
+
+rag_pill MCP server — single endpoint dispatching (pill_id, engine_id) pairs.
+"""
 
 import json
 import logging

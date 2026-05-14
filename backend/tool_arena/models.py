@@ -1,4 +1,8 @@
 """
+BUT : décrire les structures de données échangées dans une Comparison —
+l'appel à un outil (MCPToolCall) et sa persistance en base (ToolCallRecord).
+Pas de logique métier, juste des contrats Pydantic.
+
 Data models for CompaRAG Tool Arena.
 
 Defines all data structures for:

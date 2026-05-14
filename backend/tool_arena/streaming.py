@@ -1,4 +1,13 @@
-"""tool-arena SSE streaming — multiplex two rag-pill /run-streaming NDJSON
+"""
+BUT : pousser au navigateur, en direct, la progression d'une Comparison en
+cours. Côté A et côté B émettent indépendamment ; on les multiplexe sur une
+seule connexion SSE pour que le frontend affiche deux ProgressCards animées
+en temps réel.
+
+Future home (cf. knowledge-graph/code-ontology.yaml) :
+    backend/tool_arena/comparison/stream_progress_to_browser.py
+
+tool-arena SSE streaming — multiplex two rag-pill /run-streaming NDJSON
 streams into a single SSE response.
 
 Wave 6.8: the /tool-arena/compare endpoint can return either:

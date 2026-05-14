@@ -1,4 +1,13 @@
-"""LangChain RAG MCP Server — FastMCP on port 8010 (or $PORT)."""
+"""
+BUT : un RAGTool basé sur LangChain — répond à une Question sur un Document
+uploadé OU sur le Corpus statique, et renvoie sa réponse texte via le
+protocole MCP. C'est l'un des outils que l'arène met en compétition.
+
+Sera déplacé en Phase F sous mcp_servers/_legacy_standalone_servers/ une fois
+que rag_pill (qui wrappe déjà LangChain comme moteur) aura prouvé sa stabilité.
+
+LangChain RAG MCP Server — FastMCP on port 8010 (or $PORT).
+"""
 
 import asyncio
 import json

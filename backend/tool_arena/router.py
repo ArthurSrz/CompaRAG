@@ -1,4 +1,17 @@
 """
+BUT : déclarer tous les endpoints HTTP du Tool Arena — l'utilisateur démarre
+une Comparison, voit deux réponses en aveugle, Vote pour celle qu'il préfère,
+puis le BlindReveal lui montre quel RAGTool a produit chaque réponse.
+
+Sera découpé en Phase E selon l'ontologie (cf. knowledge-graph/code-ontology.yaml) :
+    backend/tool_arena/comparison/start_comparison_endpoint.py
+    backend/tool_arena/comparison/run_comparison_endpoint.py
+    backend/tool_arena/vote/cast_vote_endpoint.py
+    backend/tool_arena/blind_reveal/reveal_tool_identities_endpoint.py
+    backend/tool_arena/leaderboard/show_leaderboard_endpoint.py
+    backend/tool_arena/rag_tool/check_tools_are_ready_endpoint.py
+    backend/tool_arena/admin/operator_admin_endpoints.py
+
 FastAPI router for the Tool Arena comparison loop.
 
 Provides 4 endpoints:

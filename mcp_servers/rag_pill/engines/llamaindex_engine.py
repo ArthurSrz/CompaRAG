@@ -1,4 +1,9 @@
-"""LlamaIndex engine adapter — index + retrieve via LlamaIndex, generate via LLMProvider.
+"""
+BUT : faire concourir LlamaIndex comme RAGEngine dans l'arène, en gardant
+le LLM identique aux autres moteurs pour que la comparaison mesure bien la
+qualité du retrieval pipeline et pas la qualité du LLM final.
+
+LlamaIndex engine adapter — index + retrieve via LlamaIndex, generate via LLMProvider.
 
 Bypasses LlamaIndex's `as_query_engine().query()` so the LLM seam is the same
 LLMProvider every other engine uses. The arena is comparing *retrieval

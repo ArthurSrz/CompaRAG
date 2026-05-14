@@ -1,4 +1,12 @@
-"""GroundTruthJudge — score retrieval against curated ExpectedSpan list.
+"""
+BUT : produire un JudgeVerdict — un score automatique de la qualité d'une
+réponse — en comparant les passages que le RAGTool a retrouvés aux passages
+attendus pour cette Question. Trois métriques : Recall@K, MRR, NDCG@K.
+
+Future home (cf. knowledge-graph/code-ontology.yaml) :
+    backend/tool_arena/judge_verdict/score_against_ground_truth.py
+
+GroundTruthJudge — score retrieval against curated ExpectedSpan list.
 
 A retrieved span counts as a hit on an expected span iff their character
 intervals overlap (within the same source_doc_id). Each retrieved span at

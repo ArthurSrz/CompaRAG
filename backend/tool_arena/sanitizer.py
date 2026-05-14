@@ -1,4 +1,13 @@
-"""Identity sanitization for CompaRAG Tool Arena.
+"""
+BUT : effacer toute trace de l'identité de l'outil dans sa réponse avant que
+l'utilisateur ne vote. Si l'utilisateur voit le nom de l'outil dans la réponse,
+le vote est biaisé par la marque — donc l'aveuglement est un invariant produit
+critique (Comparison.PRESERVES BlindReveal dans l'ontologie).
+
+Future home (cf. knowledge-graph/code-ontology.yaml) :
+    backend/tool_arena/blind_reveal/hide_tool_identity_before_vote.py
+
+Identity sanitization for CompaRAG Tool Arena.
 
 Strips MCP server identifying information (id, name, endpoint, auth token)
 from text to prevent identity leakage before blind voting.

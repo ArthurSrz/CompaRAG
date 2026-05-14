@@ -1,0 +1,337 @@
+# Code ontology for CompaRAG
+#
+# This file is the operational counterpart of the postmortem ontology in
+# 2026-05-02-clarifeye-debug.yaml. Instead of describing bugs and fixes, it
+# describes the LIVE concepts the code is built around: which entities exist
+# in the domain, what goal each one serves, where it lives in the codebase,
+# and how they relate to each other.
+#
+# Use this file as the contract for renames, file moves, and new tool
+# onboarding (cf. Phase G of the simplification plan):
+#   - When you rename a file or function, update the matching `lives_in:`.
+#   - When you add a new RAG tool, append a new RAGTool entity here.
+#   - When the relations between entities change, update the relations block.
+#
+# Schema follows knowledge-graph/README.md.
+
+ontology:
+  date: 2026-05-14
+  topic: CompaRAG operational code ontology
+  scope: backend/tool_arena, mcp_servers, utils, frontend
+  branch: claude/simplify-ontology-code-8qBKE
+  intent: |
+    Make every folder, file, and function readable as a statement of intent
+    in the project owner's domain vocabulary, rather than in technical
+    layering terms (dispatcher, normalizer, sanitizer, registry, etc.).
+
+# ---------------------------------------------------------------------------
+# Entities — the core domain concepts of CompaRAG
+# ---------------------------------------------------------------------------
+
+entities:
+
+  - id: comparison
+    type: DomainEntity
+    name: Comparison
+    goal: |
+      Une manche où deux outils RAG répondent à la même question, en aveugle,
+      pour que l'utilisateur puisse voter pour celle qu'il préfère sans biais
+      de marque.
+    lives_in: backend/tool_arena/comparison/
+    metadata:
+      currently_in: backend/tool_arena/router.py (lines 247-353 + 547-765)
+      target_file: backend/tool_arena/comparison/run_comparison_endpoint.py
+      contracts: backend/tool_arena/comparison/contracts.py (CompareRequest, CompareResponse)
+      id_field: comparison_id (formerly session_hash)
+
+  - id: question
+    type: DomainEntity
+    name: Question
+    goal: |
+      Ce que l'utilisateur veut savoir. Fusion des champs historiques
+      `task` (l'instruction) et `goal` (le critère de succès) — la distinction
+      n'était utilisée par aucun outil RAG en pratique.
+    lives_in: backend/tool_arena/question/
+    metadata:
+      currently_called: [task, goal, query, prompt]
+      canonical_name: question
+      sub_types: [summary, qa, extraction]
+      catalog_for_benchmark: backend/tool_arena/question/list_questions_with_known_answers.py
+      currently_in: backend/tool_arena/evaluation.py
+
+  - id: document
+    type: DomainEntity
+    name: Document
+    goal: |
+      Texte sur lequel la question porte. Peut être uploadé par l'utilisateur
+      (mode sandbox) ou tiré du corpus statique (mode benchmark).
+    lives_in: backend/tool_arena/document/
+    metadata:
+      currently_in: [backend/tool_arena/documents.py, backend/tool_arena/extractors.py, backend/tool_arena/documents_router.py]
+      target_files:
+        - backend/tool_arena/document/list_documents.py
+        - backend/tool_arena/document/read_uploaded_file_as_text.py
+        - backend/tool_arena/document/serve_document_endpoint.py
+
+  - id: corpus
+    type: DomainEntity
+    name: Corpus
+    goal: |
+      Bibliothèque statique de documents (tutoriels Python pour l'instant)
+      indexée au démarrage de chaque serveur RAG. Sert quand l'utilisateur
+      n'upload pas de document.
+    lives_in: backend/tool_arena/document/corpus/
+    metadata:
+      currently_in: mcp_servers/corpus/, mcp_servers/rag_pill/corpus/
+
+  - id: rag_tool
+    type: DomainEntity
+    name: RAGTool
+    goal: |
+      Un outil capable de répondre à une question à propos d'un document.
+      Implémenté comme un serveur MCP distant (HTTP streamable).
+      Remplace les noms techniques `MCPServer`, `provider`, `client`.
+    lives_in: backend/tool_arena/rag_tool/
+    metadata:
+      currently_in: [backend/tool_arena/client.py, backend/tool_arena/registry.py, backend/tool_arena/config.py]
+      target_files:
+        - backend/tool_arena/rag_tool/ask_one_tool.py
+        - backend/tool_arena/rag_tool/list_available_tools.py
+      mcp_signature: "rag_query(task: str, goal: str, document_content: str = '') -> str"
+      mcp_boundary_note: |
+        Le wire protocol MCP garde `task`/`goal` pour ne pas casser les clients
+        externes. La traduction `question → (task=question, goal=question)`
+        se fait dans ask_one_tool.py.
+      currently_known_instances:
+        - langchain_rag (legacy standalone, port 8010)
+        - llamaindex_rag (legacy standalone, port 8011)
+        - rag_pill (unified, wraps 5 engines)
+        - clarifeye (agentic OAuth tool, external)
+
+  - id: rag_engine
+    type: DomainEntity
+    name: RAGEngine
+    goal: |
+      Un moteur RAG concret encapsulé par un RAGTool. Cinq moteurs existent
+      dans rag_pill : LangChain, LlamaIndex, Haystack, Txtai, Chroma.
+    lives_in: mcp_servers/rag_pill/engines/
+    metadata:
+      shared_skeleton_target: mcp_servers/rag_pill/engines/_shared_engine_skeleton.py
+      duplication_to_absorb: "~50 LOC per engine (None-embed retry, exception handling, metadata schema)"
+
+  - id: answer
+    type: DomainEntity
+    name: Answer
+    goal: |
+      Ce qu'un RAGTool a renvoyé pour une Question donnée. Passe par plusieurs
+      étapes nommées explicitement pour qu'on sache toujours de quelle version
+      on parle.
+    lives_in: backend/tool_arena/answer/
+    metadata:
+      currently_called: [result, output, raw_result, mediated_result, sanitized]
+      canonical_stages:
+        - answer_as_returned_by_tool   # raw output from RAGTool, before any processing
+        - answer_after_mediation       # after optional LLM mediation (currently disabled)
+        - answer_with_identity_hidden  # after sanitization, ready for blind display
+      currently_in: backend/tool_arena/normalizer.py
+      target_file: backend/tool_arena/answer/wrap_answer_in_standard_envelope.py
+
+  - id: blind_reveal
+    type: DomainEntity
+    name: BlindReveal
+    goal: |
+      Machine d'état qui garde l'identité des deux RAGTool cachée jusqu'au
+      vote, puis la révèle. Préserver l'aveuglement est un invariant critique
+      du produit (sinon les votes sont biaisés par la marque).
+    lives_in: backend/tool_arena/blind_reveal/
+    metadata:
+      states: [hidden, voted, revealed]
+      currently_in: [backend/tool_arena/sanitizer.py, backend/tool_arena/session.py]
+      target_files:
+        - backend/tool_arena/blind_reveal/hide_tool_identity_before_vote.py
+        - backend/tool_arena/blind_reveal/remember_who_was_which.py
+        - backend/tool_arena/blind_reveal/reveal_tool_identities_endpoint.py
+        - backend/tool_arena/blind_reveal/identify_user_session.py
+
+  - id: vote
+    type: DomainEntity
+    name: Vote
+    goal: |
+      Préférence de l'utilisateur entre les deux réponses anonymes : a, b, ou tie.
+      Inclut une note de 1 à 5 sur l'atteinte du but (vote_goal_rating).
+    lives_in: backend/tool_arena/vote/
+    metadata:
+      currently_in: backend/tool_arena/persistence.py + backend/tool_arena/router.py:766-825
+      target_files:
+        - backend/tool_arena/vote/cast_vote_endpoint.py
+        - backend/tool_arena/vote/save_vote_to_database.py
+      record_model: ToolVoteRecord
+
+  - id: judge_verdict
+    type: DomainEntity
+    name: JudgeVerdict
+    goal: |
+      Score automatique d'une réponse contre la vérité de référence (ground
+      truth). Sert au mode benchmark où la question a une bonne réponse connue.
+    lives_in: backend/tool_arena/judge_verdict/
+    metadata:
+      currently_in: [backend/tool_arena/judge/base.py, backend/tool_arena/judge/ground_truth.py]
+      target_file: backend/tool_arena/judge_verdict/score_against_ground_truth.py
+
+  - id: tool_auth_session
+    type: DomainEntity
+    name: ToolAuthSession
+    goal: |
+      Identifiants OAuth d'un RAGTool externe (Clarifeye notamment). Stocke
+      les tokens de manière persistante et gère leur rotation.
+    lives_in: backend/tool_arena/rag_tool/auth/
+    metadata:
+      currently_in: backend/tool_arena/auth.py (496 lines)
+      target_files:
+        - backend/tool_arena/rag_tool/auth/remember_tool_credentials.py
+        - backend/tool_arena/rag_tool/auth/refresh_credentials_safely.py
+        - backend/tool_arena/rag_tool/auth/sign_in_to_tool.py
+        - backend/tool_arena/rag_tool/auth/warm_up_credentials_at_startup.py
+
+  - id: readiness_check
+    type: DomainEntity
+    name: ReadinessCheck
+    goal: |
+      Vérifie si un RAGTool est joignable et capable de répondre, à un instant
+      donné. Empêche d'appeler un outil dont on sait qu'il est down.
+    lives_in: backend/tool_arena/rag_tool/readiness/
+    metadata:
+      currently_in: backend/tool_arena/readiness.py
+      target_files:
+        - backend/tool_arena/rag_tool/readiness/probe_one_tool.py
+        - backend/tool_arena/rag_tool/readiness/watch_tools_continuously.py
+        - backend/tool_arena/rag_tool/readiness/store_readiness.py
+
+  - id: leaderboard
+    type: DomainEntity
+    name: Leaderboard
+    goal: |
+      Agrégat des Votes dans le temps pour classer les RAGTool. Visible
+      publiquement après que des comparaisons ont eu lieu.
+    lives_in: backend/tool_arena/leaderboard/
+    metadata:
+      currently_in: backend/tool_arena/router.py:414-451
+      target_file: backend/tool_arena/leaderboard/show_leaderboard_endpoint.py
+
+  - id: dataset_export
+    type: DomainEntity
+    name: DatasetExport
+    goal: |
+      Publication périodique des comparaisons enregistrées vers Hugging Face,
+      en tant que dataset ouvert de préférences humaines.
+    lives_in: utils/dataset_export/
+    metadata:
+      currently_in: utils/export_dataset.py (789 lines)
+      target_files:
+        - utils/dataset_export/keep_only_real_conversations.py
+        - utils/dataset_export/read_comparisons_from_database.py
+        - utils/dataset_export/publish_dataset_to_huggingface.py
+        - utils/dataset_export/run_one_dataset.py
+        - utils/dataset_export/__main__.py
+
+  - id: openrouter_provider
+    type: ExternalDependency
+    name: OpenRouterProvider
+    goal: |
+      Fournisseur LLM + embeddings utilisé par tous les serveurs RAG.
+      Identifié comme le maillon faible de la chaîne (cf. postmortem 2026-05-02) :
+      cap silencieux par Cloudflare, sur-résumé par mistral-small, embeddings
+      None.
+    lives_in: backend/tests/test_openrouter_health.py (à créer en Phase B)
+    metadata:
+      check_script: scripts/check_openrouter_providers.py
+      health_endpoint: GET /health (enrichi en Phase B)
+      models_in_use:
+        - mistralai/mistral-medium-3.1
+        - text-embedding-3-small
+      known_failure_modes:
+        - silent_token_cap_when_only_provider_is_cloudflare
+        - none_embeddings_from_degraded_provider
+        - over_summarization_by_mistral_small
+
+# ---------------------------------------------------------------------------
+# Relations — how the entities connect
+# ---------------------------------------------------------------------------
+
+relations:
+  # User-facing flow
+  - {from: comparison, rel: ASKS, to: question}
+  - {from: comparison, rel: USES, to: rag_tool}          # 2x, one per side
+  - {from: comparison, rel: ABOUT, to: document}
+  - {from: comparison, rel: PRODUCES, to: answer}        # 2x, one per side
+  - {from: comparison, rel: TRIGGERS, to: blind_reveal}
+
+  # Answer lifecycle
+  - {from: rag_tool, rel: PRODUCES, to: answer}
+  - {from: answer, rel: HIDDEN_BY, to: blind_reveal}
+  - {from: answer, rel: SCORED_BY, to: judge_verdict}    # only in benchmark mode
+
+  # Vote flow
+  - {from: vote, rel: CHOOSES, to: answer}
+  - {from: vote, rel: TRIGGERS_REVEAL, to: blind_reveal}
+  - {from: leaderboard, rel: AGGREGATES, to: vote}
+
+  # RAGTool internals
+  - {from: rag_tool, rel: AUTHENTICATED_BY, to: tool_auth_session}    # for OAuth tools
+  - {from: rag_tool, rel: CHECKED_BY, to: readiness_check}
+  - {from: rag_tool, rel: WRAPS, to: rag_engine}                       # only for rag_pill
+  - {from: rag_tool, rel: QUERIES, to: corpus}                         # when no document uploaded
+  - {from: rag_tool, rel: DEPENDS_ON, to: openrouter_provider}
+
+  # Document / Question
+  - {from: document, rel: SUBSTITUTES, to: corpus}                     # when user uploads
+  - {from: question, rel: HAS_GROUND_TRUTH_FOR, to: judge_verdict}    # benchmark only
+
+  # Cross-cutting
+  - {from: dataset_export, rel: PUBLISHES, to: vote}
+
+# ---------------------------------------------------------------------------
+# Design principles (propagable to future sessions)
+# ---------------------------------------------------------------------------
+
+learnings:
+
+  - text: |
+      Names in source code must describe the GOAL, not the mechanism. Replace
+      technical names (dispatcher, normalizer, sanitizer, extractor, registry)
+      with goal-describing names that the project owner can read as intent.
+    tags: [naming, ontology, simplify]
+
+  - text: |
+      One concept = one canonical name across the whole project. `question`
+      replaces task/goal/query/prompt; `answer` replaces result/output/
+      raw_result/mediated_result/sanitized. Intermediate stages of the same
+      concept get explicit suffixes (e.g. answer_with_identity_hidden).
+    tags: [naming, vocabulary]
+
+  - text: |
+      Folder structure follows the ontology. Each domain entity lives in its
+      own folder. New tools, new entities, and renames must update this YAML
+      to keep the ontology in sync with the code.
+    tags: [architecture, ontology]
+
+  - text: |
+      The MCP wire signature (rag_query(task, goal, document_content)) is a
+      contract with external clients. Internal renames stop at this boundary;
+      translation happens in ask_one_tool.py. Future v2 of the MCP tool will
+      align the wire to the internal vocabulary.
+    tags: [mcp, boundary, compatibility]
+
+  - text: |
+      OpenRouter is the weak link in the RAG chain. Every new RAGTool that
+      depends on it must be checked against the three known failure modes:
+      silent token cap (Cloudflare exclusivity), None embeddings, and model-
+      level over-summarization. The check script and the /health endpoint
+      cover this at runtime.
+    tags: [openrouter, robustness, observability]
+
+  - text: |
+      Adding a new RAGTool is a Phase-G workflow: copy the template folder,
+      fill in tool.manifest.yaml, run scripts/register_tool.py, and the tool
+      is auto-registered in mcp_servers.json AND in this ontology file.
+    tags: [extensibility, onboarding]

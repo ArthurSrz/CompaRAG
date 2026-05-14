@@ -1,4 +1,13 @@
-"""Server-side evaluation query metadata loader.
+"""
+BUT : exposer le catalogue des Questions qui ont une vérité de référence
+connue (mode "benchmark"). En mode benchmark, l'utilisateur choisit une
+Question parmi cette liste plutôt que d'en saisir une libre, ce qui permet
+au JudgeVerdict de scorer automatiquement les réponses.
+
+Future home (cf. knowledge-graph/code-ontology.yaml) :
+    backend/tool_arena/question/list_questions_with_known_answers.py
+
+Server-side evaluation query metadata loader.
 
 Reads the same `corpus/evaluation/queries.yaml` that rag_pill's FixedCorpus
 reads but exposes ONLY the metadata (id, query_text, goal_text) the router

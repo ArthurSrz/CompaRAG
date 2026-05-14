@@ -1,4 +1,15 @@
-"""OAuth2 authorization_code auth for MCP servers via the MCP SDK.
+"""
+BUT : gérer l'authentification OAuth des RAGTool externes (Clarifeye
+notamment) — se souvenir des tokens, les rafraîchir au bon moment, faire la
+poignée de main initiale au démarrage. C'est le ToolAuthSession de l'ontologie.
+
+Sera découpé en Phase E (cf. knowledge-graph/code-ontology.yaml) :
+    backend/tool_arena/rag_tool/auth/remember_tool_credentials.py    (storage)
+    backend/tool_arena/rag_tool/auth/refresh_credentials_safely.py   (locking)
+    backend/tool_arena/rag_tool/auth/sign_in_to_tool.py              (provider)
+    backend/tool_arena/rag_tool/auth/warm_up_credentials_at_startup.py
+
+OAuth2 authorization_code auth for MCP servers via the MCP SDK.
 
 Uses the MCP SDK's OAuthClientProvider which handles:
 - Authorization code flow with PKCE (S256)

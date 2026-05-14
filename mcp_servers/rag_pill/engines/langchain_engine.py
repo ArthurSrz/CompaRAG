@@ -1,4 +1,8 @@
-"""LangChain engine adapter — index + retrieve via LangChain/FAISS, generate via LLMProvider.
+"""
+BUT : faire concourir LangChain comme RAGEngine dans l'arène — indexation
++ récupération via LangChain/FAISS, génération via le LLMProvider partagé.
+
+LangChain engine adapter — index + retrieve via LangChain/FAISS, generate via LLMProvider.
 
 Prompt construction lives in mcp_servers/rag_pill/strategies/; OpenRouter
 wiring lives in mcp_servers/rag_pill/providers/. This module is responsible

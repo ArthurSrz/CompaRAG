@@ -1,4 +1,10 @@
-"""One-time OAuth2 setup for MCP servers requiring authorization_code flow.
+"""
+BUT : exécuter une fois (à la main) la connexion OAuth initiale pour un
+RAGTool externe, ouvrir un navigateur pour que l'opérateur se logue, et
+stocker le token résultant. Tous les appels ultérieurs utilisent le
+refresh_token automatiquement.
+
+One-time OAuth2 setup for MCP servers requiring authorization_code flow.
 
 Usage:
     uv run python -m backend.tool_arena.oauth_setup clarifeye

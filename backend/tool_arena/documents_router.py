@@ -1,4 +1,10 @@
 """
+BUT : endpoints HTTP pour lister les Documents disponibles et servir le
+contenu d'un Document particulier au frontend (avant l'upload de l'utilisateur).
+
+Future home (cf. knowledge-graph/code-ontology.yaml) :
+    backend/tool_arena/document/serve_document_endpoint.py
+
 Document library sub-router (DOC-02, DOC-03).
 
 Isolated from the main router so tests can import this without

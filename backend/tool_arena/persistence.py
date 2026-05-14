@@ -1,4 +1,11 @@
 """
+BUT : sauvegarder un Vote en base de données après que l'utilisateur a choisi
+entre les deux réponses anonymes. Sert ensuite à alimenter le Leaderboard et
+le DatasetExport.
+
+Future home (cf. knowledge-graph/code-ontology.yaml) :
+    backend/tool_arena/vote/save_vote_to_database.py
+
 Database persistence for tool arena votes.
 
 Stores blind comparison votes in the tool_votes table.

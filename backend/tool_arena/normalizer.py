@@ -1,4 +1,12 @@
-"""Output normalizer for CompaRAG Tool Arena.
+"""
+BUT : envelopper la réponse brute d'un outil RAG dans une enveloppe standard
+{answer, sources, confidence, latency_ms} pour que l'arène traite toutes les
+réponses de la même manière, quel que soit l'outil qui les a produites.
+
+Future home (cf. knowledge-graph/code-ontology.yaml) :
+    backend/tool_arena/answer/wrap_answer_in_standard_envelope.py
+
+Output normalizer for CompaRAG Tool Arena.
 
 Produces a canonical NormalizedEnvelope from heterogeneous RAG tool output.
 Pipeline position: post-dispatch, pre-sanitize (D-06).

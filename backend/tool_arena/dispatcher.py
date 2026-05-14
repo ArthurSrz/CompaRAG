@@ -1,4 +1,12 @@
-"""MCPDispatcher — orchestrates concurrent MCP tool calls.
+"""
+BUT : poser la même question à deux outils RAG en parallèle et renvoyer
+leurs deux réponses, prêtes à être affichées en aveugle. C'est le cœur d'une
+manche de Comparison.
+
+Future home (cf. knowledge-graph/code-ontology.yaml) :
+    backend/tool_arena/comparison/ask_two_tools_concurrently.py
+
+MCPDispatcher — orchestrates concurrent MCP tool calls.
 
 Single entry point: dispatch(task, goal, session_id) returns two MCPToolCall
 objects with sanitized results. Each MCP server is responsible for producing

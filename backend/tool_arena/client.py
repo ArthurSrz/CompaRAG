@@ -1,4 +1,12 @@
-"""MCP client wrapper for CompaRAG Tool Arena.
+"""
+BUT : poser UNE question à UN outil RAG via MCP, et récupérer sa réponse texte
+ainsi que la durée d'appel. C'est la primitive de bas niveau qu'utilise le
+dispatcher pour interroger deux outils en parallèle.
+
+Future home (cf. knowledge-graph/code-ontology.yaml) :
+    backend/tool_arena/rag_tool/ask_one_tool.py
+
+MCP client wrapper for CompaRAG Tool Arena.
 
 Provides single_mcp_call() coroutine that opens a fresh streamablehttp_client
 session, discovers or calls specific tools, and returns raw text + duration.

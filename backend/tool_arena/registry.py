@@ -1,4 +1,11 @@
 """
+BUT : tenir la liste des outils RAG disponibles (chargée depuis
+mcp_servers.json) et en piocher deux pour une Comparison. C'est le catalogue
+des RAGTool de l'arène.
+
+Future home (cf. knowledge-graph/code-ontology.yaml) :
+    backend/tool_arena/rag_tool/list_available_tools.py
+
 MCPRegistry — singleton registry of MCP servers loaded from mcp_servers.json.
 
 Provides server selection (pick_two) and lookup (get_server) for the Tool Arena.
