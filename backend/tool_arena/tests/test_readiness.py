@@ -19,7 +19,7 @@ from backend.tool_arena.credential import (
     CredentialUpstreamDown,
     _clear_credential_cache,
 )
-from backend.tool_arena.readiness import (
+from backend.tool_arena.rag_tool.readiness import (
     ReadinessRegistry,
     ServerReadiness,
     ServerStatus,
@@ -347,7 +347,7 @@ async def test_probe_loop_targets_only_failed_between_full_cycles(monkeypatch):
     probes within 15s`` — before the fix, all servers waited a full minute,
     keeping a flapped Clarifeye out of the dispatch pool until the next pulse.
     """
-    from backend.tool_arena import readiness as rd
+    from backend.tool_arena.rag_tool import readiness as rd
 
     healthy = _none_server("healthy")
     flapped = _none_server("flapped")

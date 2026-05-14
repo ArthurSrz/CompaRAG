@@ -16,7 +16,7 @@ from unittest.mock import AsyncMock, MagicMock, patch
 import pytest
 
 from backend.tool_arena.config import MCPServerConfig
-from backend.tool_arena.readiness import (
+from backend.tool_arena.rag_tool.readiness import (
     _reset_registry_for_tests,
     get_readiness_registry,
 )
@@ -85,7 +85,7 @@ async def test_dispatcher_oversamples_high_weight_server():
 
     Run many trials and check empirical frequencies converge within ±2%.
     """
-    from backend.tool_arena.dispatcher import MCPDispatcher
+    from backend.tool_arena.comparison.ask_two_tools_concurrently import MCPDispatcher
 
     s_light_a = _srv("light_a", "summary", weight=1.0)
     s_light_b = _srv("light_b", "summary", weight=1.0)
@@ -102,14 +102,14 @@ async def test_dispatcher_oversamples_high_weight_server():
     counts: Counter[str] = Counter()
 
     with (
-        patch("backend.tool_arena.dispatcher.registry", mock_registry),
+        patch("backend.tool_arena.comparison.ask_two_tools_concurrently.registry", mock_registry),
         patch(
-            "backend.tool_arena.dispatcher.single_mcp_call",
+            "backend.tool_arena.comparison.ask_two_tools_concurrently.single_mcp_call",
             new_callable=AsyncMock,
             return_value=("ok", 10),
         ),
         patch(
-            "backend.tool_arena.dispatcher.sanitize_output",
+            "backend.tool_arena.comparison.ask_two_tools_concurrently.sanitize_output",
             side_effect=lambda text, servers: text,
         ),
     ):
@@ -134,7 +134,7 @@ async def test_dispatcher_oversamples_high_weight_server():
 async def test_dispatcher_uniform_when_weights_equal():
     """Sanity check: with all weights equal, the weighted code path collapses
     to uniform — each server appears in 2/3 of pairs."""
-    from backend.tool_arena.dispatcher import MCPDispatcher
+    from backend.tool_arena.comparison.ask_two_tools_concurrently import MCPDispatcher
 
     servers = [_srv(f"s{i}", "summary", weight=1.0) for i in range(3)]
 
@@ -149,14 +149,14 @@ async def test_dispatcher_uniform_when_weights_equal():
     counts: Counter[str] = Counter()
 
     with (
-        patch("backend.tool_arena.dispatcher.registry", mock_registry),
+        patch("backend.tool_arena.comparison.ask_two_tools_concurrently.registry", mock_registry),
         patch(
-            "backend.tool_arena.dispatcher.single_mcp_call",
+            "backend.tool_arena.comparison.ask_two_tools_concurrently.single_mcp_call",
             new_callable=AsyncMock,
             return_value=("ok", 10),
         ),
         patch(
-            "backend.tool_arena.dispatcher.sanitize_output",
+            "backend.tool_arena.comparison.ask_two_tools_concurrently.sanitize_output",
             side_effect=lambda text, servers: text,
         ),
     ):

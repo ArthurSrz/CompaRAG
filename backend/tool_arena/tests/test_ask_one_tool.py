@@ -83,14 +83,14 @@ def _make_stream_ctx(mock_session: MagicMock):
 
 async def test_single_mcp_call_uses_list_tools_when_wildcard():
     """Test 1: single_mcp_call calls session.list_tools() when server.tools is ["*"]."""
-    from backend.tool_arena.client import single_mcp_call
+    from backend.tool_arena.rag_tool.ask_one_tool import single_mcp_call
 
     server = _make_server(tools=["*"], auth_type=None)
     mock_session = _make_mock_session(["discovered_tool"], "result text")
     ctx_manager, session_ctx = _make_stream_ctx(mock_session)
 
-    with patch("backend.tool_arena.client.streamablehttp_client", return_value=ctx_manager):
-        with patch("backend.tool_arena.client.ClientSession", return_value=session_ctx):
+    with patch("backend.tool_arena.rag_tool.ask_one_tool.streamablehttp_client", return_value=ctx_manager):
+        with patch("backend.tool_arena.rag_tool.ask_one_tool.ClientSession", return_value=session_ctx):
             raw_text, duration_ms = await single_mcp_call(server, "task text", "goal text")
 
     mock_session.list_tools.assert_awaited_once()
@@ -101,14 +101,14 @@ async def test_single_mcp_call_uses_list_tools_when_wildcard():
 
 async def test_single_mcp_call_uses_named_tool_when_not_wildcard():
     """Test 2: single_mcp_call calls the first named tool from server.tools when not ["*"]."""
-    from backend.tool_arena.client import single_mcp_call
+    from backend.tool_arena.rag_tool.ask_one_tool import single_mcp_call
 
     server = _make_server(tools=["extract_memo", "summarize"], auth_type=None)
     mock_session = _make_mock_session(["extract_memo"], "memo output")
     ctx_manager, session_ctx = _make_stream_ctx(mock_session)
 
-    with patch("backend.tool_arena.client.streamablehttp_client", return_value=ctx_manager):
-        with patch("backend.tool_arena.client.ClientSession", return_value=session_ctx):
+    with patch("backend.tool_arena.rag_tool.ask_one_tool.streamablehttp_client", return_value=ctx_manager):
+        with patch("backend.tool_arena.rag_tool.ask_one_tool.ClientSession", return_value=session_ctx):
             await single_mcp_call(server, "task text", "goal text")
 
     # Should NOT call list_tools when tools are explicitly named
@@ -120,14 +120,14 @@ async def test_single_mcp_call_uses_named_tool_when_not_wildcard():
 
 async def test_single_mcp_call_passes_task_and_goal_as_arguments():
     """Test 3: single_mcp_call passes {"task": task, "goal": goal} as arguments."""
-    from backend.tool_arena.client import single_mcp_call
+    from backend.tool_arena.rag_tool.ask_one_tool import single_mcp_call
 
     server = _make_server(tools=["my_tool"], auth_type=None)
     mock_session = _make_mock_session(["my_tool"], "some output")
     ctx_manager, session_ctx = _make_stream_ctx(mock_session)
 
-    with patch("backend.tool_arena.client.streamablehttp_client", return_value=ctx_manager):
-        with patch("backend.tool_arena.client.ClientSession", return_value=session_ctx):
+    with patch("backend.tool_arena.rag_tool.ask_one_tool.streamablehttp_client", return_value=ctx_manager):
+        with patch("backend.tool_arena.rag_tool.ask_one_tool.ClientSession", return_value=session_ctx):
             await single_mcp_call(server, "my specific task", "my specific goal")
 
     call_args = mock_session.call_tool.call_args
@@ -141,7 +141,7 @@ async def test_single_mcp_call_passes_task_and_goal_as_arguments():
 async def test_single_mcp_call_returns_raw_text_and_duration():
     """Test 4: single_mcp_call returns (raw_text, duration_ms) from TextContent."""
     from mcp.types import TextContent
-    from backend.tool_arena.client import single_mcp_call
+    from backend.tool_arena.rag_tool.ask_one_tool import single_mcp_call
 
     server = _make_server(tools=["summary_tool"], auth_type=None)
     mock_session = _make_mock_session(["summary_tool"], "")
@@ -155,8 +155,8 @@ async def test_single_mcp_call_returns_raw_text_and_duration():
 
     ctx_manager, session_ctx = _make_stream_ctx(mock_session)
 
-    with patch("backend.tool_arena.client.streamablehttp_client", return_value=ctx_manager):
-        with patch("backend.tool_arena.client.ClientSession", return_value=session_ctx):
+    with patch("backend.tool_arena.rag_tool.ask_one_tool.streamablehttp_client", return_value=ctx_manager):
+        with patch("backend.tool_arena.rag_tool.ask_one_tool.ClientSession", return_value=session_ctx):
             raw_text, duration_ms = await single_mcp_call(server, "task", "goal")
 
     assert raw_text == "First line\nSecond line"
@@ -165,7 +165,7 @@ async def test_single_mcp_call_returns_raw_text_and_duration():
 
 async def test_single_mcp_call_passes_auth_for_oauth2():
     """Test 5: single_mcp_call passes auth= to streamablehttp_client for OAuth2."""
-    from backend.tool_arena.client import single_mcp_call
+    from backend.tool_arena.rag_tool.ask_one_tool import single_mcp_call
 
     server = _make_server(tools=["tool"], auth_type="oauth2")
     mock_session = _make_mock_session(["tool"], "output")
@@ -178,8 +178,8 @@ async def test_single_mcp_call_passes_auth_for_oauth2():
         return ctx_manager
 
     mock_provider = MagicMock()
-    with patch("backend.tool_arena.client.streamablehttp_client", side_effect=mock_streamable):
-        with patch("backend.tool_arena.client.ClientSession", return_value=session_ctx):
+    with patch("backend.tool_arena.rag_tool.ask_one_tool.streamablehttp_client", side_effect=mock_streamable):
+        with patch("backend.tool_arena.rag_tool.ask_one_tool.ClientSession", return_value=session_ctx):
             with patch("backend.tool_arena.auth.get_oauth_provider", return_value=mock_provider):
                 await single_mcp_call(server, "task", "goal")
 
@@ -188,7 +188,7 @@ async def test_single_mcp_call_passes_auth_for_oauth2():
 
 async def test_single_mcp_call_no_authorization_header_when_no_auth():
     """Test 6: single_mcp_call does NOT set Authorization header when server.auth is None."""
-    from backend.tool_arena.client import single_mcp_call
+    from backend.tool_arena.rag_tool.ask_one_tool import single_mcp_call
 
     server = _make_server(tools=["tool"], auth_type=None)
     mock_session = _make_mock_session(["tool"], "output")
@@ -200,8 +200,8 @@ async def test_single_mcp_call_no_authorization_header_when_no_auth():
         captured_kwargs["headers"] = headers
         return ctx_manager
 
-    with patch("backend.tool_arena.client.streamablehttp_client", side_effect=mock_streamable):
-        with patch("backend.tool_arena.client.ClientSession", return_value=session_ctx):
+    with patch("backend.tool_arena.rag_tool.ask_one_tool.streamablehttp_client", side_effect=mock_streamable):
+        with patch("backend.tool_arena.rag_tool.ask_one_tool.ClientSession", return_value=session_ctx):
             await single_mcp_call(server, "task", "goal")
 
     headers = captured_kwargs.get("headers", {})
@@ -214,7 +214,7 @@ async def test_single_mcp_call_raises_when_result_is_error():
     as a successful answer (e.g. "Engine X failed: No embedding data received"
     rendered as Tool A's answer next to Tool B's "Tool encountered an error")."""
     from mcp.types import TextContent
-    from backend.tool_arena.client import MCPToolError, single_mcp_call
+    from backend.tool_arena.rag_tool.ask_one_tool import MCPToolError, single_mcp_call
 
     server = _make_server(tools=["my_tool"], auth_type=None)
 
@@ -230,15 +230,15 @@ async def test_single_mcp_call_raises_when_result_is_error():
 
     ctx_manager, session_ctx = _make_stream_ctx(mock_session)
 
-    with patch("backend.tool_arena.client.streamablehttp_client", return_value=ctx_manager):
-        with patch("backend.tool_arena.client.ClientSession", return_value=session_ctx):
+    with patch("backend.tool_arena.rag_tool.ask_one_tool.streamablehttp_client", return_value=ctx_manager):
+        with patch("backend.tool_arena.rag_tool.ask_one_tool.ClientSession", return_value=session_ctx):
             with pytest.raises(MCPToolError, match="No embedding data received"):
                 await single_mcp_call(server, "task", "goal")
 
 
 async def test_single_mcp_call_raises_mcp_tool_error_when_iserror_with_empty_content():
     """isError=True with no text content still surfaces as MCPToolError."""
-    from backend.tool_arena.client import MCPToolError, single_mcp_call
+    from backend.tool_arena.rag_tool.ask_one_tool import MCPToolError, single_mcp_call
 
     server = _make_server(tools=["my_tool"], auth_type=None)
 
@@ -251,8 +251,8 @@ async def test_single_mcp_call_raises_mcp_tool_error_when_iserror_with_empty_con
 
     ctx_manager, session_ctx = _make_stream_ctx(mock_session)
 
-    with patch("backend.tool_arena.client.streamablehttp_client", return_value=ctx_manager):
-        with patch("backend.tool_arena.client.ClientSession", return_value=session_ctx):
+    with patch("backend.tool_arena.rag_tool.ask_one_tool.streamablehttp_client", return_value=ctx_manager):
+        with patch("backend.tool_arena.rag_tool.ask_one_tool.ClientSession", return_value=session_ctx):
             with pytest.raises(MCPToolError):
                 await single_mcp_call(server, "task", "goal")
 
@@ -261,7 +261,7 @@ async def test_single_mcp_call_raises_mcp_error_on_protocol_failure():
     """Test 7: single_mcp_call raises mcp.McpError when session.call_tool raises it."""
     import mcp
     from mcp.types import ErrorData
-    from backend.tool_arena.client import single_mcp_call
+    from backend.tool_arena.rag_tool.ask_one_tool import single_mcp_call
 
     server = _make_server(tools=["tool"], auth_type=None)
     mock_session = MagicMock()
@@ -272,22 +272,22 @@ async def test_single_mcp_call_raises_mcp_error_on_protocol_failure():
 
     ctx_manager, session_ctx = _make_stream_ctx(mock_session)
 
-    with patch("backend.tool_arena.client.streamablehttp_client", return_value=ctx_manager):
-        with patch("backend.tool_arena.client.ClientSession", return_value=session_ctx):
+    with patch("backend.tool_arena.rag_tool.ask_one_tool.streamablehttp_client", return_value=ctx_manager):
+        with patch("backend.tool_arena.rag_tool.ask_one_tool.ClientSession", return_value=session_ctx):
             with pytest.raises(mcp.McpError):
                 await single_mcp_call(server, "task", "goal")
 
 
 async def test_single_mcp_call_returns_non_negative_duration_ms():
     """Test 8: single_mcp_call returns duration_ms >= 0 (measured via time.monotonic)."""
-    from backend.tool_arena.client import single_mcp_call
+    from backend.tool_arena.rag_tool.ask_one_tool import single_mcp_call
 
     server = _make_server(tools=["tool"], auth_type=None)
     mock_session = _make_mock_session(["tool"], "output")
     ctx_manager, session_ctx = _make_stream_ctx(mock_session)
 
-    with patch("backend.tool_arena.client.streamablehttp_client", return_value=ctx_manager):
-        with patch("backend.tool_arena.client.ClientSession", return_value=session_ctx):
+    with patch("backend.tool_arena.rag_tool.ask_one_tool.streamablehttp_client", return_value=ctx_manager):
+        with patch("backend.tool_arena.rag_tool.ask_one_tool.ClientSession", return_value=session_ctx):
             raw_text, duration_ms = await single_mcp_call(server, "task", "goal")
 
     assert duration_ms >= 0
@@ -297,7 +297,7 @@ async def test_single_mcp_call_returns_non_negative_duration_ms():
 # --- INJ-01: Context Injection tests ---
 
 def test_build_task_prompt_with_document():
-    from backend.tool_arena.client import _build_task_prompt
+    from backend.tool_arena.rag_tool.ask_one_tool import _build_task_prompt
     result = _build_task_prompt("Summarize this", "Full document text here.")
     assert result.startswith("[CONTEXT]\n")
     assert "Full document text here." in result
@@ -306,7 +306,7 @@ def test_build_task_prompt_with_document():
 
 
 def test_build_task_prompt_empty_document():
-    from backend.tool_arena.client import _build_task_prompt
+    from backend.tool_arena.rag_tool.ask_one_tool import _build_task_prompt
     assert _build_task_prompt("my task", "") == "my task"
     assert _build_task_prompt("my task", "   ") == "my task"
     assert _build_task_prompt("my task", "\n\t ") == "my task"
@@ -314,7 +314,7 @@ def test_build_task_prompt_empty_document():
 
 def test_no_empty_context_block_when_no_document():
     """INJ-01 guard: empty/whitespace document_content produces no [CONTEXT] block."""
-    from backend.tool_arena.client import _build_task_prompt
+    from backend.tool_arena.rag_tool.ask_one_tool import _build_task_prompt
     for empty in ("", "   ", "\n", "\t\n "):
         result = _build_task_prompt("task X", empty)
         assert "[CONTEXT]" not in result

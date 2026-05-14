@@ -11,7 +11,7 @@ from fastapi.testclient import TestClient
 import backend.tool_arena.auth as auth_module
 import backend.tool_arena.credential as credential_module
 from backend.tool_arena.config import ApiKeyAuth, MCPServerConfig, OAuth2Auth
-from backend.tool_arena.readiness import (
+from backend.tool_arena.rag_tool.readiness import (
     ServerReadiness,
     ServerStatus,
     _reset_registry_for_tests,

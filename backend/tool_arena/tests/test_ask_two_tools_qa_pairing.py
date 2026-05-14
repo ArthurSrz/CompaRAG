@@ -17,7 +17,7 @@ from unittest.mock import AsyncMock, MagicMock, patch
 import pytest
 
 from backend.tool_arena.config import MCPServerConfig
-from backend.tool_arena.readiness import (
+from backend.tool_arena.rag_tool.readiness import (
     _reset_registry_for_tests,
     get_readiness_registry,
 )
@@ -55,7 +55,7 @@ async def test_dispatcher_pairs_two_qa_servers_when_only_qa_group_has_pair():
     """Given two qa servers and one summary server (no explicit task_type),
     the dispatcher must pair the two QAs — summary group has only one,
     QA is the only group with >=2 READY."""
-    from backend.tool_arena.dispatcher import MCPDispatcher
+    from backend.tool_arena.comparison.ask_two_tools_concurrently import MCPDispatcher
 
     s_qa_a = _srv("qa_a", "qa")
     s_qa_b = _srv("qa_b", "qa")
@@ -68,14 +68,14 @@ async def test_dispatcher_pairs_two_qa_servers_when_only_qa_group_has_pair():
         reg.set_ready(s.id)
 
     with (
-        patch("backend.tool_arena.dispatcher.registry", mock_registry),
+        patch("backend.tool_arena.comparison.ask_two_tools_concurrently.registry", mock_registry),
         patch(
-            "backend.tool_arena.dispatcher.single_mcp_call",
+            "backend.tool_arena.comparison.ask_two_tools_concurrently.single_mcp_call",
             new_callable=AsyncMock,
             return_value=("ok", 10),
         ),
         patch(
-            "backend.tool_arena.dispatcher.sanitize_output",
+            "backend.tool_arena.comparison.ask_two_tools_concurrently.sanitize_output",
             side_effect=lambda text, servers: text,
         ),
     ):
@@ -89,7 +89,7 @@ async def test_dispatcher_raises_when_requested_qa_has_only_one_ready():
     must raise InsufficientReadyServersError — never silently cross groups.
     This is the failure mode that gates QA enablement: until two QA pills
     are READY in production, requesting QA cleanly fails."""
-    from backend.tool_arena.dispatcher import (
+    from backend.tool_arena.comparison.ask_two_tools_concurrently import (
         InsufficientReadyServersError,
         MCPDispatcher,
     )
@@ -105,9 +105,9 @@ async def test_dispatcher_raises_when_requested_qa_has_only_one_ready():
         reg.set_ready(s.id)
 
     with (
-        patch("backend.tool_arena.dispatcher.registry", mock_registry),
+        patch("backend.tool_arena.comparison.ask_two_tools_concurrently.registry", mock_registry),
         patch(
-            "backend.tool_arena.dispatcher.single_mcp_call",
+            "backend.tool_arena.comparison.ask_two_tools_concurrently.single_mcp_call",
             new_callable=AsyncMock,
             return_value=("ok", 10),
         ),

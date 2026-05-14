@@ -39,21 +39,21 @@ from pydantic import BaseModel, Field, model_validator
 
 from pathlib import Path
 
-from backend.tool_arena.client import single_mcp_call
-from backend.tool_arena.dispatcher import (
+from backend.tool_arena.rag_tool.ask_one_tool import single_mcp_call
+from backend.tool_arena.comparison.ask_two_tools_concurrently import (
     InsufficientReadyServersError,
     MCPDispatcher,
 )
 from backend.tool_arena.question.list_questions_with_known_answers import EvaluationCatalog
 from backend.tool_arena.judge_verdict.score_against_ground_truth import GroundTruthJudge
 from backend.tool_arena.answer.wrap_answer_in_standard_envelope import normalize_output
-from backend.tool_arena.readiness import get_readiness_registry, probe_server
+from backend.tool_arena.rag_tool.readiness import get_readiness_registry, probe_server
 from backend.tool_arena.blind_reveal.hide_tool_identity_before_vote import sanitize_envelope
 from backend.tool_arena.document.serve_document_endpoint import documents_router
 from utils.storage.redis import REDIS_TOOL_RANKING_KEY, get_redis_client
 from backend.tool_arena.models import save_tool_call_to_db, ToolCallRecord
 from backend.tool_arena.vote.save_vote_to_database import ToolVoteRecord, save_tool_vote_to_db
-from backend.tool_arena.registry import registry
+from backend.tool_arena.rag_tool.list_available_tools import registry
 from backend.tool_arena.blind_reveal.remember_who_was_which import (
     create_tool_session,
     retrieve_tool_session,
@@ -404,7 +404,7 @@ def get_tool_session(session_hash: str = Depends(get_tool_session_hash)) -> dict
 
 
 def _build_reveal_response(session: dict, chosen: str) -> ToolRevealResponse:
-    from backend.tool_arena.registry import registry
+    from backend.tool_arena.rag_tool.list_available_tools import registry
 
     tool_a = session["tool_a"]
     tool_b = session["tool_b"]
@@ -582,7 +582,7 @@ async def compare(body: CompareRequest, request: Request):
     """
     accept = request.headers.get("accept", "")
     if "text/event-stream" in accept:
-        from backend.tool_arena.streaming import (
+        from backend.tool_arena.comparison.stream_progress_to_browser import (
             create_sse_response,
             stream_compare,
         )

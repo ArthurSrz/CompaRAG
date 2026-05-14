@@ -96,7 +96,7 @@ async def test_compare_streaming_emits_per_side_events_and_terminal_complete():
         "backend.tool_arena.router.MCPDispatcher",
         return_value=fake_disp_instance,
     ), patch(
-        "backend.tool_arena.streaming.open_rag_pill_stream",
+        "backend.tool_arena.comparison.stream_progress_to_browser.open_rag_pill_stream",
         side_effect=_fake_open_stream,
     ), patch(
         "backend.tool_arena.router.store_tool_session"
@@ -204,7 +204,7 @@ async def test_stream_emits_keep_alive_during_quiet_phases(monkeypatch):
     """
     import asyncio as _asyncio
 
-    from backend.tool_arena import streaming
+    from backend.tool_arena.comparison import stream_progress_to_browser as streaming
     monkeypatch.setattr(streaming, "_SSE_HEARTBEAT_S", 0.05)
 
     async def _slow_stream():
@@ -218,7 +218,7 @@ async def test_stream_emits_keep_alive_during_quiet_phases(monkeypatch):
     server_b = _make_fake_server("srv-b", "p", "e")
 
     with patch(
-        "backend.tool_arena.streaming.open_rag_pill_stream",
+        "backend.tool_arena.comparison.stream_progress_to_browser.open_rag_pill_stream",
         side_effect=lambda *a, **kw: _slow_stream(),
     ):
         out: list[str] = []

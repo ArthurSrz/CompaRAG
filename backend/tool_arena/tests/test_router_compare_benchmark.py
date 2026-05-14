@@ -15,7 +15,7 @@ import pytest
 from fastapi import FastAPI
 from fastapi.testclient import TestClient
 
-from backend.tool_arena.dispatcher import MCPDispatcher
+from backend.tool_arena.comparison.ask_two_tools_concurrently import MCPDispatcher
 from backend.tool_arena.question.list_questions_with_known_answers import EvaluationCatalog, EvaluationQueryMeta
 from backend.tool_arena.router import router
 

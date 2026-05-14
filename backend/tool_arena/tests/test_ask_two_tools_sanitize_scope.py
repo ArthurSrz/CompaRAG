@@ -20,7 +20,7 @@ from backend.tool_arena.config import (
     MCPServerConfig,
     SanitizeConfig,
 )
-from backend.tool_arena.readiness import (
+from backend.tool_arena.rag_tool.readiness import (
     _reset_registry_for_tests,
     get_readiness_registry,
 )
@@ -60,7 +60,7 @@ async def test_sanitize_applies_patterns_from_non_racing_servers():
     and passes only that pair to sanitize_envelope/sanitize_output. The third
     server's `sanitize.extra_terms` are dropped.
     """
-    from backend.tool_arena.dispatcher import MCPDispatcher
+    from backend.tool_arena.comparison.ask_two_tools_concurrently import MCPDispatcher
 
     server_lc = _server("langchain_rag")
     server_li = _server("llamaindex_rag")
@@ -89,9 +89,9 @@ async def test_sanitize_applies_patterns_from_non_racing_servers():
     )
 
     with (
-        patch("backend.tool_arena.dispatcher.registry", mock_registry),
+        patch("backend.tool_arena.comparison.ask_two_tools_concurrently.registry", mock_registry),
         patch(
-            "backend.tool_arena.dispatcher.single_mcp_call",
+            "backend.tool_arena.comparison.ask_two_tools_concurrently.single_mcp_call",
             new_callable=AsyncMock,
             return_value=(raw_answer, 100),
         ),

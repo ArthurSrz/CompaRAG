@@ -30,7 +30,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 import httpx  # noqa: E402
 
 from backend.tool_arena.config import MCPServerConfig  # noqa: E402,F401
-from backend.tool_arena.registry import registry  # noqa: E402
+from backend.tool_arena.rag_tool.list_available_tools import registry  # noqa: E402
 
 CALLBACK_PORT = 9876
 _auth_result: dict[str, str | None] = {"code": None, "state": None}

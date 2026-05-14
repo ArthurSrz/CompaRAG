@@ -6,13 +6,13 @@ from fastapi.middleware.cors import CORSMiddleware
 from prometheus_fastapi_instrumentator import Instrumentator
 
 from backend.arena.router import router as arena_router
-from backend.tool_arena.readiness import (
+from backend.tool_arena.rag_tool.readiness import (
     get_probe_interval_seconds,
     get_readiness_registry,
     probe_server,
     readiness_probe_loop,
 )
-from backend.tool_arena.registry import registry
+from backend.tool_arena.rag_tool.list_available_tools import registry
 from backend.tool_arena.router import admin_router as tool_arena_admin_router
 from backend.tool_arena.router import router as tool_arena_router
 from backend.config import OBJECTIVES

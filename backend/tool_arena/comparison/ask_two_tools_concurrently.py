@@ -24,12 +24,12 @@ import asyncio
 import logging
 import os
 
-from backend.tool_arena.client import single_mcp_call
+from backend.tool_arena.rag_tool.ask_one_tool import single_mcp_call
 from backend.tool_arena.config import MCPServerConfig
 from backend.tool_arena.models import MCPToolCall
 from backend.tool_arena.answer.wrap_answer_in_standard_envelope import normalize_output
-from backend.tool_arena.readiness import get_readiness_registry
-from backend.tool_arena.registry import registry
+from backend.tool_arena.rag_tool.readiness import get_readiness_registry
+from backend.tool_arena.rag_tool.list_available_tools import registry
 from backend.tool_arena.blind_reveal.hide_tool_identity_before_vote import sanitize_envelope, sanitize_output
 
 

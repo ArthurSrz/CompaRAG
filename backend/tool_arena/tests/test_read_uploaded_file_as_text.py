@@ -1,4 +1,4 @@
-"""Behavior tests for backend.tool_arena.extractors.extract_text."""
+"""Behavior tests for backend.tool_arena.document.read_uploaded_file_as_text.extract_text."""
 
 from pathlib import Path
 

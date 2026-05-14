@@ -10,7 +10,7 @@ from unittest.mock import AsyncMock, MagicMock, patch
 import pytest
 
 from backend.tool_arena.config import MCPServerConfig
-from backend.tool_arena.readiness import (
+from backend.tool_arena.rag_tool.readiness import (
     _reset_registry_for_tests,
     get_readiness_registry,
 )
@@ -47,7 +47,7 @@ def _wire(mock_registry, *servers):
 async def test_dispatcher_pairs_within_task_type():
     """Given two summary servers and one qa server, the dispatcher must
     pair the two summary servers (the qa group has only one member)."""
-    from backend.tool_arena.dispatcher import MCPDispatcher
+    from backend.tool_arena.comparison.ask_two_tools_concurrently import MCPDispatcher
 
     s_summary_a = _srv("sum_a", "summary")
     s_summary_b = _srv("sum_b", "summary")
@@ -60,14 +60,14 @@ async def test_dispatcher_pairs_within_task_type():
         reg.set_ready(s.id)
 
     with (
-        patch("backend.tool_arena.dispatcher.registry", mock_registry),
+        patch("backend.tool_arena.comparison.ask_two_tools_concurrently.registry", mock_registry),
         patch(
-            "backend.tool_arena.dispatcher.single_mcp_call",
+            "backend.tool_arena.comparison.ask_two_tools_concurrently.single_mcp_call",
             new_callable=AsyncMock,
             return_value=("ok", 10),
         ),
         patch(
-            "backend.tool_arena.dispatcher.sanitize_output",
+            "backend.tool_arena.comparison.ask_two_tools_concurrently.sanitize_output",
             side_effect=lambda text, servers: text,
         ),
     ):
@@ -79,7 +79,7 @@ async def test_dispatcher_pairs_within_task_type():
 
 async def test_dispatcher_raises_when_no_group_has_two_ready():
     """One summary + one qa READY = no group has 2 = raise."""
-    from backend.tool_arena.dispatcher import (
+    from backend.tool_arena.comparison.ask_two_tools_concurrently import (
         InsufficientReadyServersError,
         MCPDispatcher,
     )
@@ -94,9 +94,9 @@ async def test_dispatcher_raises_when_no_group_has_two_ready():
     reg.set_ready(s_qa.id)
 
     with (
-        patch("backend.tool_arena.dispatcher.registry", mock_registry),
+        patch("backend.tool_arena.comparison.ask_two_tools_concurrently.registry", mock_registry),
         patch(
-            "backend.tool_arena.dispatcher.single_mcp_call",
+            "backend.tool_arena.comparison.ask_two_tools_concurrently.single_mcp_call",
             new_callable=AsyncMock,
             return_value=("ok", 10),
         ),
@@ -108,7 +108,7 @@ async def test_dispatcher_raises_when_no_group_has_two_ready():
 async def test_dispatcher_honors_explicit_task_type_param():
     """When the caller passes task_type, the dispatcher must pair within that
     group only — even if another group has more contestants."""
-    from backend.tool_arena.dispatcher import MCPDispatcher
+    from backend.tool_arena.comparison.ask_two_tools_concurrently import MCPDispatcher
 
     s_sum_a = _srv("sum_a", "summary")
     s_sum_b = _srv("sum_b", "summary")
@@ -123,14 +123,14 @@ async def test_dispatcher_honors_explicit_task_type_param():
         reg.set_ready(s.id)
 
     with (
-        patch("backend.tool_arena.dispatcher.registry", mock_registry),
+        patch("backend.tool_arena.comparison.ask_two_tools_concurrently.registry", mock_registry),
         patch(
-            "backend.tool_arena.dispatcher.single_mcp_call",
+            "backend.tool_arena.comparison.ask_two_tools_concurrently.single_mcp_call",
             new_callable=AsyncMock,
             return_value=("ok", 10),
         ),
         patch(
-            "backend.tool_arena.dispatcher.sanitize_output",
+            "backend.tool_arena.comparison.ask_two_tools_concurrently.sanitize_output",
             side_effect=lambda text, servers: text,
         ),
     ):
@@ -144,7 +144,7 @@ async def test_dispatcher_honors_explicit_task_type_param():
 async def test_dispatcher_raises_when_explicit_task_type_has_no_pair():
     """Requesting task_type=extraction when no extraction servers exist must
     raise rather than silently fall back to a different group."""
-    from backend.tool_arena.dispatcher import (
+    from backend.tool_arena.comparison.ask_two_tools_concurrently import (
         InsufficientReadyServersError,
         MCPDispatcher,
     )
@@ -159,9 +159,9 @@ async def test_dispatcher_raises_when_explicit_task_type_has_no_pair():
     reg.set_ready(s_sum_b.id)
 
     with (
-        patch("backend.tool_arena.dispatcher.registry", mock_registry),
+        patch("backend.tool_arena.comparison.ask_two_tools_concurrently.registry", mock_registry),
         patch(
-            "backend.tool_arena.dispatcher.single_mcp_call",
+            "backend.tool_arena.comparison.ask_two_tools_concurrently.single_mcp_call",
             new_callable=AsyncMock,
             return_value=("ok", 10),
         ),
@@ -174,7 +174,7 @@ async def test_dispatcher_raises_when_explicit_task_type_has_no_pair():
 
 async def test_legacy_servers_form_their_own_group():
     """Servers without task_type (None) are paired together — backward compat."""
-    from backend.tool_arena.dispatcher import MCPDispatcher
+    from backend.tool_arena.comparison.ask_two_tools_concurrently import MCPDispatcher
 
     s_legacy_a = _srv("legacy_a", None)
     s_legacy_b = _srv("legacy_b", None)
@@ -187,14 +187,14 @@ async def test_legacy_servers_form_their_own_group():
         reg.set_ready(s.id)
 
     with (
-        patch("backend.tool_arena.dispatcher.registry", mock_registry),
+        patch("backend.tool_arena.comparison.ask_two_tools_concurrently.registry", mock_registry),
         patch(
-            "backend.tool_arena.dispatcher.single_mcp_call",
+            "backend.tool_arena.comparison.ask_two_tools_concurrently.single_mcp_call",
             new_callable=AsyncMock,
             return_value=("ok", 10),
         ),
         patch(
-            "backend.tool_arena.dispatcher.sanitize_output",
+            "backend.tool_arena.comparison.ask_two_tools_concurrently.sanitize_output",
             side_effect=lambda text, servers: text,
         ),
     ):
