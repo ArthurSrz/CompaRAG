@@ -3,7 +3,7 @@
 import json
 import pytest
 
-from backend.tool_arena.normalizer import (
+from backend.tool_arena.answer.wrap_answer_in_standard_envelope import (
     NormalizedEnvelope,
     RetrievedSpanEnvelope,
     Source,

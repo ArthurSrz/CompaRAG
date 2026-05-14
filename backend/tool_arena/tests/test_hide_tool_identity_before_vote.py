@@ -3,12 +3,12 @@
 import pytest
 
 from backend.tool_arena.config import ApiKeyAuth, NoAuth, MCPServerConfig, SanitizeConfig
-from backend.tool_arena.normalizer import (
+from backend.tool_arena.answer.wrap_answer_in_standard_envelope import (
     NormalizedEnvelope,
     RetrievedSpanEnvelope,
     Source,
 )
-from backend.tool_arena.sanitizer import sanitize_output, sanitize_envelope
+from backend.tool_arena.blind_reveal.hide_tool_identity_before_vote import sanitize_output, sanitize_envelope
 
 # --------------------------------------------------------------------------- #
 # Test fixtures

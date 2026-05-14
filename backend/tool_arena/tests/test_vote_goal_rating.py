@@ -14,7 +14,7 @@ from __future__ import annotations
 import pytest
 from pydantic import ValidationError
 
-from backend.tool_arena.persistence import ToolVoteRecord
+from backend.tool_arena.vote.save_vote_to_database import ToolVoteRecord
 from backend.tool_arena.router import ToolPreferencesPayload
 
 

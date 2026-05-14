@@ -9,7 +9,7 @@ cursor's execute() args.
 
 from unittest.mock import MagicMock, patch
 
-from backend.tool_arena.persistence import ToolVoteRecord, save_tool_vote_to_db
+from backend.tool_arena.vote.save_vote_to_database import ToolVoteRecord, save_tool_vote_to_db
 
 
 def test_save_tool_vote_to_db_writes_judgement_columns() -> None:
@@ -48,7 +48,7 @@ def test_save_tool_vote_to_db_writes_judgement_columns() -> None:
         values = ", ".join(f"%({k})s" for k in data.keys())
         yield (fake_cursor, fields, values)
 
-    with patch("backend.tool_arena.persistence.db", fake_db_ctx):
+    with patch("backend.tool_arena.vote.save_vote_to_database.db", fake_db_ctx):
         save_tool_vote_to_db(payload)
 
     sql = captured["sql"]
@@ -96,7 +96,7 @@ def test_save_tool_vote_sandbox_writes_null_judgements() -> None:
         values = ", ".join(f"%({k})s" for k in data.keys())
         yield (fake_cursor, fields, values)
 
-    with patch("backend.tool_arena.persistence.db", fake_db_ctx):
+    with patch("backend.tool_arena.vote.save_vote_to_database.db", fake_db_ctx):
         save_tool_vote_to_db(payload)
 
     params = captured["params"]

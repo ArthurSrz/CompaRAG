@@ -46,15 +46,15 @@ from backend.tool_arena.dispatcher import (
 )
 from backend.tool_arena.question.list_questions_with_known_answers import EvaluationCatalog
 from backend.tool_arena.judge_verdict.score_against_ground_truth import GroundTruthJudge
-from backend.tool_arena.normalizer import normalize_output
+from backend.tool_arena.answer.wrap_answer_in_standard_envelope import normalize_output
 from backend.tool_arena.readiness import get_readiness_registry, probe_server
-from backend.tool_arena.sanitizer import sanitize_envelope
+from backend.tool_arena.blind_reveal.hide_tool_identity_before_vote import sanitize_envelope
 from backend.tool_arena.document.serve_document_endpoint import documents_router
 from utils.storage.redis import REDIS_TOOL_RANKING_KEY, get_redis_client
 from backend.tool_arena.models import save_tool_call_to_db, ToolCallRecord
-from backend.tool_arena.persistence import ToolVoteRecord, save_tool_vote_to_db
+from backend.tool_arena.vote.save_vote_to_database import ToolVoteRecord, save_tool_vote_to_db
 from backend.tool_arena.registry import registry
-from backend.tool_arena.session import (
+from backend.tool_arena.blind_reveal.remember_who_was_which import (
     create_tool_session,
     retrieve_tool_session,
     store_tool_session,
