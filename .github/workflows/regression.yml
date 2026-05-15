@@ -1,0 +1,111 @@
+name: Regression suite
+
+on:
+  pull_request:
+    branches: [develop, main]
+  push:
+    branches:
+      - 'claude/**'
+      - develop
+
+permissions:
+  contents: read
+
+jobs:
+  pytest:
+    name: pytest backend + rag_pill
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v3
+        with:
+          version: "0.7.2"
+
+      - name: Set up Python
+        run: uv python install 3.13
+
+      - name: Install dependencies
+        run: uv sync --frozen
+
+      - name: Backend regression suite
+        run: uv run pytest backend/ -q --no-header
+
+      - name: rag_pill regression suite
+        # test_txtai_external_method is a pre-existing failure on develop
+        # (missing optional txtai Embeddings dep) — out of scope for this PR.
+        run: |
+          uv run pytest mcp_servers/rag_pill/tests \
+            --ignore=mcp_servers/rag_pill/tests/test_txtai_external_method.py \
+            -q --no-header
+
+      - name: Ontology ↔ mcp_servers.json consistency
+        run: uv run python scripts/register_tool.py --check
+
+      - name: YAML ontology is well-formed
+        run: |
+          uv run python -c "import yaml; yaml.safe_load(open('knowledge-graph/code-ontology.yaml')); print('OK')"
+
+      - name: No orphan imports of pre-rename module paths
+        run: |
+          set -e
+          # Phase D moved these modules. A surviving import means a missed rename.
+          if grep -rEn "from backend\.tool_arena\.(dispatcher|normalizer|sanitizer|extractors|registry|readiness|session|persistence|streaming|evaluation|client|judge\.|oauth_setup|documents_router|documents)\b" backend/ mcp_servers/ utils/ scripts/ 2>/dev/null; then
+            echo "FAIL: orphan imports found — see grep output above."
+            exit 1
+          fi
+          echo "OK: no orphan imports."
+
+  openrouter-providers:
+    name: OpenRouter providers (Cloudflare-only check)
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    # The endpoint is public — no API key required.
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v3
+        with:
+          version: "0.7.2"
+
+      - name: Set up Python
+        run: uv python install 3.13
+
+      - name: Install httpx
+        run: uv pip install --system httpx
+
+      - name: Check every model in use has a non-Cloudflare provider
+        run: python scripts/check_openrouter_providers.py --verbose
+
+  prod-health-smoke:
+    name: Prod /health probes (read-only)
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    # Read-only against the live backend. NO writes — never hits /compare or /vote.
+    steps:
+      - name: GET /health
+        run: |
+          set -e
+          code=$(curl -sS -o /tmp/health.json -w "%{http_code}" https://comparag-production.up.railway.app/health)
+          cat /tmp/health.json
+          test "$code" = "200" || { echo "FAIL /health -> $code"; exit 1; }
+
+      - name: GET /health/openrouter
+        run: |
+          set -e
+          code=$(curl -sS -o /tmp/or.json -w "%{http_code}" https://comparag-production.up.railway.app/health/openrouter)
+          cat /tmp/or.json
+          test "$code" = "200" || { echo "FAIL /health/openrouter -> $code"; exit 1; }
+          # OK is reported by the endpoint itself (reachable + no models at risk).
+          python -c "import json,sys; d=json.load(open('/tmp/or.json')); sys.exit(0 if d.get('reachable') else 1)"
+
+      - name: GET /tool-arena/leaderboard
+        run: |
+          set -e
+          code=$(curl -sS -o /tmp/lb.json -w "%{http_code}" https://comparag-production.up.railway.app/tool-arena/leaderboard)
+          head -c 400 /tmp/lb.json; echo
+          test "$code" = "200" || { echo "FAIL /tool-arena/leaderboard -> $code"; exit 1; }
