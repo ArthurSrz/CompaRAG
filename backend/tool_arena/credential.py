@@ -1,4 +1,10 @@
-"""Credential Module — single dispatch seam for MCP server auth.
+"""
+BUT : juste avant d'appeler un RAGTool, fabriquer les en-têtes HTTP
+d'authentification appropriés à cet outil (rien, API-key, ou OAuth). Le
+reste du code ne sait plus quel type d'auth chaque outil utilise — il demande
+simplement à la "credential" de produire ses headers.
+
+Credential Module — single dispatch seam for MCP server auth.
 
 Phase 1 of the OAuth refactor: collapse per-call auth-type branching in
 ``client.py`` into a small Adapter family behind a uniform ``Credential``
@@ -214,7 +220,7 @@ class OAuth2Credential:
         """
         # Local import keeps this module importable even when the OAuth code
         # path is not exercised (tests, none-auth-only deployments).
-        from backend.tool_arena.auth import get_oauth_provider
+        from backend.tool_arena.rag_tool.auth.sign_in_to_tool import get_oauth_provider
 
         try:
             return get_oauth_provider(server)

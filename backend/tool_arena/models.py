@@ -1,4 +1,8 @@
 """
+BUT : décrire les structures de données échangées dans une Comparison —
+l'appel à un outil (MCPToolCall) et sa persistance en base (ToolCallRecord).
+Pas de logique métier, juste des contrats Pydantic.
+
 Data models for CompaRAG Tool Arena.
 
 Defines all data structures for:
@@ -27,16 +31,23 @@ class MCPToolCall(BaseModel):
 
     Stores everything needed for blind comparison and vote attribution.
     Completely isolated from the LLM arena Conversation model.
+
+    Canonical vocabulary (cf. backend/tool_arena/vocabulary.py) :
+      session_id      -> comparison_id
+      task + goal     -> question (single field once frontend migrates)
+      tool_id         -> rag_tool_id
+      raw_result      -> answer_as_returned_by_tool
+      mediated_result -> answer_after_mediation
     """
 
     call_id: str = Field(default_factory=lambda: str(uuid4()).replace("-", ""))
-    session_id: str
-    task: str
-    goal: str
-    tool_id: str  # references mcp_servers.json key
+    session_id: str  # canonical: comparison_id
+    task: str        # canonical: question (intent)
+    goal: str        # canonical: question (success criterion)
+    tool_id: str  # references mcp_servers.json key — canonical: rag_tool_id
     llm_id: str  # litellm model name used to mediate the result
-    raw_result: str  # raw MCP server response (supports DATA-03 sanitization traceability)
-    mediated_result: str  # LLM-processed output shown to user
+    raw_result: str  # canonical: answer_as_returned_by_tool (raw MCP server response, DATA-03 sanitization traceability)
+    mediated_result: str  # canonical: answer_after_mediation (LLM-processed output shown to user)
     duration_ms: int
     created_at: Annotated[datetime, PlainSerializer(lambda v: v.isoformat())] = Field(
         default_factory=datetime.now

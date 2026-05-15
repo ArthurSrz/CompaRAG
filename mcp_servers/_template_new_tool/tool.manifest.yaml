@@ -1,0 +1,63 @@
+# Manifeste d'un nouveau RAGTool — décrit comment l'outil entre dans l'arène.
+#
+# Copier ce dossier sous `mcp_servers/<slug_de_l_outil>/`, remplir les champs
+# ci-dessous, puis lancer `python scripts/register_tool.py <slug_de_l_outil>`
+# pour l'enregistrer automatiquement dans mcp_servers.json + code-ontology.yaml.
+#
+# Source de vérité : knowledge-graph/code-ontology.yaml (entité RAGTool).
+
+# Identifiant court, snake_case. Doit être unique dans l'arène.
+# Exemple : "lightrag", "r2r", "paperqa", "vectara".
+tool_id: TEMPLATE_REPLACE_ME
+
+# Nom affiché au frontend (après le vote, dans le BlindReveal).
+display_name: Template — change me
+
+# Une phrase qui décrit le but de l'outil, en français, dans le vocabulaire
+# du domaine. Apparait dans code-ontology.yaml et dans l'UI.
+goal: |
+  À quoi sert cet outil — par exemple "Graph-RAG avec citations natives,
+  excellent pour les questions de relation entre entités."
+
+# Transport MCP. streamable-http est le défaut pour CompaRAG.
+transport: streamable-http
+
+# Port d'écoute si on déploie l'outil en local. Choisir un port libre
+# au-dessus de 8013 (rag_pill = 8012).
+port: 8013
+
+# Endpoint complet (Railway URL en prod ; localhost pour dev local).
+endpoint: http://localhost:8013/mcp
+
+# Outils MCP exposés. Pour s'aligner sur l'arène, exposer au moins
+# `rag_query(task: str, goal: str, document_content: str = "") -> str`
+# (cf. la frontière MCP décrite dans le plan de simplification).
+exposes:
+  - name: rag_query
+    args:
+      - {name: task,             type: str}
+      - {name: goal,             type: str}
+      - {name: document_content, type: str, default: ""}
+
+# Type d'authentification.
+# - none    : pas d'auth (Railway public)
+# - api_key : clef simple via header X-API-Key
+# - oauth2  : flow autorisation_code via scripts/auth_setup.py
+auth: none
+
+# Fournisseur LLM/embeddings. Si "openrouter" est utilisé, le check provider
+# de scripts/check_openrouter_providers.py s'appliquera automatiquement.
+provider: openrouter
+
+# Type de tâche que l'outil sait faire. Doit matcher un task_type connu :
+# summary | qa | extraction. Sert au matchmaking équitable du dispatcher
+# (deux outils du même task_type s'affrontent).
+task_type: qa
+
+# Patterns à supprimer pour cacher l'identité de l'outil dans sa réponse
+# (BlindReveal). Ajouter ici le nom de l'outil et toute URL caractéristique.
+sanitize:
+  url_patterns: []
+  metadata_keys: []
+  extra_terms:
+    - TemplateNewTool

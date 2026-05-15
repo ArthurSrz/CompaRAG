@@ -1,4 +1,8 @@
-"""txtai engine adapter — txtai Embeddings DB for indexing + retrieval.
+"""
+BUT : faire concourir txtai comme RAGEngine dans l'arène — un moteur compact
+qui combine stockage d'embeddings et retriever dans une seule bibliothèque.
+
+txtai engine adapter — txtai Embeddings DB for indexing + retrieval.
 
 txtai bundles an embeddings store and retriever in one tight library.
 Generation routes through LLMProvider so the LLM stays invariant across

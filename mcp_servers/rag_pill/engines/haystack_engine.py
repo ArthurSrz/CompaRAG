@@ -1,4 +1,9 @@
-"""Haystack engine adapter — InMemoryDocumentStore + dense retrieval.
+"""
+BUT : faire concourir Haystack (deepset) comme RAGEngine dans l'arène —
+indexation + récupération via les composants Haystack 2.x, génération
+déléguée au LLMProvider partagé.
+
+Haystack engine adapter — InMemoryDocumentStore + dense retrieval.
 
 Indexing/retrieval via Haystack 2.x components; generation via LLMProvider.
 Lazy-imports haystack so a missing install yields SUPPORTS = set() instead

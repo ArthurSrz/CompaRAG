@@ -1,4 +1,9 @@
-"""Chroma + naive retriever — interpretable baseline for the arena.
+"""
+BUT : un RAGEngine de référence (baseline) volontairement minimaliste —
+Chroma + chunking par fenêtre de caractères + top-k. Permet de mesurer ce
+qu'un moteur sophistiqué apporte par rapport à ce plancher.
+
+Chroma + naive retriever — interpretable baseline for the arena.
 
 Deliberately minimal: char-window chunking, OpenAI embeddings via Chroma's
 embedding function, top-k cosine retrieval. No reranker, no query rewrite,

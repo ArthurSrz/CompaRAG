@@ -270,7 +270,7 @@ flowchart LR
 
 **Why bypass retrieval for user-uploaded docs?** Chunking a short uploaded document into k=3 chunks of ~500 chars left the LLM with sparse context, which produced "context not enough" refusals (LangChain) or "Empty Response" (LlamaIndex). Passing the full doc directly works because Mistral Medium 3.1 has a 128k token context window — any reasonable upload fits.
 
-### LangChain RAG (`mcp_servers/langchain_rag/server.py`)
+### LangChain RAG (`mcp_servers/_legacy_standalone_servers/langchain_rag/server.py`, deprecated)
 
 | Component | Choice | Notes |
 |---|---|---|
@@ -281,7 +281,7 @@ flowchart LR
 | LLM client | `langchain_openai.ChatOpenAI` | `extra_body={"max_tokens": 4096}` forces param through to OpenRouter |
 | Synthesis | `_PROMPT.format_messages()` → `llm.invoke()` | Single-shot, non-streaming |
 
-### LlamaIndex RAG (`mcp_servers/llamaindex_rag/server.py`)
+### LlamaIndex RAG (`mcp_servers/_legacy_standalone_servers/llamaindex_rag/server.py`, deprecated)
 
 | Component | Choice | Notes |
 |---|---|---|

@@ -6,13 +6,13 @@ from fastapi.middleware.cors import CORSMiddleware
 from prometheus_fastapi_instrumentator import Instrumentator
 
 from backend.arena.router import router as arena_router
-from backend.tool_arena.readiness import (
+from backend.tool_arena.rag_tool.readiness import (
     get_probe_interval_seconds,
     get_readiness_registry,
     probe_server,
     readiness_probe_loop,
 )
-from backend.tool_arena.registry import registry
+from backend.tool_arena.rag_tool.list_available_tools import registry
 from backend.tool_arena.router import admin_router as tool_arena_admin_router
 from backend.tool_arena.router import router as tool_arena_router
 from backend.config import OBJECTIVES
@@ -110,3 +110,45 @@ async def get_counter(country_portal: CountryPortalAnno):
 @app.get("/health")
 async def health() -> dict:
     return {"status": "ok"}
+
+
+# BUT : exposer l'état du maillon faible (OpenRouter) au frontend pour qu'il
+# affiche un badge rouge quand le fournisseur LLM/embeddings est indisponible
+# ou cappé silencieusement par Cloudflare (cf. knowledge-graph/code-ontology.yaml
+# #openrouter_provider). Endpoint séparé de /health pour que le liveness check
+# Railway reste shallow (D-06).
+_OPENROUTER_MODELS_IN_USE = [
+    "mistralai/mistral-medium-3.1",
+    "openai/text-embedding-3-small",
+]
+
+
+@app.get("/health/openrouter")
+async def health_openrouter() -> dict:
+    import httpx
+
+    async with httpx.AsyncClient(timeout=3.0) as client:
+        reachable = True
+        models_at_risk: list[dict] = []
+        for model_slug in _OPENROUTER_MODELS_IN_USE:
+            try:
+                response = await client.get(
+                    f"https://openrouter.ai/api/v1/models/{model_slug}/endpoints"
+                )
+                response.raise_for_status()
+                endpoints = response.json().get("data", {}).get("endpoints", [])
+                providers = [ep.get("provider_name", "") for ep in endpoints]
+                non_cloudflare = [p for p in providers if p != "Cloudflare"]
+                if providers and not non_cloudflare:
+                    models_at_risk.append(
+                        {"model": model_slug, "reason": "only_cloudflare_provider"}
+                    )
+            except httpx.HTTPError:
+                reachable = False
+                models_at_risk.append({"model": model_slug, "reason": "unreachable"})
+
+    return {
+        "reachable": reachable,
+        "models_at_risk": models_at_risk,
+        "ok": reachable and not models_at_risk,
+    }

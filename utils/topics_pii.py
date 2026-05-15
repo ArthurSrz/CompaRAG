@@ -1,3 +1,10 @@
+"""
+BUT : avant que le DatasetExport ne publie une conversation, détecter et
+filtrer les données personnelles (PII) et classifier le sujet de la
+conversation, en utilisant Gemini sur Vertex AI. Garantit qu'aucun nom,
+email, numéro etc. ne fuite dans le dataset ouvert.
+"""
+
 import json
 import os
 import time

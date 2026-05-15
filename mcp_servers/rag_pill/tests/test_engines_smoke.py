@@ -18,7 +18,7 @@ from pathlib import Path
 
 import pytest
 
-from backend.tool_arena.extractors import extract_text
+from backend.tool_arena.document.read_uploaded_file_as_text import extract_text
 from mcp_servers.rag_pill.engines import (
     ChromaBaselineEngine,
     HaystackEngine,

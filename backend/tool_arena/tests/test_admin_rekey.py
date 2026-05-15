@@ -8,10 +8,10 @@ import pytest
 from fastapi import FastAPI
 from fastapi.testclient import TestClient
 
-import backend.tool_arena.auth as auth_module
+import backend.tool_arena.rag_tool.auth.sign_in_to_tool as auth_module
 import backend.tool_arena.credential as credential_module
 from backend.tool_arena.config import ApiKeyAuth, MCPServerConfig, OAuth2Auth
-from backend.tool_arena.readiness import (
+from backend.tool_arena.rag_tool.readiness import (
     ServerReadiness,
     ServerStatus,
     _reset_registry_for_tests,
@@ -81,7 +81,7 @@ def app_with_server():
             return srv
         raise KeyError(server_id)
 
-    with patch("backend.tool_arena.router.registry.get_server", side_effect=_get):
+    with patch("backend.tool_arena.rag_tool.check_tools_are_ready_endpoint.registry.get_server", side_effect=_get):
         client = TestClient(app)
 
         def set_server(srv: MCPServerConfig) -> None:
@@ -155,7 +155,7 @@ def test_rekey_happy_path_seeds_invalidates_caches_and_probes(app_with_server):
 
     with patch.object(auth_module, "seed_tokens", _fake_seed_tokens):
         with patch(
-            "backend.tool_arena.router.probe_server",
+            "backend.tool_arena.admin.operator_admin_endpoints.probe_server",
             new=AsyncMock(side_effect=_fake_probe),
         ):
             resp = client.post(
@@ -199,7 +199,7 @@ def test_rekey_idempotent_second_call_succeeds(app_with_server):
 
     with patch.object(auth_module, "seed_tokens", _fake_seed_tokens):
         with patch(
-            "backend.tool_arena.router.probe_server",
+            "backend.tool_arena.admin.operator_admin_endpoints.probe_server",
             new=AsyncMock(side_effect=_fake_probe),
         ):
             payload = {"server_id": server.id, "refresh_token": "rt"}

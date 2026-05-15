@@ -12,7 +12,8 @@ from __future__ import annotations
 from fastapi import FastAPI
 from fastapi.testclient import TestClient
 
-from backend.tool_arena.router import router, get_tool_session, get_tool_session_hash
+from backend.tool_arena.router import router
+from backend.tool_arena.blind_reveal.identify_user_session import get_tool_session, get_tool_session_hash
 
 
 def _client_with_session(session_payload: dict) -> TestClient:

@@ -1,0 +1,198 @@
+"""
+BUT : envelopper la réponse brute d'un outil RAG dans une enveloppe standard
+{answer, sources, confidence, latency_ms} pour que l'arène traite toutes les
+réponses de la même manière, quel que soit l'outil qui les a produites.
+
+Future home (cf. knowledge-graph/code-ontology.yaml) :
+    backend/tool_arena/answer/wrap_answer_in_standard_envelope.py
+
+Output normalizer for CompaRAG Tool Arena.
+
+Produces a canonical NormalizedEnvelope from heterogeneous RAG tool output.
+Pipeline position: post-dispatch, pre-sanitize (D-06).
+
+All RAG tool outputs are normalized to {answer, sources, confidence, latency_ms}
+before reaching the blind display layer (D-04).
+"""
+
+import json
+from typing import Any
+
+from pydantic import BaseModel
+
+
+class Source(BaseModel):
+    """Structured source object for RAG citations (D-07).
+
+    All fields are optional — not all RAG tools provide rich citation metadata.
+    """
+
+    url: str | None = None
+    title: str | None = None
+    snippet: str | None = None
+    page: int | None = None
+
+
+class RetrievedSpanEnvelope(BaseModel):
+    """Per-side retrieval span (Phase 13 needle-in-haystack arena).
+
+    Mirrors mcp_servers.rag_pill.engines.result.RetrievedSpan over the wire.
+    The arena keeps these separate from `Source` because Source is human-
+    facing citation metadata; RetrievedSpan is machine-comparable retrieval
+    output keyed on character intervals for Recall@K / MRR / NDCG.
+    """
+
+    source_doc_id: str
+    char_start: int
+    char_end: int
+    text: str
+    score: float | None = None
+    rank: int
+
+
+class NormalizedEnvelope(BaseModel):
+    """Canonical output envelope for any RAG tool response.
+
+    normalized_fields tracks which fields were defaulted (not provided by the tool)
+    so downstream consumers know which values are real vs synthesized (D-05).
+    """
+
+    answer: str
+    sources: list[Source] = []
+    confidence: float | None = None
+    latency_ms: int = 0
+    normalized_fields: list[str] = []  # fields that were defaulted (D-05)
+    # Phase 13 / Wave 3 additions — defaulted so legacy tools coexist.
+    retrieved_spans: list[RetrievedSpanEnvelope] = []
+    retrieval_latency_ms: int = 0
+    generation_latency_ms: int = 0
+
+
+def _parse_sources(raw_sources: Any) -> list[Source]:
+    """Parse sources from raw JSON value into list[Source]."""
+    if not isinstance(raw_sources, list):
+        return []
+    result = []
+    for item in raw_sources:
+        if isinstance(item, dict):
+            result.append(Source(
+                url=item.get("url"),
+                title=item.get("title"),
+                snippet=item.get("snippet"),
+                page=item.get("page"),
+            ))
+        elif isinstance(item, str):
+            result.append(Source(url=item))
+    return result
+
+
+def normalize_output(raw_text: str, duration_ms: int) -> NormalizedEnvelope:
+    """Normalize raw MCP tool output to a canonical NormalizedEnvelope.
+
+    Normalization strategy:
+    1. Try json.loads(raw_text) — if valid JSON with "answer" key, extract known fields.
+    2. For each missing field (sources, confidence, latency_ms), use default and append
+       field name to normalized_fields so downstream knows which values are defaulted.
+    3. If raw_text is not JSON or has no "answer" key, treat entire raw_text as the
+       answer and default all other fields.
+    4. latency_ms defaults to the duration_ms parameter if not present in JSON.
+
+    Args:
+        raw_text: Raw string output from the MCP tool.
+        duration_ms: Measured duration of the MCP call — used as latency_ms fallback.
+
+    Returns:
+        NormalizedEnvelope with all required fields populated.
+    """
+    normalized_fields: list[str] = []
+
+    # Attempt JSON parsing
+    parsed: dict | None = None
+    try:
+        candidate = json.loads(raw_text)
+        if isinstance(candidate, dict) and "answer" in candidate:
+            parsed = candidate
+    except (json.JSONDecodeError, ValueError):
+        pass
+
+    if parsed is None:
+        # Plain text or JSON without "answer" key — treat entire raw_text as answer
+        normalized_fields.extend([
+            "sources", "confidence", "latency_ms",
+            "retrieved_spans", "retrieval_latency_ms", "generation_latency_ms",
+        ])
+        return NormalizedEnvelope(
+            answer=raw_text,
+            sources=[],
+            confidence=None,
+            latency_ms=duration_ms,
+            normalized_fields=normalized_fields,
+            retrieved_spans=[],
+        )
+
+    # Extract known fields from parsed JSON
+    answer: str = parsed["answer"]
+
+    # sources
+    if "sources" in parsed:
+        sources = _parse_sources(parsed["sources"])
+    else:
+        sources = []
+        normalized_fields.append("sources")
+
+    # confidence
+    if "confidence" in parsed:
+        confidence = parsed["confidence"]
+    else:
+        confidence = None
+        normalized_fields.append("confidence")
+
+    # latency_ms
+    if "latency_ms" in parsed:
+        latency_ms = int(parsed["latency_ms"])
+    else:
+        latency_ms = duration_ms
+        normalized_fields.append("latency_ms")
+
+    # retrieved_spans (Phase 13 / Wave 3)
+    raw_spans = parsed.get("retrieved_spans")
+    if isinstance(raw_spans, list):
+        retrieved_spans = [
+            RetrievedSpanEnvelope(
+                source_doc_id=item.get("source_doc_id", ""),
+                char_start=int(item.get("char_start", 0)),
+                char_end=int(item.get("char_end", 0)),
+                text=item.get("text", ""),
+                score=item.get("score"),
+                rank=int(item.get("rank", i)),
+            )
+            for i, item in enumerate(raw_spans)
+            if isinstance(item, dict)
+        ]
+    else:
+        retrieved_spans = []
+        normalized_fields.append("retrieved_spans")
+
+    # retrieval_latency_ms / generation_latency_ms
+    if "retrieval_latency_ms" in parsed:
+        retrieval_latency_ms = int(parsed["retrieval_latency_ms"])
+    else:
+        retrieval_latency_ms = 0
+        normalized_fields.append("retrieval_latency_ms")
+
+    if "generation_latency_ms" in parsed:
+        generation_latency_ms = int(parsed["generation_latency_ms"])
+    else:
+        generation_latency_ms = 0
+        normalized_fields.append("generation_latency_ms")
+
+    return NormalizedEnvelope(
+        answer=answer,
+        sources=sources,
+        confidence=confidence,
+        latency_ms=latency_ms,
+        normalized_fields=normalized_fields,
+        retrieved_spans=retrieved_spans,
+        retrieval_latency_ms=retrieval_latency_ms,
+        generation_latency_ms=generation_latency_ms,
+    )

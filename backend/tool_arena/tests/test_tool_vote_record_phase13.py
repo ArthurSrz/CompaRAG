@@ -8,7 +8,7 @@ Tests pin the field defaults so legacy callers that don't supply Phase 13
 fields keep working — additive contract.
 """
 
-from backend.tool_arena.persistence import ToolVoteRecord
+from backend.tool_arena.vote.save_vote_to_database import ToolVoteRecord
 
 
 def _base_kwargs() -> dict:

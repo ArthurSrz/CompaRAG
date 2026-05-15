@@ -41,8 +41,8 @@ def test_dry_run_happy_path():
     """POST /tool-arena/dry-run with valid tool_id, successful MCP call → valid=True, 3 checks."""
     raw_output = '{"answer": "This document is about testing.", "sources": [], "confidence": 0.9}'
 
-    with patch("backend.tool_arena.router.registry") as mock_registry, \
-         patch("backend.tool_arena.router.single_mcp_call", new_callable=AsyncMock) as mock_call:
+    with patch("backend.tool_arena.rag_tool.check_tools_are_ready_endpoint.registry") as mock_registry, \
+         patch("backend.tool_arena.rag_tool.check_tools_are_ready_endpoint.single_mcp_call", new_callable=AsyncMock) as mock_call:
 
         mock_registry.get_server.return_value = _make_server("clarifeye")
         mock_call.return_value = (raw_output, 150)
@@ -74,8 +74,8 @@ def test_dry_run_check_schema():
     """Each check object must have name, passed, and optional detail."""
     raw_output = "Plain text answer from the tool."
 
-    with patch("backend.tool_arena.router.registry") as mock_registry, \
-         patch("backend.tool_arena.router.single_mcp_call", new_callable=AsyncMock) as mock_call:
+    with patch("backend.tool_arena.rag_tool.check_tools_are_ready_endpoint.registry") as mock_registry, \
+         patch("backend.tool_arena.rag_tool.check_tools_are_ready_endpoint.single_mcp_call", new_callable=AsyncMock) as mock_call:
 
         mock_registry.get_server.return_value = _make_server("tool_a")
         mock_call.return_value = (raw_output, 100)
@@ -96,7 +96,7 @@ def test_dry_run_check_schema():
 
 def test_dry_run_unknown_tool_id():
     """POST /tool-arena/dry-run with unknown tool_id → 404."""
-    with patch("backend.tool_arena.router.registry") as mock_registry:
+    with patch("backend.tool_arena.rag_tool.check_tools_are_ready_endpoint.registry") as mock_registry:
         mock_registry.get_server.side_effect = KeyError("unknown_tool")
         resp = client.post("/tool-arena/dry-run", json={"tool_id": "unknown_tool"})
 
@@ -109,8 +109,8 @@ def test_dry_run_unknown_tool_id():
 
 def test_dry_run_connectivity_failure():
     """When single_mcp_call raises, connectivity check fails and valid=False."""
-    with patch("backend.tool_arena.router.registry") as mock_registry, \
-         patch("backend.tool_arena.router.single_mcp_call", new_callable=AsyncMock) as mock_call:
+    with patch("backend.tool_arena.rag_tool.check_tools_are_ready_endpoint.registry") as mock_registry, \
+         patch("backend.tool_arena.rag_tool.check_tools_are_ready_endpoint.single_mcp_call", new_callable=AsyncMock) as mock_call:
 
         mock_registry.get_server.return_value = _make_server("broken_tool")
         mock_call.side_effect = ConnectionError("MCP server unreachable")
@@ -132,8 +132,8 @@ def test_dry_run_connectivity_failure():
 
 def test_dry_run_empty_answer_fails_envelope_shape():
     """When MCP call returns empty string, envelope_shape check fails."""
-    with patch("backend.tool_arena.router.registry") as mock_registry, \
-         patch("backend.tool_arena.router.single_mcp_call", new_callable=AsyncMock) as mock_call:
+    with patch("backend.tool_arena.rag_tool.check_tools_are_ready_endpoint.registry") as mock_registry, \
+         patch("backend.tool_arena.rag_tool.check_tools_are_ready_endpoint.single_mcp_call", new_callable=AsyncMock) as mock_call:
 
         mock_registry.get_server.return_value = _make_server("empty_tool")
         mock_call.return_value = ("", 50)  # empty answer
@@ -155,8 +155,8 @@ def test_dry_run_sanitization_check_always_passes():
     """Sanitization check is always passed (best-effort), detail shows field count."""
     raw_output = '{"answer": "Result from clarifeye endpoint https://clarifeye.example.com", "sources": [{"url": "https://clarifeye.example.com/doc1"}]}'
 
-    with patch("backend.tool_arena.router.registry") as mock_registry, \
-         patch("backend.tool_arena.router.single_mcp_call", new_callable=AsyncMock) as mock_call:
+    with patch("backend.tool_arena.rag_tool.check_tools_are_ready_endpoint.registry") as mock_registry, \
+         patch("backend.tool_arena.rag_tool.check_tools_are_ready_endpoint.single_mcp_call", new_callable=AsyncMock) as mock_call:
 
         mock_registry.get_server.return_value = _make_server("clarifeye")
         mock_call.return_value = (raw_output, 200)

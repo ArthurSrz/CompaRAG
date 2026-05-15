@@ -1,4 +1,10 @@
-"""RAGEngine Protocol + shared span-projection helper."""
+"""
+BUT : définir le contrat commun (RAGEngine Protocol) que tous les RAGEngine
+doivent respecter — indexer un Corpus, retrouver des passages pertinents,
+générer une réponse. Tous les moteurs se branchent ici sans rien casser.
+
+RAGEngine Protocol + shared span-projection helper.
+"""
 
 from typing import Any, Protocol, runtime_checkable
 

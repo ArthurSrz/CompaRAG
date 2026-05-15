@@ -19,7 +19,7 @@ from backend.tool_arena.credential import (
     CredentialUpstreamDown,
     _clear_credential_cache,
 )
-from backend.tool_arena.readiness import (
+from backend.tool_arena.rag_tool.readiness import (
     ReadinessRegistry,
     ServerReadiness,
     ServerStatus,
@@ -197,7 +197,7 @@ async def test_probe_oauth_revoked_maps_to_needs_reauth():
         raise CredentialRevoked("refresh token rejected")
 
     with patch(
-        "backend.tool_arena.auth.prewarm_oauth_provider",
+        "backend.tool_arena.rag_tool.auth.sign_in_to_tool.prewarm_oauth_provider",
         side_effect=fake_prewarm,
     ):
         result = await probe_server(server, reg)
@@ -214,7 +214,7 @@ async def test_probe_oauth_misconfigured_maps_to_misconfigured():
         raise CredentialMisconfigured("missing env")
 
     with patch(
-        "backend.tool_arena.auth.prewarm_oauth_provider",
+        "backend.tool_arena.rag_tool.auth.sign_in_to_tool.prewarm_oauth_provider",
         side_effect=fake_prewarm,
     ):
         result = await probe_server(server, reg)
@@ -230,7 +230,7 @@ async def test_probe_oauth_upstream_down_maps_to_upstream_down():
         raise CredentialUpstreamDown("token endpoint 502")
 
     with patch(
-        "backend.tool_arena.auth.prewarm_oauth_provider",
+        "backend.tool_arena.rag_tool.auth.sign_in_to_tool.prewarm_oauth_provider",
         side_effect=fake_prewarm,
     ):
         result = await probe_server(server, reg)
@@ -250,7 +250,7 @@ async def test_probe_oauth_prewarm_returns_false_marks_upstream_down():
         return False
 
     with patch(
-        "backend.tool_arena.auth.prewarm_oauth_provider",
+        "backend.tool_arena.rag_tool.auth.sign_in_to_tool.prewarm_oauth_provider",
         side_effect=fake_prewarm,
     ):
         result = await probe_server(server, reg)
@@ -266,7 +266,7 @@ async def test_probe_oauth_success_marks_ready():
         return True
 
     with patch(
-        "backend.tool_arena.auth.prewarm_oauth_provider",
+        "backend.tool_arena.rag_tool.auth.sign_in_to_tool.prewarm_oauth_provider",
         side_effect=fake_prewarm,
     ):
         result = await probe_server(server, reg)
@@ -283,7 +283,7 @@ async def test_probe_timeout_maps_to_upstream_down():
         return True
 
     with patch(
-        "backend.tool_arena.auth.prewarm_oauth_provider",
+        "backend.tool_arena.rag_tool.auth.sign_in_to_tool.prewarm_oauth_provider",
         side_effect=slow_prewarm,
     ):
         result = await probe_server(server, reg, timeout_seconds=0.05)
@@ -347,7 +347,7 @@ async def test_probe_loop_targets_only_failed_between_full_cycles(monkeypatch):
     probes within 15s`` — before the fix, all servers waited a full minute,
     keeping a flapped Clarifeye out of the dispatch pool until the next pulse.
     """
-    from backend.tool_arena import readiness as rd
+    from backend.tool_arena.rag_tool import readiness as rd
 
     healthy = _none_server("healthy")
     flapped = _none_server("flapped")

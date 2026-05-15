@@ -1,0 +1,113 @@
+name: Regression suite
+
+on:
+  pull_request:
+    branches: [develop, main]
+  push:
+    branches:
+      - 'claude/**'
+      - develop
+
+permissions:
+  contents: read
+
+jobs:
+  pytest:
+    name: pytest backend + rag_pill
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v3
+        with:
+          version: "0.7.2"
+
+      - name: Set up Python
+        run: uv python install 3.13
+
+      - name: Install dependencies
+        run: uv sync --frozen
+
+      - name: Backend regression suite
+        run: uv run pytest backend/ -q --no-header
+
+      - name: rag_pill regression suite
+        # test_txtai_external_method is a pre-existing failure on develop
+        # (missing optional txtai Embeddings dep) — out of scope for this PR.
+        run: |
+          uv run pytest mcp_servers/rag_pill/tests \
+            --ignore=mcp_servers/rag_pill/tests/test_txtai_external_method.py \
+            -q --no-header
+
+      - name: Ontology ↔ mcp_servers.json consistency
+        run: uv run python scripts/register_tool.py --check
+
+      - name: YAML ontology is well-formed
+        run: |
+          uv run python -c "import yaml; yaml.safe_load(open('knowledge-graph/code-ontology.yaml')); print('OK')"
+
+      - name: No orphan imports of pre-rename module paths
+        run: |
+          set -e
+          # Phase D moved these modules. A surviving import means a missed rename.
+          if grep -rEn "from backend\.tool_arena\.(dispatcher|normalizer|sanitizer|extractors|registry|readiness|session|persistence|streaming|evaluation|client|judge\.|oauth_setup|documents_router|documents)\b" backend/ mcp_servers/ utils/ scripts/ 2>/dev/null; then
+            echo "FAIL: orphan imports found — see grep output above."
+            exit 1
+          fi
+          echo "OK: no orphan imports."
+
+  openrouter-providers:
+    name: OpenRouter providers (Cloudflare-only check)
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    # The endpoint is public — no API key required.
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v3
+        with:
+          version: "0.7.2"
+
+      - name: Set up Python
+        run: uv python install 3.13
+
+      - name: Check every model in use has a non-Cloudflare provider
+        run: uv run --with httpx python scripts/check_openrouter_providers.py --verbose
+
+  prod-health-smoke:
+    name: Prod /health probes (read-only)
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    # Read-only against the live backend. NO writes — never hits /compare or /vote.
+    # Validates that the CURRENTLY-DEPLOYED prod still boots; this PR's new
+    # /health/openrouter is checked separately and only after deploy.
+    steps:
+      - name: GET /health  (must be 200 — guards "did we just break prod boot?")
+        run: |
+          set -e
+          code=$(curl -sS -o /tmp/health.json -w "%{http_code}" https://comparag-production.up.railway.app/health)
+          cat /tmp/health.json; echo
+          test "$code" = "200" || { echo "FAIL /health -> $code"; exit 1; }
+
+      - name: GET /tool-arena/leaderboard  (must be 200 — guards existing endpoint)
+        run: |
+          set -e
+          code=$(curl -sS -o /tmp/lb.json -w "%{http_code}" https://comparag-production.up.railway.app/tool-arena/leaderboard)
+          head -c 400 /tmp/lb.json; echo
+          test "$code" = "200" || { echo "FAIL /tool-arena/leaderboard -> $code"; exit 1; }
+
+      - name: GET /health/openrouter  (informational — only exists after this PR deploys)
+        continue-on-error: true
+        run: |
+          code=$(curl -sS -o /tmp/or.json -w "%{http_code}" https://comparag-production.up.railway.app/health/openrouter)
+          echo "/health/openrouter -> HTTP $code"
+          cat /tmp/or.json; echo
+          if [ "$code" = "404" ]; then
+            echo "NOTE: endpoint not deployed yet — added in this PR, will turn green after merge + deploy."
+          elif [ "$code" = "200" ]; then
+            python -c "import json,sys; d=json.load(open('/tmp/or.json')); print('reachable=', d.get('reachable'), 'ok=', d.get('ok'))"
+          fi

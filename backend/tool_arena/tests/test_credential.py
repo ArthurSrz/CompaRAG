@@ -150,7 +150,7 @@ async def test_oauth2_credential_returns_empty_headers_when_provider_ok():
     """OAuth lets the SDK manage Authorization via auth=provider — see module docstring."""
     server = _oauth_server()
     cred = OAuth2Credential()
-    with patch("backend.tool_arena.auth.get_oauth_provider", return_value=object()):
+    with patch("backend.tool_arena.rag_tool.auth.sign_in_to_tool.get_oauth_provider", return_value=object()):
         assert await cred.headers_for(server) == {}
 
 
@@ -159,7 +159,7 @@ async def test_oauth2_credential_translates_runtime_error_to_revoked():
     server = _oauth_server()
     cred = OAuth2Credential()
     with patch(
-        "backend.tool_arena.auth.get_oauth_provider",
+        "backend.tool_arena.rag_tool.auth.sign_in_to_tool.get_oauth_provider",
         side_effect=RuntimeError("OAuth authorization_code flow triggered..."),
     ):
         with pytest.raises(CredentialRevoked):
@@ -177,7 +177,7 @@ async def test_oauth2_credential_provider_for_returns_cached_provider():
     server = _oauth_server()
     cred = OAuth2Credential()
     sentinel = object()
-    with patch("backend.tool_arena.auth.get_oauth_provider", return_value=sentinel) as m:
+    with patch("backend.tool_arena.rag_tool.auth.sign_in_to_tool.get_oauth_provider", return_value=sentinel) as m:
         assert cred.provider_for(server) is sentinel
         m.assert_called_once_with(server)
 

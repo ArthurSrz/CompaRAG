@@ -10,7 +10,7 @@ inputs without reaching the dispatcher.
 import pytest
 from pydantic import ValidationError
 
-from backend.tool_arena.router import CompareRequest
+from backend.tool_arena.comparison.contracts import CompareRequest
 
 
 def test_sandbox_with_document_content_accepted() -> None:

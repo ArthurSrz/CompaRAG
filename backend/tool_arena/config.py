@@ -1,4 +1,8 @@
 """
+BUT : lire mcp_servers.json et le valider, pour que chaque RAGTool décrit
+dans ce manifeste soit utilisable par l'arène. Si la config est cassée,
+l'app refuse de démarrer plutôt que de planter sur la première requête.
+
 MCP server configuration for CompaRAG Tool Arena.
 
 Defines validated Pydantic models for MCP server entries and provides

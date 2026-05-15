@@ -323,7 +323,7 @@ def test_validate_document_embeddings_raises_on_none():
         validate_document_embeddings(result)
 ```
 
-**llamaindex_rag (mcp_servers/llamaindex_rag/tests/):**
+**llamaindex_rag (mcp_servers/_legacy_standalone_servers/llamaindex_rag/tests/):**
 - Smoke tests for the single LlamaIndex pipeline
 - Framework: pytest
 

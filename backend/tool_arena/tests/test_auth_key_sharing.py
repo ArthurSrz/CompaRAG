@@ -14,8 +14,8 @@ from unittest.mock import patch
 
 import pytest
 
-import backend.tool_arena.auth as auth_module
-from backend.tool_arena.auth import (
+import backend.tool_arena.rag_tool.auth.sign_in_to_tool as auth_module
+from backend.tool_arena.rag_tool.auth.sign_in_to_tool import (
     FileTokenStorage,
     _get_storage,
     build_oauth_provider,

@@ -17,8 +17,11 @@ Checks (in order, per D-09):
   1. GET /health -> 200 with status ok
   2. GET FRONTEND_URL -> 200
   3. POST /tool-arena/compare -> 200, both error_a and error_b are null
-  4. POST /tool-arena/vote -> 200 (uses X-Session-Hash from compare response)
-  5. Verify reveal response contains non-empty tool_a.name and tool_b.name
+  4. POST /tool-arena/compare -> result_a and result_b are non-trivial (>200 chars):
+     guards against the Cloudflare token-cap regression (cf.
+     knowledge-graph/code-ontology.yaml#openrouter_provider).
+  5. POST /tool-arena/vote -> 200 (uses X-Session-Hash from compare response)
+  6. Verify reveal response contains non-empty tool_a.name and tool_b.name
 
 Exit code: 0 if all checks pass, 1 if any check fails.
 """
@@ -94,6 +97,28 @@ def run_smoke_test(backend_url: str, frontend_url: str, verbose: bool) -> int:
                 verbose,
                 detail,
             )
+
+            # Guard against the Cloudflare token-cap regression: a healthy
+            # OpenRouter provider returns at least ~300 chars for the prompt
+            # below; a Cloudflare-capped provider returns ~80-150 chars before
+            # silently truncating.
+            if ok_status:
+                len_a = len(body.get("result_a") or "")
+                len_b = len(body.get("result_b") or "")
+                MIN_CHARS = 200
+                length_ok = len_a > MIN_CHARS and len_b > MIN_CHARS
+                length_detail = (
+                    f"result_a={len_a} chars, result_b={len_b} chars "
+                    f"(threshold > {MIN_CHARS} chars). "
+                    "Below threshold suggests Cloudflare token cap — "
+                    "run scripts/check_openrouter_providers.py."
+                )
+                all_passed &= check(
+                    "Compare answers are non-trivial (no token cap)",
+                    length_ok,
+                    verbose,
+                    length_detail,
+                )
         except Exception as exc:
             all_passed &= check(
                 "POST /tool-arena/compare -> 200, no MCP errors",

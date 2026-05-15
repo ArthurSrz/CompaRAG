@@ -13,9 +13,9 @@ from unittest.mock import AsyncMock, MagicMock, patch
 from fastapi import FastAPI
 from fastapi.testclient import TestClient
 
-from backend.tool_arena.evaluation import EvaluationCatalog, EvaluationQueryMeta
+from backend.tool_arena.question.list_questions_with_known_answers import EvaluationCatalog, EvaluationQueryMeta
 from backend.tool_arena.router import router
-from backend.tool_arena.judge.base import ExpectedSpan
+from backend.tool_arena.judge_verdict.base import ExpectedSpan
 
 _app = FastAPI()
 _app.include_router(router)
@@ -96,11 +96,11 @@ def test_benchmark_mode_attaches_judgement_to_each_tool_call() -> None:
         captured_payload.update(payload)
 
     with (
-        patch("backend.tool_arena.router.MCPDispatcher", return_value=fake_disp_instance),
-        patch("backend.tool_arena.router._eval_catalog", fake_catalog, create=True),
-        patch("backend.tool_arena.router.save_tool_call_to_db"),
-        patch("backend.tool_arena.router.create_tool_session", return_value="sess-x"),
-        patch("backend.tool_arena.router.store_tool_session", side_effect=capture_session),
+        patch("backend.tool_arena.comparison.run_comparison_endpoint.MCPDispatcher", return_value=fake_disp_instance),
+        patch("backend.tool_arena.comparison.run_comparison_endpoint._eval_catalog", fake_catalog, create=True),
+        patch("backend.tool_arena.comparison.run_comparison_endpoint.save_tool_call_to_db"),
+        patch("backend.tool_arena.comparison.run_comparison_endpoint.create_tool_session", return_value="sess-x"),
+        patch("backend.tool_arena.comparison.run_comparison_endpoint.store_tool_session", side_effect=capture_session),
     ):
         response = client.post(
             "/tool-arena/compare",
@@ -131,10 +131,10 @@ def test_sandbox_mode_leaves_judgement_none() -> None:
     fake_disp_instance.dispatch = dispatch_mock
 
     with (
-        patch("backend.tool_arena.router.MCPDispatcher", return_value=fake_disp_instance),
-        patch("backend.tool_arena.router.save_tool_call_to_db"),
-        patch("backend.tool_arena.router.create_tool_session", return_value="sess-x"),
-        patch("backend.tool_arena.router.store_tool_session"),
+        patch("backend.tool_arena.comparison.run_comparison_endpoint.MCPDispatcher", return_value=fake_disp_instance),
+        patch("backend.tool_arena.comparison.run_comparison_endpoint.save_tool_call_to_db"),
+        patch("backend.tool_arena.comparison.run_comparison_endpoint.create_tool_session", return_value="sess-x"),
+        patch("backend.tool_arena.comparison.run_comparison_endpoint.store_tool_session"),
     ):
         response = client.post(
             "/tool-arena/compare",

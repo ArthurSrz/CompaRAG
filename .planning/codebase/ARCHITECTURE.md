@@ -190,8 +190,8 @@
 
 **MCP Servers:**
 - `mcp_servers/rag_pill/server.py`: FastMCP lifespan (initialize engines + PillRegistry), `/health`, `/pills`, `rag_pill_query` tool
-- `mcp_servers/langchain_rag/`: Single LangChain pipeline (index on first call, reuse)
-- `mcp_servers/llamaindex_rag/`: Single LlamaIndex pipeline (same pattern)
+- `mcp_servers/_legacy_standalone_servers/langchain_rag/`: Single LangChain pipeline (index on first call, reuse)
+- `mcp_servers/_legacy_standalone_servers/llamaindex_rag/`: Single LlamaIndex pipeline (same pattern)
 
 **Frontend:**
 - `frontend/src/routes/tool-arena/+page.svelte`: Main page, forms, API calls, state management

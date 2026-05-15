@@ -1,3 +1,13 @@
+<!--
+  BUT : la page d'accueil du Tool Arena côté navigateur. L'utilisateur saisit
+  une Question (et éventuellement un Document), lance une Comparison, voit
+  deux réponses côte à côte en aveugle, vote pour celle qu'il préfère, puis
+  voit l'identité des deux RAGTool révélée.
+
+  Future home (cf. knowledge-graph/code-ontology.yaml) :
+      frontend/src/routes/compare-two-rag-tools/+page.svelte
+      (avec redirection 301 depuis /tool-arena)
+-->
 <script lang="ts">
   import { browser, dev } from '$app/environment'
   import { env as publicEnv } from '$env/dynamic/public'
