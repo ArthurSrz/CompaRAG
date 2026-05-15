@@ -6,9 +6,8 @@
   import { getI18nContext } from '$lib/global.svelte'
   import { useLocalStorage } from '$lib/helpers/useLocalStorage.svelte'
   import { m } from '$lib/i18n/messages'
-  import { getLocale, type Locale } from '$lib/i18n/runtime'
-  import { externalLinkProps, propsToAttrs, sanitize } from '$lib/utils/commons'
-  import type { HTMLImgAttributes } from 'svelte/elements'
+  import { getLocale } from '$lib/i18n/runtime'
+  import { propsToAttrs, sanitize } from '$lib/utils/commons'
 
   const locale = getLocale()
   const i18nData = getI18nContext()
@@ -78,24 +77,6 @@
     title: m[`home.usage.${i18nKey}.title`](),
     desc: m[`home.usage.${i18nKey}.desc`]()
   }))
-
-  // FIXME i18n specific logos
-  const localizedLogos = (
-    {
-      da: [],
-      en: [],
-      fr: [
-        {
-          class: 'max-h-[40px] dark:invert',
-          src: '/orgs/borges-graph.svg',
-          alt: 'Le graphe de Borges',
-          title: 'Le graphe de Borges'
-        }
-      ],
-      lt: [],
-      sv: []
-    } satisfies Record<Locale, HTMLImgAttributes[]>
-  )[locale === 'en' ? 'fr' : locale]
 
   const reducedFAQ = (
     [
@@ -228,50 +209,6 @@
             <p class="mb-0! text-grey">{card.desc}</p>
           </div>
         {/each}
-      </div>
-    </div>
-  </section>
-
-  <section class="fr-container--fluid bg-very-light-grey lg:pb-38 py-12 lg:pt-20">
-    <div class="fr-container gap-10 lg:grid-cols-2 lg:gap-6 grid">
-      <!-- i18n: specific to locales -->
-      <div class="cg-border bg-white px-5 py-10 md:px-8">
-        <h5>{m['home.origin.team.title']()}</h5>
-        <p>{@html sanitize(m['home.origin.team.desc']())}</p>
-
-        <div class="mt-12 gap-8 flex flex-wrap">
-          {#each localizedLogos as logoProps, i (i)}
-            <img {...logoProps} />
-          {/each}
-        </div>
-      </div>
-
-      <div class="cg-border bg-white px-5 py-10 md:px-8">
-        <h5>{m['home.origin.project.title']()}</h5>
-        <p>
-          {@html sanitize(
-            m['home.origin.project.desc']({ linkProps: externalLinkProps('https://beta.gouv.fr') })
-          )}
-        </p>
-
-        <div class="mt-12 gap-8 flex flex-wrap">
-          <img
-            src="/orgs/betagouv.svg"
-            alt="beta.gouv.fr"
-            title="beta.gouv.fr"
-            class="max-w-[178px] dark:invert"
-            width="191px"
-            height="65px"
-          />
-          <img
-            src="/orgs/dinum.png"
-            class="max-w-[254px] dark:invert"
-            alt="DINUM"
-            title="DINUM"
-            width="278px"
-            height="59px"
-          />
-        </div>
       </div>
     </div>
   </section>

@@ -1226,16 +1226,6 @@
         "help": "Data is shared for research purposes"
       }
     },
-    "origin": {
-      "project": {
-        "desc": "The chatbot arena was designed and developed as part of a government startup led by the French Ministry of Culture, integrated into the <a {linkProps}>Beta.gouv.fr</a> program by the Interministerial Digital Directorate (DINUM). This initiative supports French public administrations in building useful, simple, and user-friendly digital services.",
-        "title": "Who initiated the project?"
-      },
-      "team": {
-        "desc": "The chatbot arena is led within the French Ministry of Culture by a multidisciplinary team - AI experts, developers, deployment specialists, and designers - with a mission to make conversational AI more transparent and accessible to everyone.",
-        "title": "Who are we?"
-      }
-    },
     "usage": {
       "desc": "The tool is also aimed at AI experts and educators for more specific use cases",
       "educate": {
