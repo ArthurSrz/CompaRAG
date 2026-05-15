@@ -15,7 +15,7 @@ import pytest
 from pydantic import ValidationError
 
 from backend.tool_arena.vote.save_vote_to_database import ToolVoteRecord
-from backend.tool_arena.router import ToolPreferencesPayload
+from backend.tool_arena.comparison.contracts import ToolPreferencesPayload
 
 
 # --- ToolPreferencesPayload validation ----------------------------------------

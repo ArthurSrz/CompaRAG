@@ -93,13 +93,13 @@ async def test_compare_streaming_emits_per_side_events_and_terminal_complete():
     fake_disp_instance.pick_pair = AsyncMock(return_value=(server_a, server_b))
 
     with patch(
-        "backend.tool_arena.router.MCPDispatcher",
+        "backend.tool_arena.comparison.run_comparison_endpoint.MCPDispatcher",
         return_value=fake_disp_instance,
     ), patch(
         "backend.tool_arena.comparison.stream_progress_to_browser.open_rag_pill_stream",
         side_effect=_fake_open_stream,
     ), patch(
-        "backend.tool_arena.router.store_tool_session"
+        "backend.tool_arena.comparison.run_comparison_endpoint.store_tool_session"
     ):
         client = TestClient(_app())
         response = client.post(
@@ -164,12 +164,12 @@ async def test_compare_sync_path_unchanged_without_sse_accept():
     )
 
     with patch(
-        "backend.tool_arena.router.MCPDispatcher",
+        "backend.tool_arena.comparison.run_comparison_endpoint.MCPDispatcher",
         return_value=fake_disp_instance,
     ), patch(
-        "backend.tool_arena.router.store_tool_session"
+        "backend.tool_arena.comparison.run_comparison_endpoint.store_tool_session"
     ), patch(
-        "backend.tool_arena.router.save_tool_call_to_db"
+        "backend.tool_arena.comparison.run_comparison_endpoint.save_tool_call_to_db"
     ):
         client = TestClient(_app())
         response = client.post(
