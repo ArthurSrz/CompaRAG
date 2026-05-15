@@ -149,107 +149,51 @@
     "unknown": "Der er opstået en fejl"
   },
   "faq": {
-    "datasets": {
+    "title": "Frequently asked questions",
+    "fairness": {
+      "title": "Fairness of the comparison",
       "questions": {
         "1": {
-          "desc": "<p> Præferencedata bruges til at forbedre modeller under fremtidig træning. </p><p> Ved blindt at sammenligne svarene fra to modeller udtrykker brugere deres præferencer og angiver, hvilke svar der er mest relevante. Disse præferencedata kan bruges til at forbedre modeljustering, det vil sige at træne dem til at generere svar, der er mere i overensstemmelse med brugernes forventninger og præferencer. </p><p> Dette er en iterativ proces, hvor modellen gradvist lærer at generere bedre svar baseret på feedback fra mennesker om svarenes kvalitet. Ved at blive eksponeret for præferencedata justerer modellerne deres svarstil. </p>",
-          "title": "Har præferencedata en umiddelbar effekt på forbedringen af modellerne?"
-        },
-        "2": {
-          "desc": "<p>Det særlige ved de data, der indsamles på platformen, er, at de er på dansk, og at de svarer til brugernes faktiske opgaver. Disse data afspejler menneskelige præferencer i en sproglig og kulturel kontekst. De gør det muligt at justere modellerne, så de bliver mere relevante og tilpasset danske brugeres behov, samtidig med at de udjævner eventuelle skævheder eller mangler i de nuværende modeller.</p>",
-          "title": "Hvorfor er præferencedata værdifulde?"
-        },
-        "3": {
-          "desc": "<p>AI Arenaen positionerer sig som et evaluerings- og tilpasningsværktøj, der er specifikt til dansk, med fokus på svarenes kvalitet og indsamling af præferencedata, og adskiller sig dermed fra den globale rangeringstilgang hos <a href='https://lmarena.ai/' target='_blank'>chatbot arena</a> udviklet af <a href='http://lmsys.org' target='_blank'>lmsys.org</a> og den etiske justering af AI-modeller hos <a href='https://hannahkirk.github.io/prism-alignment/' target='_blank'>Prism Alignment Project</a>.</p>",
-          "title": "Hvad er det særlige ved AI Arenaen sammenlignet med andre lignende initiativer?"
+          "title": "How can I be sure the tools are queried fairly?",
+          "desc": "<p>Three invariants guarantee fairness in every round.</p><p><strong>1. Same context.</strong> Both tools receive the exact same question, the same document, and the same timeout. The code that builds the request (<code>backend/tool_arena/rag_tool/ask_one_tool.py</code>) is shared — there is no per-tool special path.</p><p><strong>2. Transparent draw.</strong> Only tools declared READY at request time enter the draw. They are grouped by <em>task_type</em> (summary, question-answering, extraction); a tool only ever competes with another tool from the same group. Within a group, two tools are picked at random, weighted by a public weight declared in <code>mcp_servers.json</code>.</p><p><strong>3. Blind vote.</strong> The identities of both tools are hidden until you vote. You see «answer A» and «answer B», never their brand. Any mention of the tool in its own answer is stripped before display.</p><p>The code for all three mechanisms is public and auditable: <code>backend/tool_arena/comparison/ask_two_tools_concurrently.py</code>, <code>backend/tool_arena/rag_tool/readiness.py</code>, <code>backend/tool_arena/blind_reveal/hide_tool_identity_before_vote.py</code>.</p>"
         }
-      },
-      "title": "Datasæt"
+      }
     },
-    "ecology": {
+    "comparison": {
+      "title": "How a comparison runs",
       "questions": {
         "1": {
-          "desc": "<p>AI Arenaen bruger den metode, der er udviklet af <a target='_blank' href='https://ecologits.ai/latest/'><strong>Ecologits</strong> (GenAI Impact)</a> til at levere et energiregnskab, der gør det muligt for brugerne at sammenligne den miljømæssige påvirkning fra forskellige AI-modeller for den samme forespørgsel. Denne gennemsigtighed er afgørende for at fremme udviklingen og implementeringen af mere miljøansvarlige AI-modeller.</p><p>Ecologits anvender principperne for livscyklusvurdering (LCA) i overensstemmelse med ISO 14044-standarden ved i øjeblikket at fokusere på påvirkningen fra <strong>inferens</strong> (det vil sige brugen af modeller til at besvare forespørgsler) og <strong>fremstillingen af grafikkort</strong> (udvinding af ressourcer, fremstilling og transport).</p><p>Modellens elforbrug estimeres under hensyntagen til forskellige parametre såsom størrelsen af den anvendte AI-model, placeringen af de servere, hvor modellerne er implementeret, og antallet af output-tokens. Beregningen af indikatoren for globalt opvarmningspotentiale udtrykt i CO2-ækvivalenter er afledt af målingen af modellens elforbrug.</p><p>Det er vigtigt at bemærke, at metoderne til vurdering af AI's miljøpåvirkning stadig er under udvikling, samt at der er tale om estimater.</p>",
-          "title": "Hvordan beregnes miljøindikatorerne?"
-        },
-        "2": {
-          "desc": "<p>Placeringen af datacentre spiller en rolle for AI's CO2-fodaftryk. Hvis en model trænes eller bruges i et land, der er stærkt afhængigt af fossile brændstoffer, vil dens miljøpåvirkning være større, end hvis den hostes i et land, der primært bruger vedvarende energi.</p><p>Metoden til analyse af AI's miljøpåvirkning udviklet af <a target='_blank' href='https://ecologits.ai/latest/'>Ecologits (fra GenAI Impact)</a>, integrerer data om energimixet i de forskellige lande, hvor serverne befinder sig. Dette gør det muligt at opnå et mere præcist og nuanceret estimat af det faktiske CO2-fodaftryk fra inferens på de forskellige generative AI-modeller.</p>",
-          "title": "Tager miljøindikatorerne hensyn til energimixet i de forskellige lande?"
-        },
-        "3": {
-          "desc": "<p>De nuværende miljøpåvirkningsindikatorer fokuserer primært på påvirkningen fra <strong>inferens</strong>, det vil sige brugen af AI-modeller til at besvare forespørgsler. Denne tilgang kan give den illusion, at inferens er mindre energikrævende end træning af modeller. Men <strong>virkeligheden er mere kompleks.</strong> Lad os tage analogien med bilen:</p><ul><li>At bygge en bil (træningen) er en engangsproces, der kræver mange ressourcer.</li><li>Hver biltur (inferens) forbruger mindre energi, men disse ture gentages dagligt, og deres antal er potentielt enormt.</li></ul><p>På samme måde <strong>kan den akkumulerede påvirkning fra inferens, i skalaen af millioner af brugere, der foretager daglige forespørgsler, vise sig at være større end påvirkningen fra den indledende træning.</strong> Derfor er det afgørende, at værktøjerne til vurdering af AI's CO2-fodaftryk tager hensyn til <strong>hele livscyklussen</strong> for modellerne, fra træning til brug i produktion</p>",
-          "title": "Tager miljøpåvirkningsindikatorerne hensyn til de ressourcer, der bruges til at træne modellerne?"
+          "title": "What happens when I click «Compare»?",
+          "desc": "<p>Four ordered steps:</p><ol><li><strong>Draw</strong> two ready RAGTools (see the fairness question).</li><li><strong>Parallel query</strong>: the same question and document are sent simultaneously to both tools over MCP. Per-tool timeout of 180s.</li><li><strong>Blinding</strong>: each answer is sanitized to remove the tool's name, then displayed unlabelled as «answer A» / «answer B». Order is randomised.</li><li><strong>Reveal</strong>: after your vote, both identities are shown and the vote is persisted.</li></ol><p>If one of the two tools errors out, you see an error card in its place and voting is disabled — comparing an answer to a failure is meaningless.</p>"
         }
-      },
-      "title": "Miljøindikatorer"
+      }
     },
-    "i18n": {
+    "rag": {
+      "title": "What is a RAG tool",
       "questions": {
         "1": {
-          "desc": "<p>Ja, internationaliseringen af AI Arenaen er i gang. Projektet havde først success I Frankrig og er nu kommet til Danmark, samt Litauen og Sverige. Denne første fase gør det muligt at teste tilgangen og tilpasse interfacet til forskellige sproglige og kulturelle kontekster i Europa. På sigt kan kredsen udvides til flere europæiske sprog afhængigt af erfaringerne fra disse pilotlande. Målet er gradvist at opbygge en egentligt europæisk digital ressource til menneskelig evaluering af dialogbaserede AI-systemer baseret på en samarbejdsmodel, der skal fastlægges mellem de forskellige deltagende lande.</p>",
-          "title": "Er AI Arenaen kun på dansk, eller er der planer om andre europæiske sprog?"
-        },
-        "2": {
-          "desc": "<p>Udviklingen af en europæisk platform til sammenligning af dialogbaserede AI-systemer giver flere konkrete fordele. Den gør det muligt at indsamle præferencedata, der afspejler de reelle behov hos europæiske brugere, og dermed forbedre modellernes relevans for dette publikum. Den sikrer således en bedre repræsentation af europæiske sprog og kulturer, som ofte er underrepræsenteret i globale evalueringer domineret af engelsk. Den sikrer også overholdelse af europæiske reguleringer (GDPR, AI Act) og integrerer evalueringskriterier, der er i overensstemmelse med europæiske prioriteter som miljømæssig bæredygtighed og algoritmisk gennemsigtighed. Endelig fremmer den fremkomsten af et konkurrencedygtigt og selvstændigt europæisk AI-økosystem.</p>",
-          "title": "Hvad er fordelene ved en specifikt europæisk platform til indsamling af præferencer?"
+          "title": "Why put several RAG tools in competition?",
+          "desc": "<p>RAG (Retrieval-Augmented Generation) is a broad category of tools combining <strong>information retrieval</strong> with <strong>LLM generation</strong>. The same label hides very different architecture choices:</p><ul><li><strong>Which <em>chunker</em>?</strong> Paragraph, character window, sentence…</li><li><strong>Which <em>retriever</em>?</strong> Dense (embeddings), sparse (BM25), hybrid, graph-based (LightRAG, GraphRAG)…</li><li><strong>Which <em>reranker</em>?</strong> Cross-encoder, LLM-judge, or none.</li><li><strong>Which <em>prompt</em>?</strong> The same question can yield radically different outputs depending on the prompt that wraps the retrieved passages.</li></ul><p>CompaRAG today races five engine families (LangChain, LlamaIndex, Haystack, Txtai, Chroma) on the same LLM (Mistral Medium 3.1 via OpenRouter). The LLM constant is deliberate: we measure the quality of the <em>retrieval pipeline</em>, not the LLM.</p>"
         }
-      },
-      "title": "Internationalisering"
+      }
     },
-    "models": {
+    "data": {
+      "title": "Your data",
       "questions": {
         "1": {
-          "desc": "<p>Vi vælger modellerne baseret på deres popularitet, diversitet og relevans for brugerne. Vi bestræber os særligt på at gøre såkaldte <em>open weights</em> (semi-åbne) samt <em>open source</em> (åbne) modeller af forskellig størrelse tilgængelige.</p>",
-          "title": "Hvordan vælger I de modeller, der er i sammenligningsværktøjet?"
-        },
-        "2": {
-          "desc": "<p>Inferens, det vil sige muligheden for at forespørge modellerne, understøttes af projektet. For de fleste modeller går vi gennem Open Router og Hugging Face's API'er, og vi betaler for brugen efter tokens.</p>",
-          "title": "Hvordan er det muligt at gøre denne tjeneste gratis?"
-        },
-        "3": {
-          "desc": "<p>Kvantiserede modeller er optimeret til at forbruge færre ressourcer ved at forenkle visse beregninger, samtidig med at de sigter mod den bedste svarkvalitet.</p><p>Kvantisering er en optimeringsteknik, der består i at reducere præcisionen af de tal, der bruges til at repræsentere parametrene i en AI-model. Dette gør det muligt at <strong>reducere modellens størrelse</strong> og <strong>fremskynde beregningerne</strong>, hvilket er særligt fordelagtigt ved inferens på maskiner med begrænsede ressourcer. Kvantisering af en model kan således også reducere miljøpåvirkningen.</p>",
-          "title": "Hvad er \"kvanticerede modeller\"?"
-        },
-        "4": {
-          "desc": "<p><strong>En models evne til at tale flere sprog er knyttet til den sproglige diversitet i dens træningsdata og ikke til landet den var udviklet i</strong>. <strong>LLM'er bruger enorme korpusser på mange sprog</strong>, men fordelingen af sprog i træningsdataene er ikke ensartet. En overrepræsentation af engelsk kan føre til begrænsninger i andre sprog. Disse begrænsninger viser sig for eksempel ved <strong>anglicismer eller en manglende evne til at generere indhold på visse sprog, der er klassificeret som \"truede\" af UNESCO</strong>.</p><p><strong>En models nøjagtighed og ordforrådsrigdom er afhængig af de data, der bruges til dens træning</strong>.</p>",
-          "title": "Er der en sammenhæng mellem nationaliteten af den virksomhed eller det forskningsinstitution, der står bag modellen, og dens evne til at tale flere sprog?"
-        },
-        "5": {
-          "desc": "<p>Der er få aktører, der er \"transparente\" omkring de datakilder, der bruges i træningskorpusserne. Disse oplysninger er ofte fortrolige af juridiske og kommercielle årsager.</p>",
-          "title": "Kan vi se modellernes træningsdata?"
+          "title": "What happens to my question, answer, vote?",
+          "desc": "<p><strong>Your questions and votes</strong> are published as an open dataset on Hugging Face (<a href=\"https://huggingface.co/datasets/ArthurSrz/comparag-tool-votes\">comparag-tool-votes</a>) after PII filtering. That is the project's purpose: build a public corpus of human preferences between RAG tools, usable to train and evaluate other systems.</p><p><strong>Documents you upload are not published.</strong> They are passed to both RAG tools so they can answer, then dropped from the cache at the end of the session (24h).</p><p>You can request the removal of a specific vote by contacting us — the vote is then archived and excluded from the next dataset export.</p>"
         }
-      },
-      "title": "Modeller"
+      }
     },
-    "title": "Ofte stillede spørgsmål",
-    "usage": {
+    "extend": {
+      "title": "Extend the arena",
       "questions": {
         "1": {
-          "desc": "<p>De nuværende dialogbaserede sprogmodeller er <strong>ude af stand til at citere kilderne</strong>, som de har brugt til at generere et svar. De fungerer ved at forudsige det næste mest sandsynlige ord baseret på den statistiske fordeling i træningsdataene. Selvom de kan syntetisere information fra forskellige kilder, bevarer de ikke spor af oprindelsen af disse informationer.</p><p>Der findes dog teknikker som <strong>Kildebaseret generering</strong> (Retrieval-Augmented Generation, RAG), der sigter mod at afhjælpe denne begrænsning. Kildebaseret generering gør det muligt for modeller at få adgang til eksterne vidensbaser og <strong>levere kontekstualiseret information med kildehenvisninger</strong>. Denne tilgang er afgørende for at forbedre gennemsigtigheden og pålideligheden af de svar, der genereres af modellerne.</p>",
-          "title": "Kan modellerne citere deres kilder?"
-        },
-        "2": {
-          "desc": "<p>Du har stillet spørgsmålet \"hvem vandt fodboldkampen i går, og angiv dine kilder\", og du blev skuffet over svarene? Det er normalt…</p><p><strong>De \"rå\" dialogbaserede AI-systemer kan ikke besvare spørgsmål om de seneste nyheder.</strong> De er trænet på statiske datasæt og kan ikke interagere med nettet eller åbne links. De har ikke evnen til at opdatere sig i realtid med de begivenheder, der finder sted i verden. De oplysninger, som modellen har adgang til, er begrænset til datoen for dens seneste træning.</p><p>Hvis du derfor stiller et spørgsmål om en nylig aktuel begivenhed, vil modellen basere sig på potentielt forældede oplysninger med risiko for at generere unøjagtige svar.</p><p>I Perplexity, Copilot eller ChatGPT er de såkaldte \"rå\" dialogbaserede AI-systemer kombineret med andre teknologiske komponenter, der har forbindelse til internettet for at få adgang til realtidsoplysninger. Man taler da om \"dialogbaserede agenter\".</p>",
-          "title": "Hvis jeg stiller et spørgsmål om de seneste nyheder, kan modellen så svare?"
-        },
-        "3": {
-          "desc": "<p>Hvis du inkluderer en URL i et spørgsmål, kan det dialogbaserede system ikke få adgang til den direkte. Sprogmodellerne behandler teksten i forespørgslen, men har ikke evnen til at interagere med nettet eller åbne links. De er trænet på et fast tekstdatasæt, og deres svar er baseret på disse træningsdata. Når et spørgsmål stilles, bruger modellerne denne træning til at generere et svar, men kan ikke få adgang til nye oplysninger online.</p><p>Som en analogi kan du forestille dig en studerende, der tager en eksamen uden adgang til internettet. Vedkommende kan bruge sin erhvervede viden til at besvare spørgsmålene, men kan ikke tjekke hjemmesider for at få yderligere information.</p>",
-          "title": "Hvis jeg inkluderer et URL-link i et spørgsmål, kan modellen så få adgang til det?"
-        },
-        "4": {
-          "desc": "<p>Det sker, at modellerne mister tråden i en samtale på grund af deres <strong>begrænsede kontekstvindue.</strong> Dette \"vindue\" repræsenterer mængden af forudgående information, som modellen kan fastholde, og fungerer som en korttidshukommelse. Jo mindre vinduet er, desto mere tilbøjelig er modellen til at glemme nøgleelementer i samtalen, hvilket fører til usammenhængende svar. Lange eller komplekse samtaler kan hurtigt fylde kontekstvinduet, hvilket øger risikoen for et usammenhængende svar.</p><p>Som en analogi kan du forestille dig en person, der kun husker de seneste fem sætninger i en samtale. Hvis samtalen er kort, kan personen følge med. Men hvis samtalen bliver lang, vil personen glemme afgørende information, hvilket vil gøre vedkommendes svar usammenhængende. På samme måde kan en AI-model med et lille kontekstvindue \"miste tråden\" i en samtale, når der udveksles for mange oplysninger, glemme pointer og producere svar, der ikke længere giver mening.</p>",
-          "title": "Hvorfor mister nogle modeller hurtigt tråden i samtalen?"
-        },
-        "5": {
-          "desc": "<p>Formuleringen af spørgsmål, eller \"prompts\", påvirker samtalens sammenhæng. For at opnå de bedste resultater fra en sprogmodel er det essentielt at mestre kunsten at <em>prompte</em>, det vil sige formuleringen af forespørgsler eller instruktioner. <strong>Klarhed er altafgørende</strong>:</p><ul><li>Brug et simpelt og direkte sprog, og undgå for lange eller komplekse spørgsmål. Opdel forespørgsler i flere simplere spørgsmål for mere præcise svar.</li><li><strong>Præcisér om nødvendigt specifikke formatkrav</strong>: Hvis du har brug for et svar i et bestemt format (liste, tabel, resumé osv.), så angiv det i prompten. Du kan også præcisere de trin, der skal følges, og de ønskede kvalitetskriterier.</li><li><strong>Specificer modellens rolle</strong>: Start for eksempel med \"Agér som en ekspert i...\" eller \"Forestil dig, at du er en lærer...\" for at styre tonen og perspektivet i svaret.</li><li><strong>Kontekstualiser dine spørgsmål</strong>: hvis nødvendigt, giv relevante eksempler for at guide modellen.</li><li><strong>Tilskynd til ræsonnement</strong>: brug opfordring til trin-for-trin ræsonnement (<em>Chain-of-Thought Prompting</em>) for at bede modellen om at forklare sin tankegang, hvilket gør svarene mere robuste.</li></ul><p>Samtalemodeller er følsomme over for variationer i formuleringen: et simpelt sprog, korte spørgsmål og en omformulering hvis nødvendigt kan hjælpe med at guide modellen mod relevante svar. Test og finpuds dine prompts for at finde den mest effektive formulering!</p>",
-          "title": "Hvad er de gode praksisser for at prompte?"
-        },
-        "6": {
-          "desc": "<p>Chatbots svarer direkte ved at formulere sætninger ud fra et stort datasæt, som modellen er blevet trænet på, mens en søgemaskine foreslår links og ressourcer, som brugeren selv kan udforske.</p>",
-          "title": "Hvad er forskellen mellem at stille et spørgsmål til en chatbot og at lave en søgning på Google?"
+          "title": "How do I add my own RAG tool to the arena?",
+          "desc": "<p>The arena is built to grow. Five steps, ~30 minutes:</p><ol><li>Copy the template <code>mcp_servers/_template_new_tool/</code>.</li><li>Fill <code>tool.manifest.yaml</code> (name, goal, transport, port, task_type).</li><li>Implement the <code>rag_query(task, goal, document_content)</code> function in <code>server.py</code> with your tool's logic.</li><li>Run <code>python scripts/register_tool.py &lt;slug&gt;</code> — it updates <code>mcp_servers.json</code> and the ontology automatically.</li><li>Run <code>pytest backend/</code> and <code>python scripts/check_openrouter_providers.py</code>.</li></ol><p>Full guide: <code>docs/add_a_new_rag_tool.md</code>. Candidate tools to scout: LightRAG, R2R, Vectara MCP, PaperQA2, Verba, RAGFlow, Cohere RAG, Pinecone MCP.</p>"
         }
-      },
-      "title": "Brug"
+      }
     }
   },
   "footer": {
