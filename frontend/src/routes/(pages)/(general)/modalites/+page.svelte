@@ -52,7 +52,9 @@
     <p>
       {@html sanitize(
         m['general.tos.featuresDatasetsMore']({
-          linkProps: externalLinkProps('https://huggingface.co/ministere-culture')
+          linkProps: externalLinkProps(
+            'https://huggingface.co/datasets/ArthurSrz/comparag-tool-votes'
+          )
         })
       )}
     </p>

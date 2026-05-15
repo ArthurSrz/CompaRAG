@@ -48,7 +48,7 @@
         )
     ].join('\n')
 
-    downloadTextFile(csvData, `comparag_model-winrate-${lastUpdateDate}-license_Etalab_2_0`)
+    downloadTextFile(csvData, `comparag_model-winrate-${lastUpdateDate}-open-license`)
   }
 </script>
 

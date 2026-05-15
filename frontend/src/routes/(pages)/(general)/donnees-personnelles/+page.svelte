@@ -56,16 +56,16 @@
     <p>
       {@html sanitize(
         m['general.privacy.dataAccessDesc']({
-          linkProps: externalLinkProps(
-            'https://stats.beta.gouv.fr/index.php?module=CoreHome&action=index&idSite=126&period=day&date=yesterday#?period=day&date=yesterday&category=Dashboard_Dashboard&subcategory=1&idSite=126'
-          )
+          linkProps: externalLinkProps('https://github.com/ArthurSrz/CompaRAG')
         })
       )}
     </p>
     <p>
       {@html sanitize(
         m['general.privacy.dataAccessDatasets']({
-          linkProps: externalLinkProps('https://huggingface.co/ministere-culture')
+          linkProps: externalLinkProps(
+            'https://huggingface.co/datasets/ArthurSrz/comparag-tool-votes'
+          )
         })
       )}
     </p>
@@ -106,8 +106,4 @@
       </li>
     </ul>
   </div>
-
-  <script
-    src="https://stats.beta.gouv.fr/index.php?module=CoreAdminHome&action=optOutJS&divId=matomo-opt-out&language=auto&showIntro=1"
-  ></script>
 </main>
