@@ -1187,14 +1187,14 @@
       }
     },
     "usage": {
-      "desc": "The tool is also aimed at AI experts and educators for more specific use cases",
+      "desc": "CompaRAG also serves RAG developers, researchers and trainers looking for concrete comparison data on retrieval pipelines.",
       "educate": {
-        "desc": "Use the chatbot arena as an educational tool to discuss AI with your audience",
-        "title": "Train and raise awareness"
+        "desc": "Use CompaRAG as a teaching aid to compare RAG pipelines and explain their differences to your audience.",
+        "title": "Teach and raise awareness"
       },
       "explore": {
-        "desc": "Find all model specifications and terms of use in one place",
-        "title": "Explore the models"
+        "desc": "See the architecture choices (chunker, retriever, reranker) and the real-world performance of each tool in one place.",
+        "title": "Explore RAG tools"
       },
       "title": "Specific uses of CompaRAG",
       "use": {
@@ -1223,18 +1223,18 @@
     },
     "vote": {
       "datasetAccess": "Access the datasets",
-      "desc": "The tool is also useful to AI experts, developers and for educational purposes.",
+      "desc": "Your votes feed the public ranking of RAG tools and an open dataset the community can reuse to train and evaluate their own systems.",
       "steps": {
         "datasets": {
-          "desc": "All questions and votes are compiled into datasets and published openly after anonymization.",
-          "title": "Datasets by language"
+          "desc": "Every comparison and vote is compiled into a dataset published openly on Hugging Face after anonymization.",
+          "title": "An open dataset"
         },
         "finetune": {
-          "desc": "Companies and academia can use the datasets to train new models that are more respectful of linguistic and cultural diversity.",
-          "title": "Models fine-tuned for specific languages"
+          "desc": "Researchers, product teams and RAG tool authors can use these human preferences to measure the real quality of their pipeline and improve it where it matters.",
+          "title": "Better RAG tools"
         },
         "prefs": {
-          "desc": "After discussing with the AIs, you are invited to indicate your preference for a model on given criteria, such as the relevance or usefulness of the answers.",
+          "desc": "After reading both answers blindly, you indicate which one feels more relevant. That's the human signal automated benchmarks miss.",
           "title": "Your preferences"
         }
       },

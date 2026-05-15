@@ -913,14 +913,14 @@
       }
     },
     "usage": {
-      "desc": "Verktyget riktar sig även till AI-experter och utbildare för mer specifika användningsområden",
+      "desc": "CompaRAG also serves RAG developers, researchers and trainers looking for concrete comparison data on retrieval pipelines.",
       "educate": {
-        "desc": "Använd jämföraren som ett utbildningsverktyg för att öka medvetenheten om AI i din målgrupp",
-        "title": "Utbilda och öka medvetenheten"
+        "desc": "Use CompaRAG as a teaching aid to compare RAG pipelines and explain their differences to your audience.",
+        "title": "Teach and raise awareness"
       },
       "explore": {
-        "desc": "Se alla modellernas egenskaper och användarsvillkor på ett ställe",
-        "title": "Utforska modellerna"
+        "desc": "See the architecture choices (chunker, retriever, reranker) and the real-world performance of each tool in one place.",
+        "title": "Explore RAG tools"
       },
       "title": "Specifika användningsområden för CompaRAG",
       "use": {
@@ -949,19 +949,19 @@
     },
     "vote": {
       "datasetAccess": "Åtkomst till datamängderna",
-      "desc": "Verktyget riktar sig även till AI-experter och utbildare för mer specifika användningsområden",
+      "desc": "Your votes feed the public ranking of RAG tools and an open dataset the community can reuse to train and evaluate their own systems.",
       "steps": {
         "datasets": {
-          "desc": "Alla frågor som ställs och alla röster sammanställs och publiceras fritt efter anonymisering.",
-          "title": "Datamängder efter språk"
+          "desc": "Every comparison and vote is compiled into a dataset published openly on Hugging Face after anonymization.",
+          "title": "An open dataset"
         },
         "finetune": {
-          "desc": "I slutändan kan företag och akademiker använda datamängderna för att utbilda nya modeller som är bättre anpassade för språklig och kulturell mångfald.",
-          "title": "Språkspecifika förfinade modeller"
+          "desc": "Researchers, product teams and RAG tool authors can use these human preferences to measure the real quality of their pipeline and improve it where it matters.",
+          "title": "Better RAG tools"
         },
         "prefs": {
-          "desc": "Efter att ha diskuterat med AI-modellerna anger du vilken du föredrar enligt givna kriterier, såsom svarens relevans eller användbarhet.",
-          "title": "Dina preferenser"
+          "desc": "After reading both answers blindly, you indicate which one feels more relevant. That's the human signal automated benchmarks miss.",
+          "title": "Your preferences"
         }
       },
       "title": "Varför är din röst viktig?"

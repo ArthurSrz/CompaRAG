@@ -299,5 +299,35 @@
       "descEditor": "CompaRAG is a platform for blindly comparing RAG tools, aimed at the general public, with three goals: (1) measure the real-world quality of RAG tools on user questions, (2) collect human preferences to produce an open dataset, and (3) rank tools according to those preferences.",
       "featuresDatasetsMore": "The editor publishes the dialogue and preference data under an open license on Hugging Face: <a {linkProps}>huggingface.co/datasets/ArthurSrz/comparag-tool-votes</a>."
     }
+  },
+  "home": {
+    "vote": {
+      "desc": "Your votes feed the public ranking of RAG tools and an open dataset the community can reuse to train and evaluate their own systems.",
+      "steps": {
+        "prefs": {
+          "title": "Your preferences",
+          "desc": "After reading both answers blindly, you indicate which one feels more relevant. That's the human signal automated benchmarks miss."
+        },
+        "datasets": {
+          "title": "An open dataset",
+          "desc": "Every comparison and vote is compiled into a dataset published openly on Hugging Face after anonymization."
+        },
+        "finetune": {
+          "title": "Better RAG tools",
+          "desc": "Researchers, product teams and RAG tool authors can use these human preferences to measure the real quality of their pipeline and improve it where it matters."
+        }
+      }
+    },
+    "usage": {
+      "desc": "CompaRAG also serves RAG developers, researchers and trainers looking for concrete comparison data on retrieval pipelines.",
+      "explore": {
+        "title": "Explore RAG tools",
+        "desc": "See the architecture choices (chunker, retriever, reranker) and the real-world performance of each tool in one place."
+      },
+      "educate": {
+        "title": "Teach and raise awareness",
+        "desc": "Use CompaRAG as a teaching aid to compare RAG pipelines and explain their differences to your audience."
+      }
+    }
   }
 }

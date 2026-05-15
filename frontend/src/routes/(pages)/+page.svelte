@@ -199,7 +199,7 @@
   <section class="fr-container--fluid bg-light-grey py-10 lg:py-20">
     <div class="fr-container">
       <h3 class="mb-2! text-center">{m['home.usage.title']()}</h3>
-      <p class="fr-mb-4w text-grey text-center">{m['home.vote.desc']()}</p>
+      <p class="fr-mb-4w text-grey text-center">{m['home.usage.desc']()}</p>
 
       <div class="gap-8 md:grid-cols-3 grid">
         {#each usageCards as card, i (i)}
