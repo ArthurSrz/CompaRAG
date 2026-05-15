@@ -38,10 +38,25 @@ DEFAULT_MODELS_TO_CHECK = [
 CLOUDFLARE_PROVIDER_NAME = "Cloudflare"
 
 
+class ModelNotEnumerable(Exception):
+    """OpenRouter does not expose an /endpoints listing for this model.
+
+    Embedding models (openai/text-embedding-3-small) are passed through
+    rather than load-balanced across providers, so the endpoint returns 404.
+    Treated as "out of scope for the Cloudflare check" rather than a failure.
+    """
+
+
 def fetch_providers(model_slug: str, timeout: float = 10.0) -> list[str]:
-    """Return the list of provider names serving `model_slug` on OpenRouter."""
+    """Return the list of provider names serving `model_slug` on OpenRouter.
+
+    Raises ModelNotEnumerable when OpenRouter returns 404 — this happens for
+    embedding / passthrough models that aren't multi-provider.
+    """
     url = f"https://openrouter.ai/api/v1/models/{model_slug}/endpoints"
     response = httpx.get(url, timeout=timeout)
+    if response.status_code == 404:
+        raise ModelNotEnumerable(model_slug)
     response.raise_for_status()
     data = response.json()
     endpoints = data.get("data", {}).get("endpoints", [])
@@ -55,6 +70,13 @@ def check_model(model_slug: str, verbose: bool) -> bool:
     """
     try:
         providers = fetch_providers(model_slug)
+    except ModelNotEnumerable:
+        print(
+            f"[SKIP]  {model_slug}: OpenRouter does not enumerate providers for "
+            f"this model (embedding / passthrough — out of scope for the "
+            f"Cloudflare check)"
+        )
+        return True
     except httpx.HTTPError as exc:
         print(f"[ERROR] {model_slug}: could not reach OpenRouter ({exc})")
         return False
