@@ -962,16 +962,6 @@
         "help": "Data delas för forskningsändamål"
       }
     },
-    "origin": {
-      "project": {
-        "desc": "Jämföraren designades och utvecklades som en del av en statlig startup med stöd av franska kulturministeriet, och integrerades i <a {linkProps}>Beta.gouv.fr</a>-programmet inom det interministeriella digitala direktoratet (DINUM), vilket hjälper franska offentliga förvaltningar att bygga användbara, enkla och lättanvända digitala tjänster.",
-        "title": "Vilka står bakom projektet?"
-      },
-      "team": {
-        "desc": "Jämföraren stöds inom kulturministeriet av ett tvärvetenskapligt team som sammanför experter inom artificiell intelligens, utvecklare, driftsättningschefer och designers, med uppdraget att göra konversationsbaserad AI mer transparent och tillgänglig för alla.",
-        "title": "Vilka är vi?"
-      }
-    },
     "usage": {
       "desc": "Verktyget riktar sig även till AI-experter och utbildare för mer specifika användningsområden",
       "educate": {

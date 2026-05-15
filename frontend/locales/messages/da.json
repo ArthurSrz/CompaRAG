@@ -1242,16 +1242,6 @@
         "help": "Data deles til forskningsformål"
       }
     },
-    "origin": {
-      "project": {
-        "desc": "AI-Arenaen blev designet og udviklet som en del af et statsligt startup-projekt ledet af det franske kulturministerium og integreret i programmet <a {linkProps}>Beta.gouv.fr</a> af det tværministerielle digitale direktorat (DINUM). Dette initiativ støtter franske offentlige myndigheder i at opbygge nyttige, enkle og brugervenlige digitale tjenester.",
-        "title": "Hvem tog initiativ til projektet?"
-      },
-      "team": {
-        "desc": "AI Arenaen er et samarbejde mellem Danish Foundation Models, Digitaliseringsstyrelsen og det franske kulturministerium. Danish Foundation Models består af forskere og AI specialister fra Aarhus Universitet, Syddansk Universitet, Københavns Universitet og Alexandra instituttet. Servicen er hostet af det franske kulturministerie hvis team består af AI-eksperter, udviklere, implementeringsspecialister og designere – Missionen med AI Arenaen er at gøre AI mere gennemsigtig og tilgængelig for alle.",
-        "title": "Hvem er vi?"
-      }
-    },
     "usage": {
       "desc": "Værktøjet er også rettet mod AI-eksperter og undervisere til mere specifikke anvendelsestilfælde",
       "educate": {
