@@ -3,45 +3,47 @@
   import { m } from '$lib/i18n/messages'
   import { sanitize } from '$lib/utils/commons'
 
+  // Five tabs, each focused on a domain question users actually ask about
+  // CompaRAG's RAG-comparison flow — see locales/messages/*.json#faq.
   const tabs = [
     {
-      id: 'usage',
-      label: m['faq.usage.title'](),
-      qs: (['1', '2', '3', '4', '5', '6'] as const).map((q) => ({
-        title: m[`faq.usage.questions.${q}.title`](),
-        desc: m[`faq.usage.questions.${q}.desc`]()
+      id: 'fairness',
+      label: m['faq.fairness.title'](),
+      qs: (['1'] as const).map((q) => ({
+        title: m[`faq.fairness.questions.${q}.title`](),
+        desc: m[`faq.fairness.questions.${q}.desc`]()
       }))
     },
     {
-      id: 'models',
-      label: m['faq.models.title'](),
-      qs: (['1', '2', '3', '4', '5'] as const).map((q) => ({
-        title: m[`faq.models.questions.${q}.title`](),
-        desc: m[`faq.models.questions.${q}.desc`]()
+      id: 'comparison',
+      label: m['faq.comparison.title'](),
+      qs: (['1'] as const).map((q) => ({
+        title: m[`faq.comparison.questions.${q}.title`](),
+        desc: m[`faq.comparison.questions.${q}.desc`]()
       }))
     },
     {
-      id: 'datasets',
-      label: m['faq.datasets.title'](),
-      qs: (['1', '2', '3'] as const).map((q) => ({
-        title: m[`faq.datasets.questions.${q}.title`](),
-        desc: m[`faq.datasets.questions.${q}.desc`]()
+      id: 'rag',
+      label: m['faq.rag.title'](),
+      qs: (['1'] as const).map((q) => ({
+        title: m[`faq.rag.questions.${q}.title`](),
+        desc: m[`faq.rag.questions.${q}.desc`]()
       }))
     },
     {
-      id: 'ecology',
-      label: m['faq.ecology.title'](),
-      qs: (['1', '2', '3'] as const).map((q) => ({
-        title: m[`faq.ecology.questions.${q}.title`](),
-        desc: m[`faq.ecology.questions.${q}.desc`]()
+      id: 'data',
+      label: m['faq.data.title'](),
+      qs: (['1'] as const).map((q) => ({
+        title: m[`faq.data.questions.${q}.title`](),
+        desc: m[`faq.data.questions.${q}.desc`]()
       }))
     },
     {
-      id: 'i18n',
-      label: m['faq.i18n.title'](),
-      qs: (['2'] as const).map((q) => ({
-        title: m[`faq.i18n.questions.${q}.title`](),
-        desc: m[`faq.i18n.questions.${q}.desc`]()
+      id: 'extend',
+      label: m['faq.extend.title'](),
+      qs: (['1'] as const).map((q) => ({
+        title: m[`faq.extend.questions.${q}.title`](),
+        desc: m[`faq.extend.questions.${q}.desc`]()
       }))
     }
   ]
