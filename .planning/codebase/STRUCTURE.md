@@ -232,8 +232,8 @@ CompaRAG/
 
 - `backend/main.py`: FastAPI app initialization (routers, middleware, lifespan)
 - `mcp_servers/rag_pill/server.py`: RAG Pill MCP server (FastMCP)
-- `mcp_servers/langchain_rag/main.py`: LangChain MCP server
-- `mcp_servers/llamaindex_rag/main.py`: LlamaIndex MCP server
+- `mcp_servers/_legacy_standalone_servers/langchain_rag/main.py`: LangChain MCP server
+- `mcp_servers/_legacy_standalone_servers/llamaindex_rag/main.py`: LlamaIndex MCP server
 - `frontend/src/routes/+layout.svelte`: SvelteKit root layout
 - `frontend/src/routes/tool-arena/+page.svelte`: MCP arena main page
 

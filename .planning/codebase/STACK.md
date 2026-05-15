@@ -42,8 +42,8 @@
 
 **MCP/RAG Servers:**
 - FastMCP >=2.0.0 - MCP server framework used by all three RAG engines
-  - `mcp_servers/langchain_rag/` - LangChain-based pipeline
-  - `mcp_servers/llamaindex_rag/` - LlamaIndex-based pipeline
+  - `mcp_servers/_legacy_standalone_servers/langchain_rag/` - LangChain-based pipeline
+  - `mcp_servers/_legacy_standalone_servers/llamaindex_rag/` - LlamaIndex-based pipeline
   - `mcp_servers/rag_pill/` - Multi-engine registry with pluggable strategies
 
 **Testing & Development:**
