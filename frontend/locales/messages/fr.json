@@ -1338,14 +1338,14 @@
       }
     },
     "usage": {
-      "desc": "L’outil s’adresse également aux experts IA et aux formateurs pour des usages plus spécifiques",
+      "desc": "CompaRAG s'adresse aussi aux développeurs RAG, aux chercheurs et aux formateurs qui cherchent des données de comparaison concrètes sur des pipelines de récupération.",
       "educate": {
-        "desc": "Utilisez le comparateur comme un support pédagogique de sensibilisation à l’IA auprès de votre public",
+        "desc": "Utilisez CompaRAG comme support pédagogique pour comparer les pipelines RAG et expliquer leurs différences à votre public.",
         "title": "Former et sensibiliser"
       },
       "explore": {
-        "desc": "Consultez au même endroit toutes les caractéristiques et conditions d’utilisation des modèles",
-        "title": "Explorer les modèles"
+        "desc": "Consultez au même endroit les choix d'architecture (chunker, retriever, reranker) et les performances réelles de chaque outil.",
+        "title": "Explorer les outils RAG"
       },
       "title": "Les usages spécifiques de CompaRAG",
       "use": {
@@ -1374,18 +1374,18 @@
     },
     "vote": {
       "datasetAccess": "Accéder aux jeux de données",
-      "desc": "L’outil s’adresse également aux experts IA et aux formateurs pour des usages plus spécifiques",
+      "desc": "Vos votes alimentent le classement public des outils RAG et un jeu de données ouvert que la communauté peut réutiliser pour entraîner et évaluer ses propres systèmes.",
       "steps": {
         "datasets": {
-          "desc": "Toutes les tâches soumises et les votes sont compilés dans des jeux de données et publiés librement après anonymisation.",
-          "title": "Les jeux de données par langue"
+          "desc": "Toutes les comparaisons et les votes sont compilés dans un jeu de données publié librement sur Hugging Face, après anonymisation.",
+          "title": "Un jeu de données ouvert"
         },
         "finetune": {
-          "desc": "À terme, les entreprises et les acteurs universitaires peuvent exploiter les jeux de données pour entrainer de nouveaux modèles plus respectueux de la diversité linguistique et culturelle.",
-          "title": "Des modèles affinés sur la langue spécifique"
+          "desc": "Chercheurs, équipes produit et auteurs d'outils RAG peuvent exploiter ces préférences humaines pour mesurer la qualité réelle de leur pipeline et l'améliorer là où ça compte.",
+          "title": "Des outils RAG améliorés"
         },
         "prefs": {
-          "desc": "Après discussion avec les IA, vous indiquez votre préférence pour un modèle selon des critères donnés, tels que la pertinence ou l’utilité des réponses.",
+          "desc": "Après avoir lu les deux réponses en aveugle, vous indiquez laquelle vous semble la plus pertinente. C'est le signal humain que les benchmarks automatiques manquent.",
           "title": "Vos préférences"
         }
       },
