@@ -31,15 +31,6 @@
     <h2 id="signaler-un-dysfonctionnement" class="fr-h5">{m['general.legal.reportTitle']()}</h2>
     <p>{m['general.legal.reportA11y']()}</p>
     <p>{m['general.legal.reportDesc']()}</p>
-    <p>
-      {@html sanitize(
-        m['general.legal.reportA11yDesc']({
-          linkProps: externalLinkProps(
-            'http://references.modernisation.gouv.fr/accessibilite-numerique'
-          )
-        })
-      )}
-    </p>
 
     <h2 id="securite" class="fr-h5">{m['general.legal.securityTitle']()}</h2>
     <p>{m['general.legal.securityCertif']()}</p>
@@ -48,9 +39,6 @@
       <strong>
         {@html sanitize(
           m['general.legal.sources']({
-            etalabLinkProps: externalLinkProps(
-              'https://www.etalab.gouv.fr/wp-content/uploads/2017/04/ETALAB-Licence-Ouverte-v2.0.pdf'
-            ),
             githubLinkProps: externalLinkProps('https://github.com/ArthurSrz/CompaRAG')
           })
         )}

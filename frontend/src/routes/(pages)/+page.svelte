@@ -80,11 +80,11 @@
 
   const reducedFAQ = (
     [
-      { id: 'usage', index: '2' },
-      { id: 'models', index: '1' },
-      { id: 'datasets', index: '2' },
-      { id: 'ecology', index: '1' },
-      { id: 'i18n', index: '1' }
+      { id: 'fairness', index: '1' },
+      { id: 'comparison', index: '1' },
+      { id: 'rag', index: '1' },
+      { id: 'data', index: '1' },
+      { id: 'extend', index: '1' }
     ] as const
   ).map(({ id, index }) => ({
     id,

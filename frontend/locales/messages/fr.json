@@ -98,19 +98,19 @@
   "datasets": {
     "access": {
       "catch": "Editeurs de modèles, chercheurs, chercheuses, entreprises, à vous de jouer !",
-      "desc": "Les questions et préférences posées sur la plateforme sont majoritairement en français et reflètent des usages réels et non contraints. Ces jeux de données sont accessibles sur <a {linkProps}>data.gouv</a> et Hugging Face.",
+      "desc": "Les votes que vous exprimez et les questions que vous posez sont publiés en jeu de données ouvert sur Hugging Face (<a {linkProps}>comparag-tool-votes</a>). Aucune donnée personnelle n'est conservée.",
       "repos": {
         "conversations": {
-          "desc": "Ensemble des réponses et des questions posées",
-          "title": "/conversations"
+          "desc": "Chaque manche : question posée, document soumis, deux outils RAG tirés.",
+          "title": "comparisons"
         },
         "reactions": {
-          "desc": "Ensemble des réactions exprimées",
-          "title": "/réactions"
+          "desc": "Ce que chaque outil a répondu, avec la durée, le LLM utilisé et le verdict éventuel.",
+          "title": "tool_calls"
         },
         "votes": {
-          "desc": "Ensemble des préférences exprimées",
-          "title": "/votes"
+          "desc": "La préférence exprimée (A, B ou égalité) et la note d'atteinte du but.",
+          "title": "votes"
         }
       },
       "share": "Partagez-nous vos réutilisations",
@@ -149,91 +149,51 @@
     "unknown": "Une erreur est survenue"
   },
   "faq": {
-    "datasets": {
+    "title": "Questions courantes",
+    "fairness": {
+      "title": "Équité de la comparaison",
       "questions": {
         "1": {
-          "desc": "<p>Les données de comparaison servent à évaluer les outils RAG sur des tâches réelles.</p><p>En comparant à l’aveugle les résultats de deux outils RAG, les utilisateurs de CompaRAG expriment leurs préférences, indiquant ainsi quels résultats sont les plus pertinents. Ces données de comparaison peuvent être utilisées pour évaluer la performance relative des outils RAG sur différents types de tâches.</p><p>Il s’agit d’un processus continu, où les préférences des utilisateurs permettent de mieux comprendre les forces et faiblesses de chaque outil RAG.</p>",
-          "title": "Les données de préférence ont-elles un effet immédiat pour améliorer les modèles?"
-        },
-        "2": {
-          "desc": "<p>La spécificité des données collectées sur la plateforme CompaRAG est qu’elles correspondent à des tâches réelles des utilisateurs. Ces données reflètent des préférences humaines dans des contextes métier précis. Elles permettent d’évaluer les outils RAG sur leur capacité à répondre aux besoins concrets des utilisateurs.</p>",
-          "title": "Pourquoi les données de comparaison collectées sur CompaRAG ont-elles de la valeur ?"
-        },
-        "3": {
-          "desc": "<p>CompaRAG se positionne comme un outil d’évaluation comparative des outils RAG, axé sur la performance réelle mesurée par les préférences des utilisateurs, se distinguant ainsi d’autres outils d’évaluation RAG par son approche en aveugle et sa mesure centrée sur les cas d’usage réels.</p>",
-          "title": "Quelle est la spécificité de CompaRAG par rapport à d’autres outils d’évaluation RAG ?"
+          "title": "Comment suis-je certain que les outils sont interrogés équitablement ?",
+          "desc": "<p>Trois invariants garantissent l'équité de chaque manche.</p><p><strong>1. Même contexte.</strong> Les deux outils reçoivent exactement la même question, le même document, et la même limite de temps. Le code qui construit la requête (<code>backend/tool_arena/rag_tool/ask_one_tool.py</code>) est unique : pas de chemin spécial par outil.</p><p><strong>2. Tirage transparent.</strong> Seuls les outils déclarés READY au moment de la requête entrent dans le tirage. Ils sont groupés par <em>task_type</em> — résumé, question-réponse, extraction — et un outil n'affronte qu'un autre outil du même groupe (pas de QA contre Résumé). Au sein d'un groupe, deux outils sont pris au hasard, pondérés par un poids public déclaré dans <code>mcp_servers.json</code>.</p><p><strong>3. Vote en aveugle.</strong> L'identité des deux outils est cachée jusqu'à votre vote. Vous voyez « réponse A » et « réponse B », pas leur marque. Toute mention de l'outil dans sa propre réponse est effacée avant affichage.</p><p>Le code de ces trois mécanismes est public et auditable : <code>backend/tool_arena/comparison/ask_two_tools_concurrently.py</code>, <code>backend/tool_arena/rag_tool/readiness.py</code>, <code>backend/tool_arena/blind_reveal/hide_tool_identity_before_vote.py</code>.</p>"
         }
-      },
-      "title": "Jeu de données"
+      }
     },
-    "ecology": {
+    "comparison": {
+      "title": "Le déroulé d'une comparaison",
       "questions": {
         "1": {
-          "title": "Pourquoi la latence des outils RAG varie-t-elle ?",
-          "desc": "<p>Chaque outil RAG appelle des services externes (bases de données, API, modèles d’embedding) avec des temps de réponse variables selon la charge et l’infrastructure du fournisseur.</p>"
-        },
-        "2": {
-          "title": "Comment évaluer le risque de dépendance fournisseur ?",
-          "desc": "<p>CompaRAG vous permet de tester plusieurs outils RAG sur la même tâche et de comparer leur fiabilité. Un outil performant sur vos cas d’usage réels réduit le risque de dépendance à un fournisseur unique.</p>"
+          "title": "Que se passe-t-il quand je clique sur « Comparer » ?",
+          "desc": "<p>Quatre étapes, dans l'ordre :</p><ol><li><strong>Tirage</strong> de deux RAGTool prêts (cf. question sur l'équité).</li><li><strong>Interrogation parallèle</strong> : la même question et le document sont envoyés simultanément aux deux outils via MCP. Time-out individuel de 180 s.</li><li><strong>Aveuglement</strong> : chaque réponse est nettoyée pour effacer le nom de l'outil, puis affichée sans étiquette comme « réponse A » / « réponse B ». L'ordre est tiré au sort.</li><li><strong>Révélation</strong> : après votre vote, les deux identités s'affichent et le vote est enregistré.</li></ol><p>Si l'un des deux outils tombe en erreur, vous voyez une carte d'erreur à sa place et le vote est désactivé — comparer une réponse à un échec n'a pas de sens.</p>"
         }
-      },
-      "title": "Performance et fiabilité des outils RAG",
-      "desc": "CompaRAG mesure la performance relative des outils RAG selon les préférences des utilisateurs : latence de réponse, fiabilité et variance des résultats selon les tâches."
+      }
     },
-    "models": {
+    "rag": {
+      "title": "Qu'est-ce qu'un outil RAG",
       "questions": {
         "1": {
-          "desc": "<p>Nous choisissons les modèles en fonction de leur popularité, de leur diversité et de la pertinence pour les utilisateurs. Nous veillons particulièrement à rendre accessibles des modèles dits <em>open weights</em> (semi-ouverts) et de taille différentes.</p>",
-          "title": "Comment choisissez-vous les modèles présents dans le comparateur ?"
-        },
-        "2": {
-          "desc": "<p>L’inférence, c’est-à-dire le fait de pouvoir interroger les modèles, est prise en charge par le projet. Pour la plupart des modèles, nous passons par les API d’Open Router et de Hugging Face et nous réglons les coûts à l’usage, au jeton.</p>",
-          "title": "Comment parvenez-vous à rendre ce service gratuit ?"
-        },
-        "3": {
-          "desc": "<p>Les modèles quantisés sont optimisés pour consommer moins de ressources en simplifiant certains calculs tout en visant la meilleure qualité de réponse.</p><p>La quantisation est une technique d'optimisation qui consiste à réduire la précision des nombres utilisés pour représenter les paramètres d'un modèle d'IA. Cela permet de <strong>diminuer la taille du modèle</strong> et <strong>d'accélérer les calculs</strong>, ce qui est particulièrement avantageux pour l'inférence sur des machines limitées en ressources.</p>",
-          "title": "« modèle quantisé », quésaco ?"
-        },
-        "4": {
-          "desc": "<p><strong>La capacité d'un modèle à parler plusieurs langues est liée à la diversité linguistique de ses données d'entraînement et non au pays</strong>. Les <strong>LLM utilisent d'énormes corpus dans de nombreuses langues</strong>, mais la répartition des langues dans les données d'entraînement n'est pas uniforme. Une surreprésentation de l'anglais peut entraîner des limitations dans d'autres langues. Ces limitations se traduisent par exemple par des <strong>anglicismes ou une incapacité à générer des contenus dans certaines langues classées « en danger » par l'UNESCO</strong>.</p><p><strong>L'exactitude et la richesse du vocabulaire d'un modèle dépendent des données utilisées pour son apprentissage</strong>.</p>",
-          "title": "Y a-t-il un lien entre la nationalité de l’entreprise ou du laboratoire à l’origine du modèle et sa capacité à parler plusieurs langues ?"
-        },
-        "5": {
-          "desc": "<p>Rares sont les acteurs à être “transparents” sur les sources de données utilisées dans les corpus d’entraînement. Ces informations sont souvent confidentielles pour des raisons légales et commerciales.</p>",
-          "title": "Peut-on connaître les données d’entraînement des modèles ?"
+          "title": "Pourquoi mettre plusieurs outils RAG en compétition ?",
+          "desc": "<p>« RAG » (Retrieval-Augmented Generation) désigne une catégorie d'outils qui combinent <strong>récupération d'information</strong> et <strong>génération par LLM</strong>. La même catégorie cache pourtant des choix d'architecture très différents :</p><ul><li><strong>Quel <em>chunker</em> ?</strong> Découpage par paragraphe, par fenêtre de caractères, par phrase…</li><li><strong>Quel <em>retriever</em> ?</strong> Dense (embeddings), creux (BM25), hybride, graph-based (LightRAG, GraphRAG)…</li><li><strong>Quel <em>reranker</em> ?</strong> Cross-encoder, LLM-judge, ou rien.</li><li><strong>Quel <em>prompt</em> ?</strong> La même question peut donner des sorties radicalement différentes selon le prompt qui enrobe les passages retrouvés.</li></ul><p>CompaRAG met aujourd'hui en compétition cinq familles de moteurs (LangChain, LlamaIndex, Haystack, Txtai, Chroma) sur le même LLM (Mistral Medium 3.1 via OpenRouter). La constante du LLM est volontaire : on mesure la qualité du <em>pipeline de récupération</em>, pas la qualité du modèle final.</p>"
         }
-      },
-      "title": "Modèles"
+      }
     },
-    "title": "Foire aux questions",
-    "usage": {
+    "data": {
+      "title": "Vos données",
       "questions": {
         "1": {
-          "desc": "<p>Les modèles de langage conversationnels actuels sont <strong>incapables de citer les sources</strong> qu'ils ont utilisées pour générer une réponse. Ils fonctionnent en prédisant le mot suivant le plus probable en fonction de la distribution statistique des données d'entraînement. Bien qu'ils puissent synthétiser des informations provenant de diverses sources, ils ne conservent pas la trace de l'origine de ces informations.</p><p>Cependant, il existe des techniques comme la <strong>Génération Augmentée par Récupération (RAG)</strong> qui visent à pallier cette limitation. Le RAG permet aux modèles d'accéder à des bases de connaissances externes et de <strong>fournir des informations contextualisées en citant les sources</strong>. Cette approche est essentielle pour améliorer la transparence et la fiabilité des réponses générées par les modèles.</p>",
-          "title": "Les modèles peuvent-ils citer leurs sources ?"
-        },
-        "2": {
-          "desc": "<p>Vous avez posé la question suivante “explique-moi la motion de censure à l'œuvre actuellement en France à l'Assemblée nationale et cite-moi tes sources” et avez été déçu·e des réponses ? C’est normal…</p><p><strong>Les modèles d'IA conversationnels “bruts” ne peuvent pas répondre aux questions sur l'actualité la plus récente.</strong> Ils sont entraînés sur des ensembles de données statiques et ne peuvent pas interagir avec le web ou ouvrir des liens. Ils n'ont pas la capacité de se mettre à jour en temps réel avec les événements qui se déroulent dans le monde. Les informations auxquelles le modèle a accès sont limitées à la date de son dernier entraînement.</p><p>Par conséquent, si vous posez une question sur un fait d’actualité récent, le modèle s'appuiera sur des informations potentiellement obsolètes, risquant de générer des réponses inexactes.</p><p>Dans le cas de Perplexity, Copilot ou ChatGPT, les modèles d’IA conversationnelle dits “bruts” sont associés à d’autres briques technologiques qui permettent de se connecter à internet pour accéder à des informations en temps réel. On parle alors “d’agents conversationnels”.</p>",
-          "title": "Si je pose une question sur l’actualité la plus récente, le modèle peut-il répondre ?"
-        },
-        "3": {
-          "desc": "<p>Si vous intégrez une URL dans une requête, le modèle conversationnel ne peut pas y accéder directement. Les modèles de langage traitent le texte de la requête mais n'ont pas la capacité d'interagir avec le web ou d'ouvrir des liens. Ils sont entraînés sur un ensemble de données textuelles fixes et leurs réponses reposent sur ces données d’entraînement. Lorsqu'une question est posées, les modèles utilisent cet entraînement pour générer une réponse mais ne peuvent pas accéder à de nouvelles informations en ligne.</p><p>Par analogie, imaginez un étudiant passant un examen sans accès à internet. Il peut utiliser ses connaissances acquises pour répondre aux questions, mais ne peut pas consulter de sites web pour obtenir des informations supplémentaires.</p>",
-          "title": "Si j’intègre un lien d’URL dans une requête, le modèle peut-il y accéder ?"
-        },
-        "4": {
-          "desc": "<p>Il arrive que les modèles perdent le fil d'une conversation en raison de leur <strong>fenêtre de contexte limitée.</strong> Cette « fenêtre » représente la quantité d'informations précédentes que le modèle peut retenir, agissant comme une mémoire à court terme. Plus la fenêtre est petite, plus le modèle est susceptible d'oublier des éléments clés de la conversation, conduisant à des réponses incohérentes. Les conversations longues ou complexes peuvent rapidement saturer la fenêtre de contexte, augmentant le risque d'incohérence.</p><p>Par analogie, imaginez une personne qui ne se souvient que des cinq dernières phrases d'une conversation. Si la conversation est courte, la personne peut suivre. Mais si la conversation devient longue, la personne oubliera des informations cruciales, ce qui rendra ses réponses incohérentes. De même, un modèle d'IA avec une petite fenêtre de contexte peut « perdre le fil » d'une conversation lorsque trop d'informations sont échangées, oubliant des éléments clés et produisant des réponses qui n'ont plus de sens.</p>",
-          "title": "Pourquoi certains modèles perdent-ils rapidement le fil de la conversation ?"
-        },
-        "5": {
-          "desc": "<p>La formulation des questions, ou « prompts », influence la cohérence de la conversation. Pour obtenir les meilleurs résultats d'un modèle de langage, il est essentiel de maîtriser l'art du <em>prompting</em>, c'est-à-dire la formulation des requêtes ou instructions. <strong>La clarté est primordiale</strong>:</p><ul><li>Utilisez un langage simple et direct, en évitant les questions trop longues ou complexes. Décomposez les requêtes en plusieurs questions plus simples pour des réponses plus précises.</li><li><strong>Précisez si besoin des contraintes de formats spécifiques</strong> : Si vous avez besoin d’une réponse dans un certain format (liste, tableau, résumé, etc.), précisez-le dans le prompt. Vous pouvez également préciser les étapes à suivre et les critères de qualité souhaités.</li><li><strong>Spécifiez le rôle du modèle</strong> : Par exemple, commencez par “Agis comme un expert en…” ou “Imagine que tu es un enseignant…” pour orienter le ton et la perspective de la réponse.</li><li><strong>Contextualisez vos questions</strong> : si nécessaire, fournissez des exemples pertinents pour guider le modèle.</li><li><strong>Encouragez le raisonnement</strong>: utilisez l’incitation au raisonnement pas à pas (<em>Chain-of-Thought Prompting</em>) pour demander au modèle d'expliciter son raisonnement, ce qui rend les réponses plus robustes.</li></ul><p>Les modèles conversationnels sont sensibles aux variations de formulation: un langage simple, des questions courtes et une reformulation si nécessaire peuvent aider à guider le modèle vers des réponses pertinentes. Testez et affinez vos prompts pour trouver la formulation la plus efficace !</p>",
-          "title": "Quelles sont les bonnes pratiques pour prompter ?"
-        },
-        "6": {
-          "desc": "<p>L'IA conversationnelle répond directement en formulant des phrases à partir d’un grand ensemble de données sur lesquelles le modèle a été entraîné, tandis qu’un moteur de recherche propose des liens et des ressources pour que l’internaute les explore lui-même.</p>",
-          "title": "Quelle est la différence entre poser une question à un modèle d’IA conversationnelle et faire une recherche sur Google ?"
+          "title": "Que devient ma question, ma réponse, mon vote ?",
+          "desc": "<p><strong>Vos questions et vos votes</strong> sont publiés en jeu de données ouvert sur Hugging Face (<a href=\"https://huggingface.co/datasets/ArthurSrz/comparag-tool-votes\">comparag-tool-votes</a>) après filtrage des informations personnelles. C'est l'objet du projet : produire un corpus public de préférences humaines entre outils RAG, utilisable pour entraîner et évaluer d'autres systèmes.</p><p><strong>Les documents que vous uploadez ne sont pas publiés.</strong> Ils sont passés aux deux outils RAG pour leur permettre de répondre, puis effacés du cache à la fin de la session (24 h).</p><p>Vous pouvez demander la suppression d'un vote précis en nous contactant — le vote est alors archivé et exclu du prochain export du dataset.</p>"
         }
-      },
-      "title": "Usage"
+      }
+    },
+    "extend": {
+      "title": "Étendre l'arène",
+      "questions": {
+        "1": {
+          "title": "Comment ajouter mon propre outil RAG à l'arène ?",
+          "desc": "<p>L'arène est faite pour grossir. Cinq étapes, environ trente minutes :</p><ol><li>Copier le template <code>mcp_servers/_template_new_tool/</code>.</li><li>Remplir <code>tool.manifest.yaml</code> (nom, but, transport, port, task_type).</li><li>Implémenter la fonction <code>rag_query(task, goal, document_content)</code> de <code>server.py</code> avec la logique de votre outil.</li><li>Lancer <code>python scripts/register_tool.py &lt;slug&gt;</code> : la commande met à jour <code>mcp_servers.json</code> et l'ontologie automatiquement.</li><li>Vérifier <code>pytest backend/</code> et <code>python scripts/check_openrouter_providers.py</code>.</li></ol><p>Guide complet : <code>docs/add_a_new_rag_tool.md</code>. Liste de candidats à intégrer : LightRAG, R2R, Vectara MCP, PaperQA2, Verba, RAGFlow, Cohere RAG, Pinecone MCP.</p>"
+        }
+      }
     }
   },
   "footer": {
@@ -241,8 +201,8 @@
     "dpg": "Le service est reconnu comme un bien public numérique par l’Alliance Digital Public Goods",
     "helpUs": "Aidez-nous à améliorer ce service !",
     "license": {
-      "linkTitle": "Licence etalab - nouvelle fenêtre",
-      "mention": "Sauf mention explicite de propriété intellectuelle détenue par des tiers, les contenus de ce site sont proposés sous <a {linkProps}>licence etalab-2.0</a>"
+      "linkTitle": "Code source du projet sur GitHub",
+      "mention": "Le code source de cette application est disponible en open source sur <a {linkProps}>GitHub</a>."
     },
     "links": {
       "accessibility": "Accessibilité : non conforme",
@@ -256,12 +216,12 @@
   },
   "general": {
     "a11y": {
-      "desc": "Cette déclaration d’accessibilité s’applique au site <strong>le site CompaRAG</strong>.",
+      "desc": "Cette déclaration d'accessibilité s'applique au site <strong>CompaRAG</strong>.",
       "disclaimer": "<strong>CompaRAG</strong> s’engage à rendre ses services numériques accessibles, conformément à l’article 47 de la loi n° 2005-102 du 11 février 2005.",
-      "improveAdress": "Adresse : DINUM, 20 avenue de Ségur 75007 Paris",
+      "improveAdress": "Le projet est maintenu en open source. Issues : <a {linkProps}>github.com/ArthurSrz/CompaRAG</a>",
       "improveDelay": "Nous essayons de répondre dans les 2 jours ouvrés.",
-      "improveDesc": "Si vous n’arrivez pas à accéder à un contenu ou à un service, vous pouvez contacter le responsable de beta.gouv.fr pour être orienté·e vers une alternative accessible ou obtenir le contenu sous une autre forme.",
-      "improveMail": "Courriel : <a {linkProps}>contact@beta.gouv.fr</a>",
+      "improveDesc": "Si vous rencontrez un contenu ou un service inaccessible, ouvrez une issue sur le dépôt GitHub du projet pour être orienté·e vers une alternative.",
+      "improveMail": "Issues GitHub : <a {linkProps}>github.com/ArthurSrz/CompaRAG/issues</a>",
       "improveTitle": "Amélioration et contact",
       "remedyAdvocate": "Écrire un message au <a {linkProps}>Défenseur des droits</a>",
       "remedyAdvocateAdress": "Envoyer un courrier par la poste (gratuit, ne pas mettre de timbre) : Défenseur des droits - Libre réponse 71120 75342 Paris CEDEX 07",
@@ -269,7 +229,7 @@
       "remedyDesc": "Cette procédure est à utiliser dans le cas suivant : vous avez signalé au responsable du site internet un défaut d’accessibilité qui vous empêche d’accéder à un contenu ou à un des services du portail et vous n’avez pas obtenu de réponse satisfaisante.",
       "remedyList": "Vous pouvez :",
       "remedyTitle": "Voie de recours",
-      "stateDesc": "Le site le site CompaRAG est non conforme avec le RGAA 4.1. Le site n’a <strong>pas encore été audité</strong>. Il a cependant été conçu pour être accessible au plus grand nombre. Vous devriez donc pouvoir :",
+      "stateDesc": "Le site CompaRAG n'a <strong>pas encore été audité</strong> au regard du RGAA. Il a cependant été conçu pour être accessible au plus grand nombre. Vous devriez donc pouvoir :",
       "stateNavigate": "naviguer sur toutes les pages du site en utilisant un clavier",
       "statePrefs": "adapter le site à votre préférences (taille de la police, zoom écran, changement de typographie…) sans perte de contenu",
       "stateScreenReader": "consulter le site web avec un lecteur d’écran.",
@@ -279,9 +239,9 @@
     "legal": {
       "a11yDesc": "La conformité aux normes d’accessibilité numérique est un objectif ultérieur mais nous tâchons de rendre ce site accessible à toutes et à tous.",
       "a11yTitle": "Accessibilité",
-      "directorDesc": "Monsieur Romain Delassus, chef du service du numérique du Ministère de la Culture",
+      "directorDesc": "Le mainteneur du projet open source CompaRAG.",
       "directorTitle": "Directeur de la publication",
-      "editorDesc": "Ce site est édité par le Ministère de la culture, 182, rue Saint-Honoré 75001 Paris",
+      "editorDesc": "CompaRAG est un projet open source maintenu sur GitHub : <a {linkProps}>github.com/ArthurSrz/CompaRAG</a>.",
       "editorTitle": "Éditeur",
       "hostingDesc": "Ce site est hébergé par OVH SAS (<a {linkProps}>https://www.ovh.com</a>) dont le siège social est situé au 2 rue Kellermann - 59100 Roubaix - France.",
       "hostingTitle": "Hébergement du site",
@@ -292,7 +252,7 @@
       "securityCertif": "Le site est protégé par un certificat électronique, matérialisé pour la grande majorité des navigateurs par un cadenas. Cette protection participe à la confidentialité des échanges.",
       "securityNoMail": "En aucun cas les services associés à la plateforme ne seront à l’origine d’envoi de courriels pour demander la saisie d’informations personnelles.",
       "securityTitle": "Sécurité",
-      "sources": "Sauf mention contraire, tous les textes de ce site sont sous <a {etalabLinkProps}>licence Etalab Open 2.0</a>. Le code source de cette application est librement réutilisable et accessible sur <a {githubLinkProps}>GitHub</a>.",
+      "sources": "Sauf mention contraire, le code source de cette application est librement réutilisable et accessible sur <a {githubLinkProps}>GitHub</a> sous licence ouverte.",
       "title": "Mentions légales"
     },
     "privacy": {
@@ -303,21 +263,21 @@
       "cookiesDesc": "Ce site dépose un petit fichier texte (un « cookie ») sur votre ordinateur lorsque vous le consultez. Cela nous permet de mesurer le nombre de visites et de comprendre quelles sont les pages les plus consultées.",
       "cookiesDescMore": "Vous pouvez vous opposer au suivi de votre navigation sur ce site web. Cela protégera votre vie privée, mais empêchera également le propriétaire d'apprendre de vos actions et de créer une meilleure expérience pour vous et les autres utilisateurs.",
       "cookiesTitle": "Cookies déposés et consentement",
-      "dataAccessDatasets": "Les données de dialogue et de préférence de l’utilisateur sont distribuées sous la Licence Ouverte 2.0 d'Etalab sur la plateforme Hugging Face à travers le compte du ministère de la culture (<a {linkProps}>https://huggingface.co/ministere-culture</a>).",
-      "dataAccessDesc": "Bien sûr ! Les statistiques d’usage du site sont disponibles en accès libre sur <a {linkProps}>stats.beta.gouv.fr</a>.",
+      "dataAccessDatasets": "Les données de dialogue et de préférence sont publiées sous licence ouverte sur Hugging Face : <a {linkProps}>huggingface.co/datasets/ArthurSrz/comparag-tool-votes</a>.",
+      "dataAccessDesc": "Le code du projet est public sur GitHub. Aucune statistique d'usage n'est publiée pour le moment.",
       "dataAccessTitle": "Je contribue à enrichir vos données, puis-je y accéder ?",
       "dataExtraCountry": "Pays destinataire : France",
       "dataExtraHost": "Sous-traitant : OVH",
       "dataExtraTitle": "Qui nous aide à traiter les données ?",
       "dataExtraWarranty": "Garanties : <a {linkProps}>https://storage.gra.cloud.ovh.net/v1/AUTH_325716a587c64897acbef9a4a4726e38/contracts/9e74492-OVH_Data_Protection_Agreement-FR-6.0.pdf</a>",
       "dataExtraWhat": "Traitement réalisé : Hébergement",
-      "dataRespDesc": "Le service du numérique du ministère de la Culture est le responsable du traitement de vos données à caractère personnel.",
+      "dataRespDesc": "Le mainteneur du projet open source CompaRAG est responsable du traitement de vos données à caractère personnel.",
       "dataRespTitle": "Qui est responsable du traitement des données ?",
       "dataTimeDesc": "Les données relatives aux utilisateurs et à leurs conversations avec les modèles sont conservées à compter de l’enregistrement du vote de préférence.",
       "dataTimeTitle": "Pendant combien de temps conservons-nous ces données ?",
       "dataUseDesc": "En tout état de cause, l’éditeur s’engage à mettre en œuvre les moyens permettant de s’assurer de l’anonymisation des données de dialogue avant leur mise à disposition publique.",
       "dataUseTitle": "Quels sont les traitements réalisés sur les données de conversation ?",
-      "desc": "Le service est édité par le service du numérique du ministère de la Culture.",
+      "desc": "Le service est édité par le mainteneur du projet open source CompaRAG.",
       "privacyData": "Les données collectées sur le site sont les suivantes :",
       "privacyDataArena": "Données relatives aux conversations des utilisateurs avec les modèles : questions posées par les utilisateurs, réponses des modèles et préférence exprimée par l’utilisateur sur les deux modèles",
       "privacyDataForm": "Données relatives au questionnaire « Nous aider à améliorer CompaRAG ».",
@@ -333,10 +293,10 @@
     },
     "rgesn": {
       "1": {
-        "1": "Le site CompaRAG permet de donner accès simplement et gratuitement à une très grande diversité de modèles d'IA conversationnelle et ainsi de sensibiliser les citoyens aux divers enjeux des IA génératives : diversité, biais, impact environnemental. Par ailleurs, les jeux de données de questions et de préférences constitués sont partagés en open source sous licence MIT/Etalab 2.0.",
+        "1": "Le site CompaRAG permet de comparer en aveugle plusieurs outils de RAG (Retrieval-Augmented Generation) sur une même question, et de constituer un jeu de données ouvert de préférences humaines entre ces outils. Cette transparence sert à la fois la recherche (mesurer la qualité des pipelines de récupération) et l'écosystème (orienter les choix techniques).",
         "2": "Les cibles utilisatrices du service CompaRAG ont été identifiées en procédant à des entretiens utilisateurs et une phase préalable d'investigation des besoins.",
         "3": "Ainsi, tous les citoyens sont concernés comme utilisateurs potentiels, mais particulièrement les professeurs, élèves, étudiants, médiateurs numériques, formateurs IA, ainsi que chercheurs (computer sciences, IA, SHS) et entreprises intéressées par l'analyse ou l’utilisation des jeux de données partagés en open source.<br> En cohérence, le service numérique répond à leurs besoins grâce aux fonctionnalités suivantes : tester et comparer gratuitement les modèles, utiliser les données partagées en open source.",
-        "4": "Le service CompaRAG s’inscrit dans une démarche d’écoconception visant à réduire les impacts environnementaux. À cette fin, la déclaration a été rédigée dans le cadre de la mise en œuvre du référentiel général de l’écoconception des services numériques (RGESN, version 2024).<br> Le RGESN, réalisé par l’Arcep et l’Arcom, en collaboration avec l’ADEME, la DINUM, la CNIL et l’Inria, est disponible sur le <a {linkProps}>site web de l’Arcep</a>.",
+        "4": "Le projet adopte les principes d'écoconception des services numériques (cache de réponses, indexation paresseuse du corpus, pas d'analytics tiers). Le code est public sur GitHub : <a {githubLinkProps}>github.com/ArthurSrz/CompaRAG</a>.",
         "title": "Raison d’être de ce service"
       },
       "2": {
@@ -425,14 +385,14 @@
     "tos": {
       "contactDesc": "Pour toute question sur le service, vous pouvez écrire à <a {linkProps}>{contactLink}</a>.",
       "contactTitle": "9. Contact",
-      "defsEditor": "« Éditeur » désigne le Service du numérique du Ministère de la Culture.",
+      "defsEditor": "« Éditeur » désigne le mainteneur du projet open source CompaRAG.",
       "defsModels": "« Modèles » désigne les grands modèles de langage (LLM) réutilisés dans le cadre de leur licence d’utilisation par la plateforme pour répondre à ses finalités.",
       "defsPlatform": "« Plateforme » désigne le site web qui rend les services accessibles.",
       "defsServices": "« Services » désigne les fonctionnalités offertes par la plateforme pour répondre à ses finalités.",
       "defsTitle": "2. Définitions",
       "defsUser": "« Utilisateur » désigne toute personne physique consultant la plateforme et qui bénéficie de ses services.",
       "descDatasets": "Ces jeux de données seront rendus accessibles sous licence ouverte, notamment pour favoriser des usages de recherche.",
-      "descEditor": "Édité par le Service du numérique du Ministère de la Culture, le comparateur est une plateforme de comparaison des modèles conversationnels adressée au grand public dans le but (1) de sensibiliser les citoyens aux grands modèles de langage (LLMs), (2) de collecter les préférences des utilisateurs pour constituer des jeux de données d’alignement.",
+      "descEditor": "CompaRAG est une plateforme de comparaison en aveugle d'outils RAG, adressée au grand public dans le but (1) de mesurer la qualité réelle des outils RAG sur des questions posées par des utilisateurs, (2) de collecter les préférences humaines pour produire un jeu de données ouvert, et (3) de classer les outils selon ces préférences.",
       "descTitle": "3. Description de la plateforme",
       "descUse": "L’utilisateur ou l’utilisatrice pose une question en français et obtient des réponses de deux grands modèles de langages (LLM) anonymes. Il ou elle vote pour le modèle qui fournit la réponse qu’il préfère et se voit alors révélée l’identité des modèles. Ce dispositif de production participative inspiré de la plateforme <a {linkProps}>« chatbot arena » (LMSYS)</a> permet de constituer des jeux de données de préférences humaines sur des tâches réelles, en français, utilisables pour l’alignement des modèles.",
       "dispoDesc": "La plateforme est accessible, sauf cas de force majeure ou d’évènement hors de contrôle de son éditeur.",
@@ -444,7 +404,7 @@
       "evoDescMore": "Ces modifications et mises à jour s’imposent à l’utilisateur ou l’utilisatrice qui doit, en conséquence, se référer régulièrement à cette rubrique pour vérifier les modalités générales en vigueur.",
       "evoTitle": "8. Évolution des modalités d'utilisation",
       "featuresDatasets": "Le service collecte les données de dialogue (questions, réponses des deux modèles) et les préférences des utilisateurs (vote, métadonnées associées). Ces données servent à la fois à constituer des jeux de données partagés et à établir un classement des modèles d'IA affiché sur la plateforme, basé sur les votes exprimés.",
-      "featuresDatasetsMore": "L’éditeur se réserve le droit de distribuer sous licence ouverte 2.0 les données de dialogue et de préférence de l’utilisateur. Le jeu de données est diffusé sur la plateforme Hugging Face à travers le compte du ministère de la culture (<a {linkProps}>https://huggingface.co/ministere-culture</a>).",
+      "featuresDatasetsMore": "L'éditeur publie sous licence ouverte les données de dialogue et de préférence des utilisateurs sur Hugging Face : <a {linkProps}>huggingface.co/datasets/ArthurSrz/comparag-tool-votes</a>.",
       "featuresDesc": "Afin de répondre au double objectif de sensibiliser les citoyens aux grands modèles de langage et collecter les préférences des utilisateurs et utilisatrices, les services rendus par la plateforme sans restriction d’accès sont les suivants :",
       "featuresDescMore": "Une interface humain-machine permettant de dialoguer simultanément avec deux modèles conversationnels et de voter pour la réponse préférée.",
       "featuresModels": "Les modèles intégrés à la plateforme sont déployés sur les serveurs d’inférence des différents hébergeurs et éditeurs de modèles. Les requêtes sont gérées notamment par le service Open Router. Les conditions de standardisation d’inférence sont renseignées sur la plateforme pour garantir la transparence d’utilisation des modèles.",

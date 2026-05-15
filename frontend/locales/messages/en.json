@@ -98,19 +98,19 @@
   "datasets": {
     "access": {
       "catch": "Model publishers, researchers, companies, now it's your turn!",
-      "desc": "The platform’s questions and preferences are primarily in French, Danish, Swedish and Lithuanian, capturing organic, real-world usage - not artificial prompts. These datasets are publicly available on <a {linkProps}>data.gouv.fr</a> and Hugging Face.",
+      "desc": "The votes you cast and the questions you ask are published as an open dataset on Hugging Face (<a {linkProps}>comparag-tool-votes</a>). No personal data is kept.",
       "repos": {
         "conversations": {
-          "desc": "All the questions and answers",
-          "title": "/conversations"
+          "desc": "Each round: the question, the document submitted, and the two RAG tools drawn.",
+          "title": "comparisons"
         },
         "reactions": {
-          "desc": "All the reactions to messages",
-          "title": "/reactions"
+          "desc": "What each tool answered, with duration, LLM used, and the judge verdict if any.",
+          "title": "tool_calls"
         },
         "votes": {
-          "desc": "All the preferences expressed",
-          "title": "/votes"
+          "desc": "The expressed preference (A, B, or tie) and the goal-attainment rating.",
+          "title": "votes"
         }
       },
       "share": "Show us how you’re using the data",
@@ -149,91 +149,51 @@
     "unknown": "An error has occurred"
   },
   "faq": {
-    "datasets": {
+    "title": "Frequently asked questions",
+    "fairness": {
+      "title": "Fairness of the comparison",
       "questions": {
         "1": {
-          "desc": "<p> Preference data is used to improve models during future training. </p> <p> By blindly comparing the responses of two models, CompaRAG users express their preferences, indicating which responses are most relevant. This preference data can be used to improve model alignment—that is, to train them to generate responses that are more in line with user expectations and preferences. </p> <p> This is an iterative process, where the model gradually learns to generate better responses based on feedback from humans on the quality of the responses. By being exposed to preference data, models adjust their response style. </p>",
-          "title": "Does preference data have an immediate effect on model performance?"
-        },
-        "2": {
-          "desc": "<p> The uniqueness of the data collected on the CompaRAG platform is that it is in lower ressourced languages and corresponds to real-life user tasks. This data reflects human preferences in specific linguistic and cultural contexts. This data allows us to adjust the models to make them more relevant, accurate, and adapted to user needs, while attempting to address any biases or gaps. </p>",
-          "title": "Why is comparison data collected on CompaRAG valuable?"
-        },
-        "3": {
-          "desc": "<p> CompaRAG positions itself as a low-ressourced language assessment and alignment tool for language models, focused on response quality and preference data collection, thus distinguishing itself from the global ranking approach of <a href='https://lmarena.ai/' target='_blank'> chatbot arena </a> developed by <a href='http://lmsys.org' target='_blank'> lmsys.org </a> and the ethical alignment of AI models of <a href='https://hannahkirk.github.io/prism-alignment/' target='_blank'> Prism Alignment Project </a> . </p>",
-          "title": "What makes CompaRAG different from other RAG evaluation tools?"
+          "title": "How can I be sure the tools are queried fairly?",
+          "desc": "<p>Three invariants guarantee fairness in every round.</p><p><strong>1. Same context.</strong> Both tools receive the exact same question, the same document, and the same timeout. The code that builds the request (<code>backend/tool_arena/rag_tool/ask_one_tool.py</code>) is shared — there is no per-tool special path.</p><p><strong>2. Transparent draw.</strong> Only tools declared READY at request time enter the draw. They are grouped by <em>task_type</em> (summary, question-answering, extraction); a tool only ever competes with another tool from the same group. Within a group, two tools are picked at random, weighted by a public weight declared in <code>mcp_servers.json</code>.</p><p><strong>3. Blind vote.</strong> The identities of both tools are hidden until you vote. You see «answer A» and «answer B», never their brand. Any mention of the tool in its own answer is stripped before display.</p><p>The code for all three mechanisms is public and auditable: <code>backend/tool_arena/comparison/ask_two_tools_concurrently.py</code>, <code>backend/tool_arena/rag_tool/readiness.py</code>, <code>backend/tool_arena/blind_reveal/hide_tool_identity_before_vote.py</code>.</p>"
         }
-      },
-      "title": "Dataset"
+      }
     },
-    "ecology": {
+    "comparison": {
+      "title": "How a comparison runs",
       "questions": {
         "1": {
-          "title": "Why does RAG tool latency vary?",
-          "desc": "<p>Each RAG tool calls external services (databases, APIs, embedding models) with variable response times depending on provider load and infrastructure.</p>"
-        },
-        "2": {
-          "title": "How can I assess vendor lock-in risk?",
-          "desc": "<p>CompaRAG lets you test multiple RAG tools on the same task and compare their reliability. A tool that performs well on your real use cases reduces the risk of dependence on a single vendor.</p>"
+          "title": "What happens when I click «Compare»?",
+          "desc": "<p>Four ordered steps:</p><ol><li><strong>Draw</strong> two ready RAGTools (see the fairness question).</li><li><strong>Parallel query</strong>: the same question and document are sent simultaneously to both tools over MCP. Per-tool timeout of 180s.</li><li><strong>Blinding</strong>: each answer is sanitized to remove the tool's name, then displayed unlabelled as «answer A» / «answer B». Order is randomised.</li><li><strong>Reveal</strong>: after your vote, both identities are shown and the vote is persisted.</li></ol><p>If one of the two tools errors out, you see an error card in its place and voting is disabled — comparing an answer to a failure is meaningless.</p>"
         }
-      },
-      "title": "RAG tool performance and reliability",
-      "desc": "CompaRAG measures the relative performance of RAG tools based on user preferences: response latency, reliability and variance of results across tasks."
+      }
     },
-    "models": {
+    "rag": {
+      "title": "What is a RAG tool",
       "questions": {
         "1": {
-          "desc": "<p> We choose models based on their popularity, diversity, and relevance to users. We pay particular attention to making <em> open weights </em> and different size models available. </p>",
-          "title": "How do you choose the models present in the arena ?"
-        },
-        "2": {
-          "desc": "<p> Inference, meaning the ability to query the models, is payed for by the project. For most models, we use the Open Router and Hugging Face Inference Providers on a per-token usage basis. </p>",
-          "title": "How do you manage to keep this service free?"
-        },
-        "3": {
-          "desc": "<p> Quantized models are optimized to consume fewer resources by simplifying certain calculations while aiming for the best response quality. </p> <p> Quantization is an optimization technique that involves reducing the precision of the numbers used to represent the parameters of an AI model. This allows <strong> to reduce the size of the model </strong> and <strong> to speed up calculations </strong> , which is particularly advantageous for inference on resource-constrained machines. </p>",
-          "title": "What are “quantized models” ?"
-        },
-        "4": {
-          "desc": "<p> <strong> A model's ability to speak multiple languages is related to the linguistic diversity of its training data, not to the country it was developed in </strong> . <strong> LLMs use huge corpora of data with many languages </strong> , but the distribution of languages in the training data is not uniform. An overrepresentation of English can lead to limitations in other languages. These limitations are visible, for example, in <strong> anglicisms or the inability to generate content in certain languages classified as \"endangered\" by UNESCO </strong> . </p> <p> <strong> The accuracy and richness of a model's vocabulary depend on the data used for its training </strong> . </p>",
-          "title": "Is there a link between the nationality of the company or lab that created the model and its ability to speak several languages?"
-        },
-        "5": {
-          "desc": "<p> Few stakeholders are “transparent” about the data sources used in training corpora. This information is often confidential for legal and commercial reasons. </p>",
-          "title": "Can we see the training data of the models?"
+          "title": "Why put several RAG tools in competition?",
+          "desc": "<p>RAG (Retrieval-Augmented Generation) is a broad category of tools combining <strong>information retrieval</strong> with <strong>LLM generation</strong>. The same label hides very different architecture choices:</p><ul><li><strong>Which <em>chunker</em>?</strong> Paragraph, character window, sentence…</li><li><strong>Which <em>retriever</em>?</strong> Dense (embeddings), sparse (BM25), hybrid, graph-based (LightRAG, GraphRAG)…</li><li><strong>Which <em>reranker</em>?</strong> Cross-encoder, LLM-judge, or none.</li><li><strong>Which <em>prompt</em>?</strong> The same question can yield radically different outputs depending on the prompt that wraps the retrieved passages.</li></ul><p>CompaRAG today races five engine families (LangChain, LlamaIndex, Haystack, Txtai, Chroma) on the same LLM (Mistral Medium 3.1 via OpenRouter). The LLM constant is deliberate: we measure the quality of the <em>retrieval pipeline</em>, not the LLM.</p>"
         }
-      },
-      "title": "Models"
+      }
     },
-    "title": "Frequently Asked Questions",
-    "usage": {
+    "data": {
+      "title": "Your data",
       "questions": {
         "1": {
-          "desc": "<p> Current conversational language models are <strong> unable to cite their sources </strong> they used to generate an answer. They work by predicting the most likely next token based on the statistical distribution of the training data. While they can synthesize information from various sources, they do not keep track of where that information comes from. </p> <p> However, there are techniques like <strong> Retrieval Augmented Generation (RAG) </strong> that aim to overcome this limitation. RAG allows models to access external knowledge bases and <strong> provide contextualized information by citing the sources </strong> . This approach is useful for improving the transparency and reliability of model answers. </p>",
-          "title": "Can models cite their sources?"
-        },
-        "2": {
-          "desc": "<p> Have you asked the question: “Explain to me the latest trendy cheesecake recipe and cite your sources” and been disappointed with the answers? That's normal... </p> <p> <strong> “Raw” conversational AI models cannot answer questions about the most recent news. </strong> They are trained on static datasets and cannot interact with the web or open links. They do not have the ability to update themselves in real time with events unfolding in the world. The information the model has access to is limited to the date of its last training. </p> <p> Therefore, if you ask a question about a recent news event, the model will rely on outdated information, risking generating inaccurate answers. </p> <p> In the case of Perplexity, Copilot, or ChatGPT, the so-called “raw” conversational AI models are combined with other system blocks that allow them to connect to the internet to access information in real time. These are called “conversational agents.” </p>",
-          "title": "If I ask a question about the latest news, can the model answer?"
-        },
-        "3": {
-          "desc": "<p> If you include a URL in a query, the conversational model will not be able to access it directly. Language models process the query text but do not have the ability to interact with the web or open links. They are trained on a fixed text dataset, and their answers are based on this training data. When a question is asked, the models use this training to generate an answer but cannot access new information online if they are not enabled to do so by a surrounding system. </p> <p> As an analogy, imagine a student taking an exam without internet access. They can use their acquired knowledge to answer questions, but cannot visit websites for additional information. </p>",
-          "title": "If I include an URL in a query, can the model access it?"
-        },
-        "4": {
-          "desc": "<p> Models sometimes lose track of a conversation due to their <strong> limited context window and the \"needle in the haystack\" problem. </strong> This \"window\" represents the amount of previous information the model can retain, acting like a short-term memory. The smaller the window, the more likely the model is to forget key parts of the conversation, leading to inconsistent responses. Long or complex conversations can quickly saturate the context window, increasing the risk of inconsistency. </p> <p> As an analogy, imagine a person who only remembers the last five sentences of a conversation. If the conversation is short, the person can keep up. But if the conversation becomes long, the person will forget crucial information, making their responses inconsistent. Similarly, an AI model with a small context window can \"lose track\" of a conversation when too much information is exchanged, missing key elements and producing responses that no longer make sense. </p>",
-          "title": "Why do some models quickly lose the thread of the conversation?"
-        },
-        "5": {
-          "desc": "<p> The wording of \"prompts,\" influences the answers significantly. To get the best results from a language model, it is essential to master the art of <em> prompting </em> , that is, the wording of requests or instructions. <strong> Clarity is key </strong> : </p> <ul> <li> Use simple and direct language, avoiding questions that are too long or complex. Break requests down into several simpler questions for more precise answers. </li> <li> <strong> Specify specific format constraints if necessary </strong> : If you need a response in a certain format (list, table, summary, etc.), specify it in the prompt. You can also specify the steps to follow and the desired quality criteria. </li> <li> <strong> Specify the role of the model </strong> For example, start with “Act like an expert in…” or “Imagine you are a teacher…” to guide the tone and perspective of the answer. </li> <li> <strong> Contextualize your questions </strong> If necessary, provide relevant examples to guide the model. </li> <li> <strong> Encourage reasoning </strong> Use chain-of-thought prompting ( <em> Chain-of-Thought Prompting </em> ) to ask the model to explain its reasoning, which makes the answers more robust. </li> </ul> <p> Conversational models are sensitive to variations in wording: simple language, short questions, and rephrasing when necessary can help guide the model toward relevant answers. Test and refine your prompts to find the most effective wording! </p>",
-          "title": "What are the best practices for prompting?"
-        },
-        "6": {
-          "desc": "<p> Raw conversational AI models answer directly by predicting tokens (words) based on their probability, while a search engine offers links and resources for the user to explore on their own. </p>",
-          "title": "What's the difference between asking a question to a conversation AI model and searching on Google?"
+          "title": "What happens to my question, answer, vote?",
+          "desc": "<p><strong>Your questions and votes</strong> are published as an open dataset on Hugging Face (<a href=\"https://huggingface.co/datasets/ArthurSrz/comparag-tool-votes\">comparag-tool-votes</a>) after PII filtering. That is the project's purpose: build a public corpus of human preferences between RAG tools, usable to train and evaluate other systems.</p><p><strong>Documents you upload are not published.</strong> They are passed to both RAG tools so they can answer, then dropped from the cache at the end of the session (24h).</p><p>You can request the removal of a specific vote by contacting us — the vote is then archived and excluded from the next dataset export.</p>"
         }
-      },
-      "title": "Use"
+      }
+    },
+    "extend": {
+      "title": "Extend the arena",
+      "questions": {
+        "1": {
+          "title": "How do I add my own RAG tool to the arena?",
+          "desc": "<p>The arena is built to grow. Five steps, ~30 minutes:</p><ol><li>Copy the template <code>mcp_servers/_template_new_tool/</code>.</li><li>Fill <code>tool.manifest.yaml</code> (name, goal, transport, port, task_type).</li><li>Implement the <code>rag_query(task, goal, document_content)</code> function in <code>server.py</code> with your tool's logic.</li><li>Run <code>python scripts/register_tool.py &lt;slug&gt;</code> — it updates <code>mcp_servers.json</code> and the ontology automatically.</li><li>Run <code>pytest backend/</code> and <code>python scripts/check_openrouter_providers.py</code>.</li></ol><p>Full guide: <code>docs/add_a_new_rag_tool.md</code>. Candidate tools to scout: LightRAG, R2R, Vectara MCP, PaperQA2, Verba, RAGFlow, Cohere RAG, Pinecone MCP.</p>"
+        }
+      }
     }
   },
   "footer": {
@@ -241,8 +201,8 @@
     "dpg": "The service is recognized as a digital public good by the Digital Public Goods Alliance",
     "helpUs": "Help us improve the product!",
     "license": {
-      "linkTitle": "Etalab license - new window",
-      "mention": "Unless otherwise explicitly stated as third-party intellectual property, the contents of this site are offered under the <a {linkProps}>Etalab 2.0 license</a>"
+      "linkTitle": "Project source code on GitHub",
+      "mention": "The source code of this application is available as open source on <a {linkProps}>GitHub</a>."
     },
     "links": {
       "accessibility": "Accessibility: non-compliant",
@@ -256,12 +216,12 @@
   },
   "general": {
     "a11y": {
-      "desc": "This accessibility statement applies to the website <strong> comparag.beta.gouv.fr </strong> .",
+      "desc": "This accessibility statement applies to the <strong>CompaRAG</strong> website.",
       "disclaimer": "<strong> CompaRAG </strong> is committed to making its digital services accessible, in accordance with Article 47 of Law No. 2005-102 of February 11, 2005.",
-      "improveAdress": "Address: DINUM, 20 avenue de Ségur 75007 Paris",
+      "improveAdress": "The project is open-source. Issues: <a {linkProps}>github.com/ArthurSrz/CompaRAG</a>",
       "improveDelay": "We try to respond within 2 business days.",
-      "improveDesc": "If you are unable to access any content or service, you can contact the manager of beta.gouv.fr to be directed to an accessible alternative or obtain the content in another format.",
-      "improveMail": "E-mail: <a {linkProps}>contact@beta.gouv.fr</a>",
+      "improveDesc": "If you encounter inaccessible content or service, open an issue on the project's GitHub repository to be directed to an accessible alternative.",
+      "improveMail": "GitHub issues: <a {linkProps}>github.com/ArthurSrz/CompaRAG/issues</a>",
       "improveTitle": "Improvement and contact",
       "remedyAdvocate": "Write a message to the <a {linkProps}>Defender of Rights</a>",
       "remedyAdvocateAdress": "Send a letter by post (free, do not put a stamp): Defender of Rights - Free response 71120 75342 Paris CEDEX 07",
@@ -269,7 +229,7 @@
       "remedyDesc": "This procedure is to be used in the following case: you have reported to the website manager an accessibility defect which prevents you from accessing content or one of the portal's services and you have not received a satisfactory response.",
       "remedyList": "You can :",
       "remedyTitle": "Appeal",
-      "stateDesc": "The comparag.beta.gouv.fr website is non-compliant with RGAA 4.1. The site has not yet been audited <strong>. However, it has been designed to be accessible to as many people as possible </strong> . You should therefore be able to:",
+      "stateDesc": "The CompaRAG website has <strong>not yet been audited</strong> against RGAA. It has however been designed to be accessible to as many people as possible. You should therefore be able to:",
       "stateNavigate": "navigate all pages of the site using a keyboard",
       "statePrefs": "adapt the site to your preferences (font size, screen zoom, change of typography, etc.) without loss of content",
       "stateScreenReader": "view the website with a screen reader.",
@@ -279,9 +239,9 @@
     "legal": {
       "a11yDesc": "Compliance with digital accessibility standards is a future goal, but we strive to make this site accessible to everyone.",
       "a11yTitle": "Accessibility",
-      "directorDesc": "Mr. Romain Delassus, Head of the Digital Department at the Ministry of Culture",
+      "directorDesc": "The maintainer of the open-source project CompaRAG.",
       "directorTitle": "Director of the publication",
-      "editorDesc": "This site is published by the French Ministry of Culture, 182 Rue Saint-Honoré, 75001 Paris",
+      "editorDesc": "CompaRAG is an open-source project maintained on GitHub: <a {linkProps}>github.com/ArthurSrz/CompaRAG</a>.",
       "editorTitle": "Published",
       "hostingDesc": "This site is hosted by OVH SAS (<a {linkProps}>https://www.ovh.com</a>), whose registered office is located at 2 Rue Kellermann, 59100 Roubaix, France.",
       "hostingTitle": "Hosting of the site",
@@ -292,7 +252,7 @@
       "securityCertif": "The site is protected by an electronic certificate, represented in most browsers by a padlock. This protection helps ensure the confidentiality of exchanges.",
       "securityNoMail": "Under no circumstances will the services associated with the platform be the source of emails asking for the input of personal information.",
       "securityTitle": "Security",
-      "sources": "Unless otherwise stated, all texts on this site are under the <a {etalabLinkProps}>Etalab Open 2.0 license</a>. The source code of this application is freely reusable and accessible on <a {githubLinkProps}>GitHub</a>.",
+      "sources": "Unless otherwise stated, the source code of this application is freely reusable and accessible on <a {githubLinkProps}>GitHub</a> under an open license.",
       "title": "Legal notice"
     },
     "privacy": {
@@ -303,21 +263,21 @@
       "cookiesDesc": "This website places a small text file (a \"cookie\") on your computer when you visit it. This allows us to measure the number of visits and understand which pages are the most viewed.",
       "cookiesDescMore": "You can opt out of tracking your browsing on this website. This will protect your privacy, but it will also prevent the owner from learning from your actions and creating a better experience for you and other users.",
       "cookiesTitle": "Cookies and Consent",
-      "dataAccessDatasets": "User dialogue and preference data are distributed under Etalab's Open License 2.0 on the Hugging Face platform as well as on Data.gouv.fr through the Ministry of Culture's account (<a {linkProps}>https://huggingface.co/ministere-culture</a>).",
-      "dataAccessDesc": "Of course! The site's usage statistics are freely accessible at <a {linkProps}>stats.beta.gouv.fr</a>.",
+      "dataAccessDatasets": "Dialogue and preference data are published under an open license on Hugging Face: <a {linkProps}>huggingface.co/datasets/ArthurSrz/comparag-tool-votes</a>.",
+      "dataAccessDesc": "The project's code is public on GitHub. No usage statistics are currently published.",
       "dataAccessTitle": "I contribute to enriching your data, can I access it?",
       "dataExtraCountry": "Destination country: France",
       "dataExtraHost": "Subcontractor: OVH",
       "dataExtraTitle": "Who helps us process the data?",
       "dataExtraWarranty": "Guarantees: <a {linkProps}>https://storage.gra.cloud.ovh.net/v1/AUTH_325716a587c64897acbef9a4a4726e38/contracts/9e74492-OVH_Data_Protection_Agreement-FR-6.0.pdf</a>",
       "dataExtraWhat": "Processing carried out: Accommodation",
-      "dataRespDesc": "The French Ministry of Culture's digital department is responsible for processing your personal data.",
+      "dataRespDesc": "The maintainer of the open-source CompaRAG project is the data controller for your personal data.",
       "dataRespTitle": "Who is responsible for data processing?",
       "dataTimeDesc": "Data relating to users and their conversations with models are retained from the time the preference vote is recorded.",
       "dataTimeTitle": "How long do we keep this data?",
       "dataUseDesc": "In any case, the publisher commits to implementing means to ensure the anonymization of dialogue data before making it publicly available.",
       "dataUseTitle": "What processing is done on the conversation data?",
-      "desc": "The service is published by the Digital Department of the French Ministry of Culture.",
+      "desc": "The service is operated by the maintainer of the open-source CompaRAG project.",
       "privacyData": "The data collected on the site are as follows:",
       "privacyDataArena": "Data related to user conversations with the models: questions asked by users, model responses, and user preferences expressed between the two models",
       "privacyDataForm": "Data related to the questionnaire \"Help us improve CompaRAG\".",
@@ -328,10 +288,10 @@
     },
     "rgesn": {
       "1": {
-        "1": "The CompaRAG website provides easy and free access to a wide variety of conversational AI models, raising public awareness of the various challenges of generative AI: diversity, bias, and environmental impact. Furthermore, the datasets of questions and preferences compiled are shared as open source under the MIT/Etalab 2.0 license.",
+        "1": "CompaRAG lets users blindly compare several RAG (Retrieval-Augmented Generation) tools on the same question and produces an open dataset of human preferences between these tools. This transparency serves both research (measuring the quality of retrieval pipelines) and the ecosystem (guiding technical choices).",
         "2": "The target users of the CompaRAG service were identified by conducting user interviews and a preliminary phase of needs investigation.",
         "3": "Thus, all citizens are concerned as potential users, but particularly teachers, pupils, students, workshop facilitators, AI trainers, as well as researchers (computer science, AI, humanities and social sciences) and companies interested in analyzing or using open-source shared datasets. Accordingly, the digital service meets their needs through the following features: testing and comparing models for free, and using open-source shared data.",
-        "4": "The CompaRAG service is part of an eco-design approach aimed at reducing environmental impacts. To this end, this declaration was drafted within the framework of the implementation of the General Eco-design Framework for Digital Services (RGESN, version 2024). The RGESN, produced by Arcep and Arcom, in collaboration with ADEME, DINUM, CNIL, and Inria, is available on the <a {linkProps}>Arcep website</a>.",
+        "4": "The project follows eco-design principles for digital services (response cache, lazy corpus indexing, no third-party analytics). The code is public on GitHub: <a {githubLinkProps}>github.com/ArthurSrz/CompaRAG</a>.",
         "title": "Purpose of this service"
       },
       "2": {
@@ -420,14 +380,14 @@
     "tos": {
       "contactDesc": "For any questions about the service, you can write to <a {linkProps}>{contactLink}</a>.",
       "contactTitle": "9. Contact",
-      "defsEditor": "“Publisher” refers to the Digital Department of the Ministry of Culture.",
+      "defsEditor": "\"Editor\" designates the maintainer of the open-source project CompaRAG.",
       "defsModels": "\"Models\" refers to the large language models (LLMs) reused under their usage license by the platform to fulfill its purposes.",
       "defsPlatform": "“Platform” refers to the website that makes the services accessible.",
       "defsServices": "\"Services\" refers to the features offered by the platform to fulfill its purposes.",
       "defsTitle": "2. Definitions",
       "defsUser": "“User” refers to any natural person consulting the platform and benefiting from its services.",
       "descDatasets": "These datasets will be made accessible under an open license, particularly to encourage research uses.",
-      "descEditor": "Published by the Digital Department of the French Ministry of Culture, the arena is a platform for comparing conversational models aimed at the general public with the goal of (1) raising citizens' awareness of large language models (LLMs), and (2) collecting user preferences to create alignment datasets.",
+      "descEditor": "CompaRAG is a platform for blindly comparing RAG tools, aimed at the general public, with three goals: (1) measure the real-world quality of RAG tools on user questions, (2) collect human preferences to produce an open dataset, and (3) rank tools according to those preferences.",
       "descTitle": "3. Platform description",
       "descUse": "The user asks a question in a given language and receives answers from two anonymous large language models (LLMs). They vote for the model that provides their preferred response and are then shown the identities of the models. This participatory production system, inspired by the \"<a {linkProps}>chatbot arena</a>\" platform (LMarena), allows for the creation of datasets of human preferences for real-world tasks in French, which can be used for model alignment.",
       "dispoDesc": "The platform is accessible, except in cases of force majeure or events beyond the control of its publisher.",
@@ -439,7 +399,7 @@
       "evoDescMore": "These modifications and updates are binding on the user, who should therefore regularly refer to this section to check the current general terms.",
       "evoTitle": "8. Changes to the Terms of Use",
       "featuresDatasets": "The service collects conversation data (questions, responses from both models) and user preferences (votes, associated metadata). This data is used both to create public datasets and to build a ranking of AI models displayed on the platform, based on the votes cast by the users.",
-      "featuresDatasetsMore": "The publisher reserves the right to distribute the user's dialogue and preference data under an etalab 2.0 license. The dataset is disseminated on Data.gouv and the Hugging Face platform through the French Ministry of Culture's account (<a {linkProps}>https://huggingface.co/ministere-culture</a>).",
+      "featuresDatasetsMore": "The editor publishes the dialogue and preference data under an open license on Hugging Face: <a {linkProps}>huggingface.co/datasets/ArthurSrz/comparag-tool-votes</a>.",
       "featuresDesc": "To meet the dual objective of raising citizen awareness about large language models and collecting user preferences, the platform provides the following services without access restrictions:",
       "featuresDescMore": "A human-machine interface that allows users to dialogue simultaneously with two conversational models and vote for the preferred response.",
       "featuresModels": "The models integrated into the platform are deployed on the inference servers of the various hosting providers and model publishers. Requests are handled primarily by the Open Router service. Inference conditions are defined on the platform to ensure transparent model usage.",

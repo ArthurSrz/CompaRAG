@@ -93,19 +93,19 @@
   "datasets": {
     "access": {
       "catch": "Modelio leidėjai, tyrėjai, įmonės, dabar jūsų eilė!",
-      "desc": "Platformos klausimai ir pageidavimai yra pateikiami daugiausia prancūzų, danų, švedų ir lietuvių kalbomis, atspindintys natūralų, realaus naudojimo kontekstą, o ne dirbtinius užklausimus. Šie duomenų rinkiniai yra viešai prieinami <a {linkProps}>data.gouv.fr</a> ir Hugging Face.",
+      "desc": "The votes you cast and the questions you ask are published as an open dataset on Hugging Face (<a {linkProps}>comparag-tool-votes</a>). No personal data is kept.",
       "repos": {
         "conversations": {
-          "desc": "Visi klausimai ir atsakymai",
-          "title": "/pokalbiai"
+          "desc": "Each round: the question, the document submitted, and the two RAG tools drawn.",
+          "title": "comparisons"
         },
         "reactions": {
-          "desc": "Visos reakcijos į žinutes",
-          "title": "/reakcijos"
+          "desc": "What each tool answered, with duration, LLM used, and the judge verdict if any.",
+          "title": "tool_calls"
         },
         "votes": {
-          "desc": "Visi išreikšti pasirinkimai",
-          "title": "/balsai"
+          "desc": "The expressed preference (A, B, or tie) and the goal-attainment rating.",
+          "title": "votes"
         }
       },
       "share": "Parodyk mums, kaip panaudoji duomenis",
@@ -144,64 +144,51 @@
     "unknown": "Įvyko klaida"
   },
   "faq": {
-    "datasets": {
+    "title": "Frequently asked questions",
+    "fairness": {
+      "title": "Fairness of the comparison",
       "questions": {
         "1": {
-          "desc": "<p> Pasirinkimo duomenys naudojami modeliams tobulinti ateityje. </p> <p> Aklai lygindami dviejų modelių atsakymus, CompaRAG naudotojai išreiškia savo pasirinkimus, nurodydami, kurie atsakymai yra labiausiai tinkami. Šie pasirinkimo duomenys gali būti naudojami modelių suderinimui tobulinti, t. y. juos mokyti generuoti atsakymus, kurie labiau atitinka naudotojų lūkesčius ir pasirinkimus. </p> <p> Tai yra pakartotinis procesas, kurio metu modelis palaipsniui mokosi generuoti geresnius atsakymus, remdamasis žmonių atsiliepimais apie atsakymų kokybę. Susipažindami su pasirinkimų duomenimis, modeliai koreguoja savo atsakymų stilių. </p>",
-          "title": "Ar pasirinkimo duomenys turi tiesioginį poveikį modelio veikimui?"
-        },
-        "2": {
-          "desc": "<p> Dialogai platformoje surinktų duomenų unikalumas yra tas, kad jie yra skirti mažiau išteklių turinčiomis kalbomis ir atitinka realias vartotojų užduotis. Šie duomenys atspindi žmonių pasirinkimus konkrečiame lingvistiniame ir kultūriniame kontekste. Šie duomenys leidžia mums pritaikyti modelius, kad jie būtų labiau aktualūs, tikslūs ir pritaikyti vartotojų poreikiams, tuo pačiu bandant pašalinti bet kokius šališkumus ar spragas. </p>",
-          "title": "Kodėl balsavimas dialogai platformoje yra naudingas?"
-        },
-        "3": {
-          "desc": "<p> dialogai pozicionuoja save kaip mažai išteklių reikalaujantį kalbos vertinimo ir suderinimo įrankį kalbos modeliams, orientuotą į atsakymų kokybę ir pasirinkimo duomenų rinkimą, taip išsiskirdamas nuo <a href='https://lmarena.ai/' target='_blank'> pokalbių arenos </a> sukurtos <a href='http://lmsys.org' target='_blank'> lmsys.org </a> ir etine atitiktimi nuo<a href='https://hannahkirk.github.io/prism-alignment/' target='_blank'> Prism Alignment Project </a> . </p>",
-          "title": "Kaip dialogai skiriasi nuo kitų panašių iniciatyvų?"
+          "title": "How can I be sure the tools are queried fairly?",
+          "desc": "<p>Three invariants guarantee fairness in every round.</p><p><strong>1. Same context.</strong> Both tools receive the exact same question, the same document, and the same timeout. The code that builds the request (<code>backend/tool_arena/rag_tool/ask_one_tool.py</code>) is shared — there is no per-tool special path.</p><p><strong>2. Transparent draw.</strong> Only tools declared READY at request time enter the draw. They are grouped by <em>task_type</em> (summary, question-answering, extraction); a tool only ever competes with another tool from the same group. Within a group, two tools are picked at random, weighted by a public weight declared in <code>mcp_servers.json</code>.</p><p><strong>3. Blind vote.</strong> The identities of both tools are hidden until you vote. You see «answer A» and «answer B», never their brand. Any mention of the tool in its own answer is stripped before display.</p><p>The code for all three mechanisms is public and auditable: <code>backend/tool_arena/comparison/ask_two_tools_concurrently.py</code>, <code>backend/tool_arena/rag_tool/readiness.py</code>, <code>backend/tool_arena/blind_reveal/hide_tool_identity_before_vote.py</code>.</p>"
         }
-      },
-      "title": "Duomenų rinkinys"
+      }
     },
-    "ecology": {
+    "comparison": {
+      "title": "How a comparison runs",
       "questions": {
         "1": {
-          "desc": "<p>Dialogai naudoja <a target='_blank' href='https://ecologits.ai/latest/'><strong>Ecologits</strong> (GenAI Impact)</a> sukurtą metodiką, kad pateiktų energijos suvartojimo įvertinimą, kuris leidžia vartotojams palyginti skirtingų AI modelių poveikį aplinkai, atliekant tą patį užklausimą. Šis skaidrumas yra būtinas, siekiant skatinti ekologiškesnių AI modelių kūrimą ir diegimą. </p> <p> Ecologits taiko gyvavimo ciklo vertinimo (LCA) principus pagal ISO 14044, šiuo metu sutelkdama dėmesį į <strong>išvadų</strong> (t. y. modelių naudojimo atsakymams į užklausas) ir <strong>grafikos plokščių gamybos</strong> (išteklių gavybos, gamybos ir transportavimo) poveikį. </p> <p> Modelio energijos suvartojimas apskaičiuojamas atsižvelgiant į įvairius parametrus, pvz., naudojamo DI modelio dydį, serverių, kuriuose modeliai yra diegiami, vietą ir išvesties žetonų skaičių. CO2 ekvivalentu išreikšto globalinio atšilimo potencialo rodiklio apskaičiavimas gaunamas iš modelio energijos suvartojimo matavimo. </p> <p> Svarbu pažymėti, kad DI poveikio aplinkai vertinimo metodikos vis dar yra tobulinamos. </p>",
-          "title": "Kaip apskaičiuojamas poveikis aplinkai?"
-        },
-        "2": {
-          "desc": "<p>Duomenų centrų vieta turi labai didelę įtaką DI CO2 pėdsakui. Jei modelis yra mokomas ar naudojamas šalyje, kuri labai priklauso nuo iškastinio kuro, jo poveikis aplinkai bus didesnis nei tuo atveju, jei jis būtų laikomas šalyje, kurioje daugiausia naudojama atsinaujinanti energija. <a target='_blank' href='https://ecologits.ai/latest/'> Ecologits (from GenAI Impact) </a> sukurta DI poveikio aplinkai analizės metodika apima duomenis apie energijos rūšių derinį skirtingose šalyse, kuriose yra serveriai. Tai leidžia tiksliau ir subtiliau įvertinti faktinį įvairių generatyvinių DI modelių panaudos CO2 pėdsaką. </p>",
-          "title": "Ar poveikio aplinkai rodikliai atsižvelgia į skirtingų šalių energijos struktūras?"
-        },
-        "3": {
-          "desc": "<p>Daugelis aplinkos poveikio rodiklių daugiausia dėmesio skiria <strong>išvadų</strong> poveikiui, t. y. DI modelių naudojimui atsakant į užklausas. Šis požiūris gali sukurti iliuziją, kad naudojimas suvartoja mažiau energijos nei modelių mokymas. Tačiau <strong>realybė yra sudėtingesnė. </strong> Pateiksime automobilio analogiją: </p> <ul> <li> Automobilio surinkimas (mokymas) yra vienkartinis, daug išteklių reikalaujantis procesas. </li> <li> Kiekviena kelionė automobiliu (išvados) sunaudoja mažiau energijos, tačiau šios kelionės kartojasi kasdien, o jų skaičius gali būti milžiniškas. </li> </ul> <p> Panašiai <strong> naudojimo kaupiamasis poveikis, kai kasdien užklausas pateikia milijonai vartotojų, dažnai yra žymiai didesnis nei pradinio mokymo poveikis. <strong> Todėl labai svarbu, kad DI CO2 pėdsako vertinimo įrankiai atsižvelgtų į visą modelių gyvavimo ciklą, nuo mokymo iki naudojimo. </strong>   </p>",
-          "title": "Ar aplinkos poveikio vertinimuose atsižvelgiama į modelių mokymui naudojamus išteklius?"
+          "title": "What happens when I click «Compare»?",
+          "desc": "<p>Four ordered steps:</p><ol><li><strong>Draw</strong> two ready RAGTools (see the fairness question).</li><li><strong>Parallel query</strong>: the same question and document are sent simultaneously to both tools over MCP. Per-tool timeout of 180s.</li><li><strong>Blinding</strong>: each answer is sanitized to remove the tool's name, then displayed unlabelled as «answer A» / «answer B». Order is randomised.</li><li><strong>Reveal</strong>: after your vote, both identities are shown and the vote is persisted.</li></ol><p>If one of the two tools errors out, you see an error card in its place and voting is disabled — comparing an answer to a failure is meaningless.</p>"
         }
-      },
-      "title": "Poveikio aplinkai duomenys"
+      }
     },
-    "i18n": {
+    "rag": {
+      "title": "What is a RAG tool",
       "questions": {
         "1": {
-          "desc": "<p>Taip, CompaRAG internacionalizacija jau vyksta. Pradedame nuo plėtros į tris bandomąsias šalis: Lietuvą, Švediją ir Daniją. Pirmasis etapas leis mums išbandyti metodą ir pritaikyti sąsają prie skirtingų Europos kalbinių ir kultūrinių kontekstų. Galiausiai, remiantis šių bandomųjų šalių atsiliepimais, ratas gali išsiplėsti ir apimti daugiau Europos kalbų. Tikslas – palaipsniui sukurti tikrą Europos bendrąją erdvę, skirtą žmogaus atliekamam pokalbių AI vertinimui, su bendradarbiavimu pagrįstu valdymu, kuris bus apibrėžtas tarp skirtingų dalyvaujančių šalių.</p>",
-          "title": "CompaRAG iš pradžių daugiausia dėmesio skyrė prancūzų kalbai: ar yra planų įtraukti kitas Europos kalbas?"
-        },
-        "2": {
-          "desc": "<p>Europos platformos, skirtos pokalbių su DI modeliais palyginimui, sukūrimas pateikia keletą konkrečių naudų. Ji leidžia rinkti pasirinkimų duomenis, atspindinčius tikruosius Europos vartotojų poreikius, taip pagerinant modelių atsakymų aktualumą šiai vartotojų grupei. Duomenų rinkinių paskelbimas užtikrina geresnį Europos kalbų ir kultūrų, kurios dažnai yra nepakankamai atstovaujamos pasauliniuose duomenų rinkiniuose ir vertinimuose, kuriuose dominuoja anglų kalba, atstovavimą. Tai taip pat užtikrina atitiktį Europos reglamentams (BDAR, DI aktas) ir integruoja vertinimo kriterijus, suderintus su Europos prioritetais, pvz., poveikio aplinkai mažinimu ir algoritmų skaidrumu. Galiausiai tai skatina konkurencingos ir autonomiškos Europos DI ekosistemos atsiradimą.</p>",
-          "title": "Kokie yra būtent Europos DI pasirinkimo platformos privalumai?"
+          "title": "Why put several RAG tools in competition?",
+          "desc": "<p>RAG (Retrieval-Augmented Generation) is a broad category of tools combining <strong>information retrieval</strong> with <strong>LLM generation</strong>. The same label hides very different architecture choices:</p><ul><li><strong>Which <em>chunker</em>?</strong> Paragraph, character window, sentence…</li><li><strong>Which <em>retriever</em>?</strong> Dense (embeddings), sparse (BM25), hybrid, graph-based (LightRAG, GraphRAG)…</li><li><strong>Which <em>reranker</em>?</strong> Cross-encoder, LLM-judge, or none.</li><li><strong>Which <em>prompt</em>?</strong> The same question can yield radically different outputs depending on the prompt that wraps the retrieved passages.</li></ul><p>CompaRAG today races five engine families (LangChain, LlamaIndex, Haystack, Txtai, Chroma) on the same LLM (Mistral Medium 3.1 via OpenRouter). The LLM constant is deliberate: we measure the quality of the <em>retrieval pipeline</em>, not the LLM.</p>"
         }
-      },
-      "title": "Tarptautiškumas"
+      }
     },
-    "models": {
+    "data": {
+      "title": "Your data",
       "questions": {
         "1": {
-          "desc": "<p>Modeliai atrenkami pagal jų populiarumą, įvairovę ir tinkamumą vartotojams. Ypatingą dėmesį skiriame tam, kad būtų prieinami vadinamieji <em>atviri modelių svoriai</em> ir įvairių dydžių modeliai.<p>",
-          "title": "Kaip renkatės modelius, kurie pateikiami palyginimo lentelėje?"
-        },
-        "2": {
-          "title": "Kaip jums pavyksta išlaikyti šią paslaugą nemokamą?"
+          "title": "What happens to my question, answer, vote?",
+          "desc": "<p><strong>Your questions and votes</strong> are published as an open dataset on Hugging Face (<a href=\"https://huggingface.co/datasets/ArthurSrz/comparag-tool-votes\">comparag-tool-votes</a>) after PII filtering. That is the project's purpose: build a public corpus of human preferences between RAG tools, usable to train and evaluate other systems.</p><p><strong>Documents you upload are not published.</strong> They are passed to both RAG tools so they can answer, then dropped from the cache at the end of the session (24h).</p><p>You can request the removal of a specific vote by contacting us — the vote is then archived and excluded from the next dataset export.</p>"
         }
-      },
-      "title": "Modeliai"
+      }
+    },
+    "extend": {
+      "title": "Extend the arena",
+      "questions": {
+        "1": {
+          "title": "How do I add my own RAG tool to the arena?",
+          "desc": "<p>The arena is built to grow. Five steps, ~30 minutes:</p><ol><li>Copy the template <code>mcp_servers/_template_new_tool/</code>.</li><li>Fill <code>tool.manifest.yaml</code> (name, goal, transport, port, task_type).</li><li>Implement the <code>rag_query(task, goal, document_content)</code> function in <code>server.py</code> with your tool's logic.</li><li>Run <code>python scripts/register_tool.py &lt;slug&gt;</code> — it updates <code>mcp_servers.json</code> and the ontology automatically.</li><li>Run <code>pytest backend/</code> and <code>python scripts/check_openrouter_providers.py</code>.</li></ol><p>Full guide: <code>docs/add_a_new_rag_tool.md</code>. Candidate tools to scout: LightRAG, R2R, Vectara MCP, PaperQA2, Verba, RAGFlow, Cohere RAG, Pinecone MCP.</p>"
+        }
+      }
     }
   },
   "header": {
@@ -280,6 +267,37 @@
     "unavailable": {
       "title": "Tools temporarily unavailable",
       "message": "The tool is temporarily unavailable. Please try again later."
+    }
+  },
+  "general": {
+    "a11y": {
+      "desc": "This accessibility statement applies to the <strong>CompaRAG</strong> website.",
+      "improveAdress": "The project is open-source. Issues: <a {linkProps}>github.com/ArthurSrz/CompaRAG</a>",
+      "improveDesc": "If you encounter inaccessible content or service, open an issue on the project's GitHub repository to be directed to an accessible alternative.",
+      "improveMail": "GitHub issues: <a {linkProps}>github.com/ArthurSrz/CompaRAG/issues</a>",
+      "stateDesc": "The CompaRAG website has <strong>not yet been audited</strong> against RGAA. It has however been designed to be accessible to as many people as possible. You should therefore be able to:"
+    },
+    "legal": {
+      "directorDesc": "The maintainer of the open-source project CompaRAG.",
+      "editorDesc": "CompaRAG is an open-source project maintained on GitHub: <a {linkProps}>github.com/ArthurSrz/CompaRAG</a>.",
+      "sources": "Unless otherwise stated, the source code of this application is freely reusable and accessible on <a {githubLinkProps}>GitHub</a> under an open license."
+    },
+    "privacy": {
+      "dataAccessDatasets": "Dialogue and preference data are published under an open license on Hugging Face: <a {linkProps}>huggingface.co/datasets/ArthurSrz/comparag-tool-votes</a>.",
+      "dataAccessDesc": "The project's code is public on GitHub. No usage statistics are currently published.",
+      "dataRespDesc": "The maintainer of the open-source CompaRAG project is the data controller for your personal data.",
+      "desc": "The service is operated by the maintainer of the open-source CompaRAG project."
+    },
+    "rgesn": {
+      "1": {
+        "1": "CompaRAG lets users blindly compare several RAG (Retrieval-Augmented Generation) tools on the same question and produces an open dataset of human preferences between these tools. This transparency serves both research (measuring the quality of retrieval pipelines) and the ecosystem (guiding technical choices).",
+        "4": "The project follows eco-design principles for digital services (response cache, lazy corpus indexing, no third-party analytics). The code is public on GitHub: <a {githubLinkProps}>github.com/ArthurSrz/CompaRAG</a>."
+      }
+    },
+    "tos": {
+      "defsEditor": "\"Editor\" designates the maintainer of the open-source project CompaRAG.",
+      "descEditor": "CompaRAG is a platform for blindly comparing RAG tools, aimed at the general public, with three goals: (1) measure the real-world quality of RAG tools on user questions, (2) collect human preferences to produce an open dataset, and (3) rank tools according to those preferences.",
+      "featuresDatasetsMore": "The editor publishes the dialogue and preference data under an open license on Hugging Face: <a {linkProps}>huggingface.co/datasets/ArthurSrz/comparag-tool-votes</a>."
     }
   }
 }
