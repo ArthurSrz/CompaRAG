@@ -65,7 +65,7 @@ async def admin_oauth_seed(
     Idempotent: a second seed with the same payload simply overwrites.
     Tokens are NEVER logged.
     """
-    from backend.tool_arena import auth as _auth_module
+    from backend.tool_arena.rag_tool.auth import sign_in_to_tool as _auth_module
     from backend.tool_arena.credential import _invalidate_cache as _cred_invalidate
 
     try:

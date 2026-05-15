@@ -210,7 +210,7 @@ async def _probe_oauth(server: MCPServerConfig) -> None:
     ``prewarm_oauth_provider`` swallows exceptions and returns ``False`` on
     failure, so we re-raise here to map onto the readiness states.
     """
-    from backend.tool_arena.auth import prewarm_oauth_provider
+    from backend.tool_arena.rag_tool.auth.sign_in_to_tool import prewarm_oauth_provider
 
     ok = await prewarm_oauth_provider(server)
     if not ok:

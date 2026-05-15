@@ -7,7 +7,7 @@ refresh_token automatiquement.
 One-time OAuth2 setup for MCP servers requiring authorization_code flow.
 
 Usage:
-    uv run python -m backend.tool_arena.oauth_setup clarifeye
+    uv run python -m backend.tool_arena.rag_tool.auth.setup_oauth_initial_handshake clarifeye
 
 Opens a browser for login, captures the callback, and stores tokens to disk.
 Subsequent MCP calls use the refresh token automatically.
@@ -27,7 +27,7 @@ from mcp.client.streamable_http import streamablehttp_client
 from mcp.shared.auth import OAuthClientMetadata
 from mcp.types import TextContent
 
-from backend.tool_arena.auth import FileTokenStorage, get_oauth_provider
+from backend.tool_arena.rag_tool.auth.sign_in_to_tool import FileTokenStorage, get_oauth_provider
 from backend.tool_arena.config import load_mcp_servers
 
 logging.basicConfig(level=logging.INFO, format="%(message)s")
@@ -124,6 +124,6 @@ async def setup_oauth(server_id: str) -> None:
 
 if __name__ == "__main__":
     if len(sys.argv) < 2:
-        print("Usage: uv run python -m backend.tool_arena.oauth_setup <server_id>")
+        print("Usage: uv run python -m backend.tool_arena.rag_tool.auth.setup_oauth_initial_handshake <server_id>")
         sys.exit(1)
     asyncio.run(setup_oauth(sys.argv[1]))

@@ -8,7 +8,7 @@ import pytest
 from fastapi import FastAPI
 from fastapi.testclient import TestClient
 
-import backend.tool_arena.auth as auth_module
+import backend.tool_arena.rag_tool.auth.sign_in_to_tool as auth_module
 import backend.tool_arena.credential as credential_module
 from backend.tool_arena.config import ApiKeyAuth, MCPServerConfig, OAuth2Auth
 from backend.tool_arena.rag_tool.readiness import (

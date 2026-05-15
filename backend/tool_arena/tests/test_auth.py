@@ -10,7 +10,7 @@ import pytest
 
 from mcp.shared.auth import OAuthClientInformationFull, OAuthClientMetadata, OAuthToken
 
-import backend.tool_arena.auth as auth_module
+import backend.tool_arena.rag_tool.auth.sign_in_to_tool as auth_module
 from backend.tool_arena.config import MCPServerConfig, OAuth2Auth
 
 pytestmark = pytest.mark.anyio

@@ -180,7 +180,7 @@ async def test_single_mcp_call_passes_auth_for_oauth2():
     mock_provider = MagicMock()
     with patch("backend.tool_arena.rag_tool.ask_one_tool.streamablehttp_client", side_effect=mock_streamable):
         with patch("backend.tool_arena.rag_tool.ask_one_tool.ClientSession", return_value=session_ctx):
-            with patch("backend.tool_arena.auth.get_oauth_provider", return_value=mock_provider):
+            with patch("backend.tool_arena.rag_tool.auth.sign_in_to_tool.get_oauth_provider", return_value=mock_provider):
                 await single_mcp_call(server, "task", "goal")
 
     assert captured_kwargs["auth"] is mock_provider

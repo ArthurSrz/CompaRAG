@@ -220,7 +220,7 @@ class OAuth2Credential:
         """
         # Local import keeps this module importable even when the OAuth code
         # path is not exercised (tests, none-auth-only deployments).
-        from backend.tool_arena.auth import get_oauth_provider
+        from backend.tool_arena.rag_tool.auth.sign_in_to_tool import get_oauth_provider
 
         try:
             return get_oauth_provider(server)

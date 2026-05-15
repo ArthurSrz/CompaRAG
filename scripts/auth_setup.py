@@ -107,7 +107,7 @@ async def run_setup(tool_id: str, print_only: bool) -> None:
     from mcp.client.streamable_http import streamablehttp_client
     from mcp.shared.auth import OAuthClientInformationFull, OAuthClientMetadata
 
-    from backend.tool_arena.auth import FileTokenStorage
+    from backend.tool_arena.rag_tool.auth.sign_in_to_tool import FileTokenStorage
     from backend.tool_arena.config import OAuth2Auth
 
     server = registry.get_server(tool_id)
