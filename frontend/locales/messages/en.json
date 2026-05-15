@@ -97,7 +97,7 @@
   },
   "datasets": {
     "access": {
-      "catch": "Model publishers, researchers, companies, now it's your turn!",
+      "catch": "RAG tool authors, researchers, product teams: your turn!",
       "desc": "The votes you cast and the questions you ask are published as an open dataset on Hugging Face (<a {linkProps}>comparag-tool-votes</a>). No personal data is kept.",
       "repos": {
         "conversations": {
@@ -273,13 +273,13 @@
       "dataExtraWhat": "Processing carried out: Accommodation",
       "dataRespDesc": "The maintainer of the open-source CompaRAG project is the data controller for your personal data.",
       "dataRespTitle": "Who is responsible for data processing?",
-      "dataTimeDesc": "Data relating to users and their conversations with models are retained from the time the preference vote is recorded.",
+      "dataTimeDesc": "Data related to users and their RAG tool comparisons are kept from the moment the preference vote is recorded.",
       "dataTimeTitle": "How long do we keep this data?",
       "dataUseDesc": "In any case, the publisher commits to implementing means to ensure the anonymization of dialogue data before making it publicly available.",
       "dataUseTitle": "What processing is done on the conversation data?",
       "desc": "The service is operated by the maintainer of the open-source CompaRAG project.",
       "privacyData": "The data collected on the site are as follows:",
-      "privacyDataArena": "Data related to user conversations with the models: questions asked by users, model responses, and user preferences expressed between the two models",
+      "privacyDataArena": "Data related to comparisons: questions asked by users, the answers from both RAG tools, and the user's expressed preference.",
       "privacyDataForm": "Data related to the questionnaire \"Help us improve CompaRAG\".",
       "privacyDesc": "The service does not process personal data as defined by the CNIL, meaning any information relating to an identifiable natural person, directly or indirectly.",
       "privacyResp": "The user is responsible for the data or content they enter in the prompt provided by the platform. By accepting the <a {linkProps}>terms of use</a>, the user agrees not to transmit any information that could identify themselves or a third party.",
@@ -290,7 +290,7 @@
       "1": {
         "1": "CompaRAG lets users blindly compare several RAG (Retrieval-Augmented Generation) tools on the same question and produces an open dataset of human preferences between these tools. This transparency serves both research (measuring the quality of retrieval pipelines) and the ecosystem (guiding technical choices).",
         "2": "The target users of the CompaRAG service were identified by conducting user interviews and a preliminary phase of needs investigation.",
-        "3": "Thus, all citizens are concerned as potential users, but particularly teachers, pupils, students, workshop facilitators, AI trainers, as well as researchers (computer science, AI, humanities and social sciences) and companies interested in analyzing or using open-source shared datasets. Accordingly, the digital service meets their needs through the following features: testing and comparing models for free, and using open-source shared data.",
+        "3": "The service is mainly aimed at RAG developers, information-retrieval researchers, product teams who need to choose a RAG pipeline for their application, and trainers who want to explain concrete differences between RAG approaches.",
         "4": "The project follows eco-design principles for digital services (response cache, lazy corpus indexing, no third-party analytics). The code is public on GitHub: <a {githubLinkProps}>github.com/ArthurSrz/CompaRAG</a>.",
         "title": "Purpose of this service"
       },
@@ -315,8 +315,8 @@
       },
       "3": {
         "1": {
-          "1": "Simplifying the user experience: navigation paths are optimized and centered around the essential features of the CompaRAG service (arena of models to test, datasets, ranking) with regular user testing.",
-          "2": "Raising awareness among users about the ecological footprint of the service: highlighting energy impact indicators on questions asked to AI; promoting \"frugal\" uses, with a mode dedicated to querying \"small\" conversational AI models whose environmental impact is smaller.",
+          "1": "Simplified user experience: navigation paths are optimised around the essential features of CompaRAG (ask a question, compare two tools blindly, vote, reveal the identities).",
+          "2": "User awareness about the ecological footprint of the service: where available, the energy cost of each RAG tool call is surfaced, and a single shared LLM is used across tools to keep the comparison fair and limit cost.",
           "3": "Use of State Design System (DSFR) interface components: they are accessible and their footprint is minimal.",
           "4": "The most intuitive navigation possible to reduce the time spent finding information.",
           "5": "Mobile-first design: all content is viewable on mobile devices. The site adapts to all screen sizes.",
@@ -369,7 +369,7 @@
           "title": "To adhere to a maximum weight and a limit on the number of requests per screen (criterion 6.1):"
         },
         "4": "Convert the illustrations to WebP, AVIF, JPEG XL or a more efficient image format for raster images (criterion 5.1).",
-        "5": "Allow the possibility to interrupt inference (loading of responses) during model comparison.",
+        "5": "Allow the user to interrupt inference (answer loading) during the comparison of two RAG tools.",
         "6": "EcoIndex analysis scores demonstrate a significant discrepancy in impact measurements, with some pages receiving scores of up to E or F (relatively large page weight, complexity, and number of requests); the challenge now is to understand these results more precisely on a case-by-case basis, despite the good practices implemented, in order to identify further improvements.",
         "desc": "Several improvements have been or are still being identified, including:",
         "title": "Improvements identified"
@@ -381,7 +381,7 @@
       "contactDesc": "For any questions about the service, you can write to <a {linkProps}>{contactLink}</a>.",
       "contactTitle": "9. Contact",
       "defsEditor": "\"Editor\" designates the maintainer of the open-source project CompaRAG.",
-      "defsModels": "\"Models\" refers to the large language models (LLMs) reused under their usage license by the platform to fulfill its purposes.",
+      "defsModels": "\"RAG tools\" designates the Retrieval-Augmented Generation pipelines compared on the platform — each combines an information-retrieval mechanism with a language model to produce an answer.",
       "defsPlatform": "“Platform” refers to the website that makes the services accessible.",
       "defsServices": "\"Services\" refers to the features offered by the platform to fulfill its purposes.",
       "defsTitle": "2. Definitions",
@@ -389,7 +389,7 @@
       "descDatasets": "These datasets will be made accessible under an open license, particularly to encourage research uses.",
       "descEditor": "CompaRAG is a platform for blindly comparing RAG tools, aimed at the general public, with three goals: (1) measure the real-world quality of RAG tools on user questions, (2) collect human preferences to produce an open dataset, and (3) rank tools according to those preferences.",
       "descTitle": "3. Platform description",
-      "descUse": "The user asks a question in a given language and receives answers from two anonymous large language models (LLMs). They vote for the model that provides their preferred response and are then shown the identities of the models. This participatory production system, inspired by the \"<a {linkProps}>chatbot arena</a>\" platform (LMarena), allows for the creation of datasets of human preferences for real-world tasks in French, which can be used for model alignment.",
+      "descUse": "The user asks a question (and optionally uploads a document) and gets answers from two anonymous RAG tools. They vote for the answer that best matches their question. Data is collected throughout in compliance with privacy, and the resulting datasets are published open source.",
       "dispoDesc": "The platform is accessible, except in cases of force majeure or events beyond the control of its publisher.",
       "dispoResp": "In this regard, the publisher cannot be held responsible for any losses or damages of any kind that may result from a malfunction or unavailability of the service. Such situations will not entitle any financial compensation.",
       "dispoRight": "The publisher reserves the right to suspend, interrupt, or limit, without prior notice, access to all or part of the services, particularly for maintenance and update operations necessary for the proper functioning of the service and related equipment, or for any other reason, including technical reasons.",
@@ -398,14 +398,14 @@
       "evoDesc": "The terms of use may be modified or supplemented at any time without prior notice, depending on changes made to the services, changes in legislation, or for any other reason deemed necessary.",
       "evoDescMore": "These modifications and updates are binding on the user, who should therefore regularly refer to this section to check the current general terms.",
       "evoTitle": "8. Changes to the Terms of Use",
-      "featuresDatasets": "The service collects conversation data (questions, responses from both models) and user preferences (votes, associated metadata). This data is used both to create public datasets and to build a ranking of AI models displayed on the platform, based on the votes cast by the users.",
+      "featuresDatasets": "The service collects comparison data (questions, answers from both RAG tools) and user preferences (vote, associated metadata). This data is used to build an open dataset and a public ranking of RAG tools displayed on the platform.",
       "featuresDatasetsMore": "The editor publishes the dialogue and preference data under an open license on Hugging Face: <a {linkProps}>huggingface.co/datasets/ArthurSrz/comparag-tool-votes</a>.",
-      "featuresDesc": "To meet the dual objective of raising citizen awareness about large language models and collecting user preferences, the platform provides the following services without access restrictions:",
-      "featuresDescMore": "A human-machine interface that allows users to dialogue simultaneously with two conversational models and vote for the preferred response.",
-      "featuresModels": "The models integrated into the platform are deployed on the inference servers of the various hosting providers and model publishers. Requests are handled primarily by the Open Router service. Inference conditions are defined on the platform to ensure transparent model usage.",
-      "featuresModelsMore": "The model comparison interface.",
+      "featuresDesc": "To meet the dual goal of informing RAG architecture choices and collecting user preferences, the services offered by the platform without access restrictions are the following:",
+      "featuresDescMore": "A human-machine interface to send the same question to two RAG tools and vote for the preferred answer.",
+      "featuresModels": "The RAG tools integrated into the platform are deployed on their own servers or exposed via the MCP protocol. The platform queries them in parallel on the user's question, without revealing their identity before the vote.",
+      "featuresModelsMore": "A comparison interface for RAG tools.",
       "featuresTitle": "4. Features",
-      "featuresVote": "The user can view the list of models on the arena and access more information on these models.",
+      "featuresVote": "The user can view the list of RAG tools integrated into the comparator and access their characteristics (framework, architectural choices, performance).",
       "featuresVoteMore": "Sharing, providing access and reuse of datasets generated by user preferences.",
       "licenceCode": "The platform's source code is open and available here: <a {linkProps}>https://github.com/ArthurSrz/CompaRAG</a>",
       "licenceTitle": "6. Code and licenses",
