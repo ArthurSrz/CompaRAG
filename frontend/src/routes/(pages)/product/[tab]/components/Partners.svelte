@@ -9,29 +9,13 @@
 </script>
 
 <div class="gap-8 lg:grid-cols-2 grid">
-  <section class="cg-border cl-card">
-    <h2 class="fr-h6">
-      <Icon icon="i-ri-government-line" size="lg" class="text-primary me-1" />
-      {m['product.partners.institution.title']()}
-    </h2>
+  {#if locale === 'da'}
+    <section class="cg-border cl-card">
+      <h2 class="fr-h6">
+        <Icon icon="i-ri-government-line" size="lg" class="text-primary me-1" />
+        {m['product.partners.institution.title']()}
+      </h2>
 
-    {#if locale === 'fr' || locale === 'en'}
-      <div class="cl-logos">
-        <img
-          src="/orgs/cnnum.png"
-          alt="Conseil national du numérique"
-          title="Conseil national du numérique"
-          width="112px"
-        />
-        <img src="/orgs/etalab.svg" alt="Etalab" title="Etalab" width="240px" />
-        <img
-          src="/orgs/peren.svg"
-          alt="PEReN, Pôle d'expertise de la régulation numérique"
-          title="Pôle d'expertise de la régulation numérique (PEReN)"
-          width="240px"
-        />
-      </div>
-    {:else if locale === 'da'}
       <img
         src="/orgs/countries/da-light.png"
         alt={m['header.logoAlt']()}
@@ -42,8 +26,8 @@
         alt={m['header.logoAlt']()}
         class="hidden max-h-[75px] dark:block"
       />
-    {/if}
-  </section>
+    </section>
+  {/if}
 
   {#if locale === 'fr' || locale === 'en'}
     <section class="cg-border cl-card">

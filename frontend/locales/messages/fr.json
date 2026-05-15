@@ -98,19 +98,19 @@
   "datasets": {
     "access": {
       "catch": "Editeurs de modèles, chercheurs, chercheuses, entreprises, à vous de jouer !",
-      "desc": "Les questions et préférences posées sur la plateforme sont majoritairement en français et reflètent des usages réels et non contraints. Ces jeux de données sont accessibles sur <a {linkProps}>data.gouv</a> et Hugging Face.",
+      "desc": "Les votes que vous exprimez et les questions que vous posez sont publiés en jeu de données ouvert sur Hugging Face (<a {linkProps}>comparag-tool-votes</a>). Aucune donnée personnelle n'est conservée.",
       "repos": {
         "conversations": {
-          "desc": "Ensemble des réponses et des questions posées",
-          "title": "/conversations"
+          "desc": "Chaque manche : question posée, document soumis, deux outils RAG tirés.",
+          "title": "comparisons"
         },
         "reactions": {
-          "desc": "Ensemble des réactions exprimées",
-          "title": "/réactions"
+          "desc": "Ce que chaque outil a répondu, avec la durée, le LLM utilisé et le verdict éventuel.",
+          "title": "tool_calls"
         },
         "votes": {
-          "desc": "Ensemble des préférences exprimées",
-          "title": "/votes"
+          "desc": "La préférence exprimée (A, B ou égalité) et la note d'atteinte du but.",
+          "title": "votes"
         }
       },
       "share": "Partagez-nous vos réutilisations",
@@ -201,8 +201,8 @@
     "dpg": "Le service est reconnu comme un bien public numérique par l’Alliance Digital Public Goods",
     "helpUs": "Aidez-nous à améliorer ce service !",
     "license": {
-      "linkTitle": "Licence etalab - nouvelle fenêtre",
-      "mention": "Sauf mention explicite de propriété intellectuelle détenue par des tiers, les contenus de ce site sont proposés sous <a {linkProps}>licence etalab-2.0</a>"
+      "linkTitle": "Code source du projet sur GitHub",
+      "mention": "Le code source de cette application est disponible en open source sur <a {linkProps}>GitHub</a>."
     },
     "links": {
       "accessibility": "Accessibilité : non conforme",
@@ -216,12 +216,12 @@
   },
   "general": {
     "a11y": {
-      "desc": "Cette déclaration d’accessibilité s’applique au site <strong>le site CompaRAG</strong>.",
+      "desc": "Cette déclaration d'accessibilité s'applique au site <strong>CompaRAG</strong>.",
       "disclaimer": "<strong>CompaRAG</strong> s’engage à rendre ses services numériques accessibles, conformément à l’article 47 de la loi n° 2005-102 du 11 février 2005.",
-      "improveAdress": "Adresse : DINUM, 20 avenue de Ségur 75007 Paris",
+      "improveAdress": "Le projet est maintenu en open source. Issues : <a {linkProps}>github.com/ArthurSrz/CompaRAG</a>",
       "improveDelay": "Nous essayons de répondre dans les 2 jours ouvrés.",
-      "improveDesc": "Si vous n’arrivez pas à accéder à un contenu ou à un service, vous pouvez contacter le responsable de beta.gouv.fr pour être orienté·e vers une alternative accessible ou obtenir le contenu sous une autre forme.",
-      "improveMail": "Courriel : <a {linkProps}>contact@beta.gouv.fr</a>",
+      "improveDesc": "Si vous rencontrez un contenu ou un service inaccessible, ouvrez une issue sur le dépôt GitHub du projet pour être orienté·e vers une alternative.",
+      "improveMail": "Issues GitHub : <a {linkProps}>github.com/ArthurSrz/CompaRAG/issues</a>",
       "improveTitle": "Amélioration et contact",
       "remedyAdvocate": "Écrire un message au <a {linkProps}>Défenseur des droits</a>",
       "remedyAdvocateAdress": "Envoyer un courrier par la poste (gratuit, ne pas mettre de timbre) : Défenseur des droits - Libre réponse 71120 75342 Paris CEDEX 07",
@@ -229,7 +229,7 @@
       "remedyDesc": "Cette procédure est à utiliser dans le cas suivant : vous avez signalé au responsable du site internet un défaut d’accessibilité qui vous empêche d’accéder à un contenu ou à un des services du portail et vous n’avez pas obtenu de réponse satisfaisante.",
       "remedyList": "Vous pouvez :",
       "remedyTitle": "Voie de recours",
-      "stateDesc": "Le site le site CompaRAG est non conforme avec le RGAA 4.1. Le site n’a <strong>pas encore été audité</strong>. Il a cependant été conçu pour être accessible au plus grand nombre. Vous devriez donc pouvoir :",
+      "stateDesc": "Le site CompaRAG n'a <strong>pas encore été audité</strong> au regard du RGAA. Il a cependant été conçu pour être accessible au plus grand nombre. Vous devriez donc pouvoir :",
       "stateNavigate": "naviguer sur toutes les pages du site en utilisant un clavier",
       "statePrefs": "adapter le site à votre préférences (taille de la police, zoom écran, changement de typographie…) sans perte de contenu",
       "stateScreenReader": "consulter le site web avec un lecteur d’écran.",
@@ -239,9 +239,9 @@
     "legal": {
       "a11yDesc": "La conformité aux normes d’accessibilité numérique est un objectif ultérieur mais nous tâchons de rendre ce site accessible à toutes et à tous.",
       "a11yTitle": "Accessibilité",
-      "directorDesc": "Monsieur Romain Delassus, chef du service du numérique du Ministère de la Culture",
+      "directorDesc": "Le mainteneur du projet open source CompaRAG.",
       "directorTitle": "Directeur de la publication",
-      "editorDesc": "Ce site est édité par le Ministère de la culture, 182, rue Saint-Honoré 75001 Paris",
+      "editorDesc": "CompaRAG est un projet open source maintenu sur GitHub : <a {linkProps}>github.com/ArthurSrz/CompaRAG</a>.",
       "editorTitle": "Éditeur",
       "hostingDesc": "Ce site est hébergé par OVH SAS (<a {linkProps}>https://www.ovh.com</a>) dont le siège social est situé au 2 rue Kellermann - 59100 Roubaix - France.",
       "hostingTitle": "Hébergement du site",
@@ -252,7 +252,7 @@
       "securityCertif": "Le site est protégé par un certificat électronique, matérialisé pour la grande majorité des navigateurs par un cadenas. Cette protection participe à la confidentialité des échanges.",
       "securityNoMail": "En aucun cas les services associés à la plateforme ne seront à l’origine d’envoi de courriels pour demander la saisie d’informations personnelles.",
       "securityTitle": "Sécurité",
-      "sources": "Sauf mention contraire, tous les textes de ce site sont sous <a {etalabLinkProps}>licence Etalab Open 2.0</a>. Le code source de cette application est librement réutilisable et accessible sur <a {githubLinkProps}>GitHub</a>.",
+      "sources": "Sauf mention contraire, le code source de cette application est librement réutilisable et accessible sur <a {githubLinkProps}>GitHub</a> sous licence ouverte.",
       "title": "Mentions légales"
     },
     "privacy": {
@@ -263,21 +263,21 @@
       "cookiesDesc": "Ce site dépose un petit fichier texte (un « cookie ») sur votre ordinateur lorsque vous le consultez. Cela nous permet de mesurer le nombre de visites et de comprendre quelles sont les pages les plus consultées.",
       "cookiesDescMore": "Vous pouvez vous opposer au suivi de votre navigation sur ce site web. Cela protégera votre vie privée, mais empêchera également le propriétaire d'apprendre de vos actions et de créer une meilleure expérience pour vous et les autres utilisateurs.",
       "cookiesTitle": "Cookies déposés et consentement",
-      "dataAccessDatasets": "Les données de dialogue et de préférence de l’utilisateur sont distribuées sous la Licence Ouverte 2.0 d'Etalab sur la plateforme Hugging Face à travers le compte du ministère de la culture (<a {linkProps}>https://huggingface.co/ministere-culture</a>).",
-      "dataAccessDesc": "Bien sûr ! Les statistiques d’usage du site sont disponibles en accès libre sur <a {linkProps}>stats.beta.gouv.fr</a>.",
+      "dataAccessDatasets": "Les données de dialogue et de préférence sont publiées sous licence ouverte sur Hugging Face : <a {linkProps}>huggingface.co/datasets/ArthurSrz/comparag-tool-votes</a>.",
+      "dataAccessDesc": "Le code du projet est public sur GitHub. Aucune statistique d'usage n'est publiée pour le moment.",
       "dataAccessTitle": "Je contribue à enrichir vos données, puis-je y accéder ?",
       "dataExtraCountry": "Pays destinataire : France",
       "dataExtraHost": "Sous-traitant : OVH",
       "dataExtraTitle": "Qui nous aide à traiter les données ?",
       "dataExtraWarranty": "Garanties : <a {linkProps}>https://storage.gra.cloud.ovh.net/v1/AUTH_325716a587c64897acbef9a4a4726e38/contracts/9e74492-OVH_Data_Protection_Agreement-FR-6.0.pdf</a>",
       "dataExtraWhat": "Traitement réalisé : Hébergement",
-      "dataRespDesc": "Le service du numérique du ministère de la Culture est le responsable du traitement de vos données à caractère personnel.",
+      "dataRespDesc": "Le mainteneur du projet open source CompaRAG est responsable du traitement de vos données à caractère personnel.",
       "dataRespTitle": "Qui est responsable du traitement des données ?",
       "dataTimeDesc": "Les données relatives aux utilisateurs et à leurs conversations avec les modèles sont conservées à compter de l’enregistrement du vote de préférence.",
       "dataTimeTitle": "Pendant combien de temps conservons-nous ces données ?",
       "dataUseDesc": "En tout état de cause, l’éditeur s’engage à mettre en œuvre les moyens permettant de s’assurer de l’anonymisation des données de dialogue avant leur mise à disposition publique.",
       "dataUseTitle": "Quels sont les traitements réalisés sur les données de conversation ?",
-      "desc": "Le service est édité par le service du numérique du ministère de la Culture.",
+      "desc": "Le service est édité par le mainteneur du projet open source CompaRAG.",
       "privacyData": "Les données collectées sur le site sont les suivantes :",
       "privacyDataArena": "Données relatives aux conversations des utilisateurs avec les modèles : questions posées par les utilisateurs, réponses des modèles et préférence exprimée par l’utilisateur sur les deux modèles",
       "privacyDataForm": "Données relatives au questionnaire « Nous aider à améliorer CompaRAG ».",
@@ -293,10 +293,10 @@
     },
     "rgesn": {
       "1": {
-        "1": "Le site CompaRAG permet de donner accès simplement et gratuitement à une très grande diversité de modèles d'IA conversationnelle et ainsi de sensibiliser les citoyens aux divers enjeux des IA génératives : diversité, biais, impact environnemental. Par ailleurs, les jeux de données de questions et de préférences constitués sont partagés en open source sous licence MIT/Etalab 2.0.",
+        "1": "Le site CompaRAG permet de comparer en aveugle plusieurs outils de RAG (Retrieval-Augmented Generation) sur une même question, et de constituer un jeu de données ouvert de préférences humaines entre ces outils. Cette transparence sert à la fois la recherche (mesurer la qualité des pipelines de récupération) et l'écosystème (orienter les choix techniques).",
         "2": "Les cibles utilisatrices du service CompaRAG ont été identifiées en procédant à des entretiens utilisateurs et une phase préalable d'investigation des besoins.",
         "3": "Ainsi, tous les citoyens sont concernés comme utilisateurs potentiels, mais particulièrement les professeurs, élèves, étudiants, médiateurs numériques, formateurs IA, ainsi que chercheurs (computer sciences, IA, SHS) et entreprises intéressées par l'analyse ou l’utilisation des jeux de données partagés en open source.<br> En cohérence, le service numérique répond à leurs besoins grâce aux fonctionnalités suivantes : tester et comparer gratuitement les modèles, utiliser les données partagées en open source.",
-        "4": "Le service CompaRAG s’inscrit dans une démarche d’écoconception visant à réduire les impacts environnementaux. À cette fin, la déclaration a été rédigée dans le cadre de la mise en œuvre du référentiel général de l’écoconception des services numériques (RGESN, version 2024).<br> Le RGESN, réalisé par l’Arcep et l’Arcom, en collaboration avec l’ADEME, la DINUM, la CNIL et l’Inria, est disponible sur le <a {linkProps}>site web de l’Arcep</a>.",
+        "4": "Le projet adopte les principes d'écoconception des services numériques (cache de réponses, indexation paresseuse du corpus, pas d'analytics tiers). Le code est public sur GitHub : <a {githubLinkProps}>github.com/ArthurSrz/CompaRAG</a>.",
         "title": "Raison d’être de ce service"
       },
       "2": {
@@ -385,14 +385,14 @@
     "tos": {
       "contactDesc": "Pour toute question sur le service, vous pouvez écrire à <a {linkProps}>{contactLink}</a>.",
       "contactTitle": "9. Contact",
-      "defsEditor": "« Éditeur » désigne le Service du numérique du Ministère de la Culture.",
+      "defsEditor": "« Éditeur » désigne le mainteneur du projet open source CompaRAG.",
       "defsModels": "« Modèles » désigne les grands modèles de langage (LLM) réutilisés dans le cadre de leur licence d’utilisation par la plateforme pour répondre à ses finalités.",
       "defsPlatform": "« Plateforme » désigne le site web qui rend les services accessibles.",
       "defsServices": "« Services » désigne les fonctionnalités offertes par la plateforme pour répondre à ses finalités.",
       "defsTitle": "2. Définitions",
       "defsUser": "« Utilisateur » désigne toute personne physique consultant la plateforme et qui bénéficie de ses services.",
       "descDatasets": "Ces jeux de données seront rendus accessibles sous licence ouverte, notamment pour favoriser des usages de recherche.",
-      "descEditor": "Édité par le Service du numérique du Ministère de la Culture, le comparateur est une plateforme de comparaison des modèles conversationnels adressée au grand public dans le but (1) de sensibiliser les citoyens aux grands modèles de langage (LLMs), (2) de collecter les préférences des utilisateurs pour constituer des jeux de données d’alignement.",
+      "descEditor": "CompaRAG est une plateforme de comparaison en aveugle d'outils RAG, adressée au grand public dans le but (1) de mesurer la qualité réelle des outils RAG sur des questions posées par des utilisateurs, (2) de collecter les préférences humaines pour produire un jeu de données ouvert, et (3) de classer les outils selon ces préférences.",
       "descTitle": "3. Description de la plateforme",
       "descUse": "L’utilisateur ou l’utilisatrice pose une question en français et obtient des réponses de deux grands modèles de langages (LLM) anonymes. Il ou elle vote pour le modèle qui fournit la réponse qu’il préfère et se voit alors révélée l’identité des modèles. Ce dispositif de production participative inspiré de la plateforme <a {linkProps}>« chatbot arena » (LMSYS)</a> permet de constituer des jeux de données de préférences humaines sur des tâches réelles, en français, utilisables pour l’alignement des modèles.",
       "dispoDesc": "La plateforme est accessible, sauf cas de force majeure ou d’évènement hors de contrôle de son éditeur.",
@@ -404,7 +404,7 @@
       "evoDescMore": "Ces modifications et mises à jour s’imposent à l’utilisateur ou l’utilisatrice qui doit, en conséquence, se référer régulièrement à cette rubrique pour vérifier les modalités générales en vigueur.",
       "evoTitle": "8. Évolution des modalités d'utilisation",
       "featuresDatasets": "Le service collecte les données de dialogue (questions, réponses des deux modèles) et les préférences des utilisateurs (vote, métadonnées associées). Ces données servent à la fois à constituer des jeux de données partagés et à établir un classement des modèles d'IA affiché sur la plateforme, basé sur les votes exprimés.",
-      "featuresDatasetsMore": "L’éditeur se réserve le droit de distribuer sous licence ouverte 2.0 les données de dialogue et de préférence de l’utilisateur. Le jeu de données est diffusé sur la plateforme Hugging Face à travers le compte du ministère de la culture (<a {linkProps}>https://huggingface.co/ministere-culture</a>).",
+      "featuresDatasetsMore": "L'éditeur publie sous licence ouverte les données de dialogue et de préférence des utilisateurs sur Hugging Face : <a {linkProps}>huggingface.co/datasets/ArthurSrz/comparag-tool-votes</a>.",
       "featuresDesc": "Afin de répondre au double objectif de sensibiliser les citoyens aux grands modèles de langage et collecter les préférences des utilisateurs et utilisatrices, les services rendus par la plateforme sans restriction d’accès sont les suivants :",
       "featuresDescMore": "Une interface humain-machine permettant de dialoguer simultanément avec deux modèles conversationnels et de voter pour la réponse préférée.",
       "featuresModels": "Les modèles intégrés à la plateforme sont déployés sur les serveurs d’inférence des différents hébergeurs et éditeurs de modèles. Les requêtes sont gérées notamment par le service Open Router. Les conditions de standardisation d’inférence sont renseignées sur la plateforme pour garantir la transparence d’utilisation des modèles.",

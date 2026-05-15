@@ -93,19 +93,19 @@
   "datasets": {
     "access": {
       "catch": "Modelio leidėjai, tyrėjai, įmonės, dabar jūsų eilė!",
-      "desc": "Platformos klausimai ir pageidavimai yra pateikiami daugiausia prancūzų, danų, švedų ir lietuvių kalbomis, atspindintys natūralų, realaus naudojimo kontekstą, o ne dirbtinius užklausimus. Šie duomenų rinkiniai yra viešai prieinami <a {linkProps}>data.gouv.fr</a> ir Hugging Face.",
+      "desc": "The votes you cast and the questions you ask are published as an open dataset on Hugging Face (<a {linkProps}>comparag-tool-votes</a>). No personal data is kept.",
       "repos": {
         "conversations": {
-          "desc": "Visi klausimai ir atsakymai",
-          "title": "/pokalbiai"
+          "desc": "Each round: the question, the document submitted, and the two RAG tools drawn.",
+          "title": "comparisons"
         },
         "reactions": {
-          "desc": "Visos reakcijos į žinutes",
-          "title": "/reakcijos"
+          "desc": "What each tool answered, with duration, LLM used, and the judge verdict if any.",
+          "title": "tool_calls"
         },
         "votes": {
-          "desc": "Visi išreikšti pasirinkimai",
-          "title": "/balsai"
+          "desc": "The expressed preference (A, B, or tie) and the goal-attainment rating.",
+          "title": "votes"
         }
       },
       "share": "Parodyk mums, kaip panaudoji duomenis",
@@ -267,6 +267,37 @@
     "unavailable": {
       "title": "Tools temporarily unavailable",
       "message": "The tool is temporarily unavailable. Please try again later."
+    }
+  },
+  "general": {
+    "a11y": {
+      "desc": "This accessibility statement applies to the <strong>CompaRAG</strong> website.",
+      "improveAdress": "The project is open-source. Issues: <a {linkProps}>github.com/ArthurSrz/CompaRAG</a>",
+      "improveDesc": "If you encounter inaccessible content or service, open an issue on the project's GitHub repository to be directed to an accessible alternative.",
+      "improveMail": "GitHub issues: <a {linkProps}>github.com/ArthurSrz/CompaRAG/issues</a>",
+      "stateDesc": "The CompaRAG website has <strong>not yet been audited</strong> against RGAA. It has however been designed to be accessible to as many people as possible. You should therefore be able to:"
+    },
+    "legal": {
+      "directorDesc": "The maintainer of the open-source project CompaRAG.",
+      "editorDesc": "CompaRAG is an open-source project maintained on GitHub: <a {linkProps}>github.com/ArthurSrz/CompaRAG</a>.",
+      "sources": "Unless otherwise stated, the source code of this application is freely reusable and accessible on <a {githubLinkProps}>GitHub</a> under an open license."
+    },
+    "privacy": {
+      "dataAccessDatasets": "Dialogue and preference data are published under an open license on Hugging Face: <a {linkProps}>huggingface.co/datasets/ArthurSrz/comparag-tool-votes</a>.",
+      "dataAccessDesc": "The project's code is public on GitHub. No usage statistics are currently published.",
+      "dataRespDesc": "The maintainer of the open-source CompaRAG project is the data controller for your personal data.",
+      "desc": "The service is operated by the maintainer of the open-source CompaRAG project."
+    },
+    "rgesn": {
+      "1": {
+        "1": "CompaRAG lets users blindly compare several RAG (Retrieval-Augmented Generation) tools on the same question and produces an open dataset of human preferences between these tools. This transparency serves both research (measuring the quality of retrieval pipelines) and the ecosystem (guiding technical choices).",
+        "4": "The project follows eco-design principles for digital services (response cache, lazy corpus indexing, no third-party analytics). The code is public on GitHub: <a {githubLinkProps}>github.com/ArthurSrz/CompaRAG</a>."
+      }
+    },
+    "tos": {
+      "defsEditor": "\"Editor\" designates the maintainer of the open-source project CompaRAG.",
+      "descEditor": "CompaRAG is a platform for blindly comparing RAG tools, aimed at the general public, with three goals: (1) measure the real-world quality of RAG tools on user questions, (2) collect human preferences to produce an open dataset, and (3) rank tools according to those preferences.",
+      "featuresDatasetsMore": "The editor publishes the dialogue and preference data under an open license on Hugging Face: <a {linkProps}>huggingface.co/datasets/ArthurSrz/comparag-tool-votes</a>."
     }
   }
 }

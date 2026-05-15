@@ -49,11 +49,17 @@
       <li>
         {@html sanitize(
           m['general.a11y.improveMail']({
-            linkProps: externalLinkProps('mailto:contact@beta.gouv.fr')
+            linkProps: externalLinkProps('https://github.com/ArthurSrz/CompaRAG/issues')
           })
         )}
       </li>
-      <li>{m['general.a11y.improveAdress']()}</li>
+      <li>
+        {@html sanitize(
+          m['general.a11y.improveAdress']({
+            linkProps: externalLinkProps('https://github.com/ArthurSrz/CompaRAG')
+          })
+        )}
+      </li>
     </ul>
     <p>{m['general.a11y.improveDelay']()}</p>
 

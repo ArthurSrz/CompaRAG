@@ -236,7 +236,7 @@
           <Link
             button
             size="lg"
-            href="mailto:simonas.zilinskas@beta.gouv.fr"
+            href="https://github.com/ArthurSrz/CompaRAG/issues"
             text="Nous contacter pour en savoir plus"
           />
         </div>
