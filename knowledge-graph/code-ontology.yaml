@@ -103,10 +103,24 @@ entities:
         externes. La traduction `question → (task=question, goal=question)`
         se fait dans ask_one_tool.py.
       currently_known_instances:
-        - langchain_rag (legacy standalone, port 8010)
-        - llamaindex_rag (legacy standalone, port 8011)
-        - rag_pill (unified, wraps 5 engines)
-        - clarifeye (agentic OAuth tool, external)
+        - "summary_default__langchain (rag_pill pill — paragraph summary via LangChain+FAISS)"
+        - "summary_default__llamaindex (rag_pill pill — paragraph summary via LlamaIndex)"
+        - "summary_default__haystack (rag_pill pill — paragraph summary via Haystack)"
+        - "summary_default__txtai (rag_pill pill — paragraph summary via txtai)"
+        - "summary_default__chroma_baseline (rag_pill pill — paragraph summary via Chroma baseline)"
+        - "qa_broad__langchain (rag_pill pill — broad QA via LangChain+FAISS)"
+        - "qa_broad__llamaindex (rag_pill pill — broad QA via LlamaIndex)"
+        - "qa_broad__haystack (rag_pill pill — broad QA via Haystack)"
+        - "qa_broad__txtai (rag_pill pill — broad QA via txtai)"
+        - "qa_broad__chroma_baseline (rag_pill pill — broad QA via Chroma baseline)"
+        - "qa_precise__langchain (rag_pill pill — precise QA via LangChain+FAISS)"
+        - "qa_precise__llamaindex (rag_pill pill — precise QA via LlamaIndex)"
+        - "qa_precise__haystack (rag_pill pill — precise QA via Haystack)"
+        - "qa_precise__txtai (rag_pill pill — precise QA via txtai)"
+        - "qa_precise__chroma_baseline (rag_pill pill — precise QA via Chroma baseline)"
+        - "clarifeye (agentic OAuth tool, external — currently disabled)"
+        - "langchain_rag (LEGACY standalone, moved to _legacy_standalone_servers/)"
+        - "llamaindex_rag (LEGACY standalone, moved to _legacy_standalone_servers/)"
 
   - id: rag_engine
     type: DomainEntity
