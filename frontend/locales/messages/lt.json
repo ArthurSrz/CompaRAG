@@ -92,7 +92,7 @@
   },
   "datasets": {
     "access": {
-      "catch": "Modelio leidėjai, tyrėjai, įmonės, dabar jūsų eilė!",
+      "catch": "RAG tool authors, researchers, product teams: your turn!",
       "desc": "The votes you cast and the questions you ask are published as an open dataset on Hugging Face (<a {linkProps}>comparag-tool-votes</a>). No personal data is kept.",
       "repos": {
         "conversations": {
@@ -286,18 +286,38 @@
       "dataAccessDatasets": "Dialogue and preference data are published under an open license on Hugging Face: <a {linkProps}>huggingface.co/datasets/ArthurSrz/comparag-tool-votes</a>.",
       "dataAccessDesc": "The project's code is public on GitHub. No usage statistics are currently published.",
       "dataRespDesc": "The maintainer of the open-source CompaRAG project is the data controller for your personal data.",
-      "desc": "The service is operated by the maintainer of the open-source CompaRAG project."
+      "desc": "The service is operated by the maintainer of the open-source CompaRAG project.",
+      "dataTimeDesc": "Data related to users and their RAG tool comparisons are kept from the moment the preference vote is recorded.",
+      "privacyDataArena": "Data related to comparisons: questions asked by users, the answers from both RAG tools, and the user's expressed preference."
     },
     "rgesn": {
       "1": {
         "1": "CompaRAG lets users blindly compare several RAG (Retrieval-Augmented Generation) tools on the same question and produces an open dataset of human preferences between these tools. This transparency serves both research (measuring the quality of retrieval pipelines) and the ecosystem (guiding technical choices).",
-        "4": "The project follows eco-design principles for digital services (response cache, lazy corpus indexing, no third-party analytics). The code is public on GitHub: <a {githubLinkProps}>github.com/ArthurSrz/CompaRAG</a>."
+        "4": "The project follows eco-design principles for digital services (response cache, lazy corpus indexing, no third-party analytics). The code is public on GitHub: <a {githubLinkProps}>github.com/ArthurSrz/CompaRAG</a>.",
+        "3": "The service is mainly aimed at RAG developers, information-retrieval researchers, product teams who need to choose a RAG pipeline for their application, and trainers who want to explain concrete differences between RAG approaches."
+      },
+      "3": {
+        "1": {
+          "1": "Simplified user experience: navigation paths are optimised around the essential features of CompaRAG (ask a question, compare two tools blindly, vote, reveal the identities).",
+          "2": "User awareness about the ecological footprint of the service: where available, the energy cost of each RAG tool call is surfaced, and a single shared LLM is used across tools to keep the comparison fair and limit cost."
+        }
+      },
+      "7": {
+        "5": "Allow the user to interrupt inference (answer loading) during the comparison of two RAG tools."
       }
     },
     "tos": {
       "defsEditor": "\"Editor\" designates the maintainer of the open-source project CompaRAG.",
       "descEditor": "CompaRAG is a platform for blindly comparing RAG tools, aimed at the general public, with three goals: (1) measure the real-world quality of RAG tools on user questions, (2) collect human preferences to produce an open dataset, and (3) rank tools according to those preferences.",
-      "featuresDatasetsMore": "The editor publishes the dialogue and preference data under an open license on Hugging Face: <a {linkProps}>huggingface.co/datasets/ArthurSrz/comparag-tool-votes</a>."
+      "featuresDatasetsMore": "The editor publishes the dialogue and preference data under an open license on Hugging Face: <a {linkProps}>huggingface.co/datasets/ArthurSrz/comparag-tool-votes</a>.",
+      "defsModels": "\"RAG tools\" designates the Retrieval-Augmented Generation pipelines compared on the platform — each combines an information-retrieval mechanism with a language model to produce an answer.",
+      "descUse": "The user asks a question (and optionally uploads a document) and gets answers from two anonymous RAG tools. They vote for the answer that best matches their question. Data is collected throughout in compliance with privacy, and the resulting datasets are published open source.",
+      "featuresDesc": "To meet the dual goal of informing RAG architecture choices and collecting user preferences, the services offered by the platform without access restrictions are the following:",
+      "featuresDescMore": "A human-machine interface to send the same question to two RAG tools and vote for the preferred answer.",
+      "featuresModels": "The RAG tools integrated into the platform are deployed on their own servers or exposed via the MCP protocol. The platform queries them in parallel on the user's question, without revealing their identity before the vote.",
+      "featuresModelsMore": "A comparison interface for RAG tools.",
+      "featuresVote": "The user can view the list of RAG tools integrated into the comparator and access their characteristics (framework, architectural choices, performance).",
+      "featuresDatasets": "The service collects comparison data (questions, answers from both RAG tools) and user preferences (vote, associated metadata). This data is used to build an open dataset and a public ranking of RAG tools displayed on the platform."
     }
   },
   "home": {

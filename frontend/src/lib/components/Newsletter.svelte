@@ -1,3 +1,14 @@
+<!--
+  BUT : afficher un encart d'inscription à l'infolettre du projet, rendu via
+  un iframe Tally.so. Le formulaire Tally lui-même (titre, libellés des
+  champs, libellé de consentement) est défini SUR TALLY.SO — pas dans ce
+  repo. Le formulaire pointé ci-dessous (zxKR40) est hérité du fork upstream
+  et mentionne encore « compar:IA » dans la case de consentement ; pour
+  corriger ce libellé il faut soit créer un nouveau formulaire Tally et
+  remplacer l'URL, soit éditer zxKR40 sur tally.so.
+
+  TODO: replace zxKR40 by a CompaRAG-owned Tally form.
+-->
 <script lang="ts">
   import { Icon, Link } from '$components/dsfr'
 </script>
