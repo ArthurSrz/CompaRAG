@@ -1,7 +1,6 @@
 <script lang="ts">
   import { Accordion, AccordionGroup, Button, Checkbox, Icon, Link } from '$components/dsfr'
   import HowItWorks from '$components/HowItWorks.svelte'
-  import Newsletter from '$components/Newsletter.svelte'
   import * as env from '$env/static/public'
   import { getI18nContext } from '$lib/global.svelte'
   import { useLocalStorage } from '$lib/helpers/useLocalStorage.svelte'
@@ -230,10 +229,6 @@
       </div>
     </div>
   </section>
-
-  {#if locale === 'fr'}
-    <Newsletter />
-  {/if}
 </main>
 
 <style lang="postcss">
