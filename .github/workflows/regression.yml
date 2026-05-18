@@ -42,6 +42,15 @@ jobs:
             --ignore=mcp_servers/rag_pill/tests/test_txtai_external_method.py \
             -q --no-header
 
+      - name: scripts regression suite
+        # Guards register_tool.py against re-introducing the
+        # mcp_servers.json-vs-external.json drift and the yaml.safe_dump
+        # ontology-stripping bug.
+        run: uv run pytest scripts/tests -q --no-header
+
+      - name: mcp_servers.json is generator output (not hand-edited)
+        run: uv run python scripts/generate_mcp_registry.py --check
+
       - name: Ontology ↔ mcp_servers.json consistency
         run: uv run python scripts/register_tool.py --check
 

@@ -1,8 +1,10 @@
 # Manifeste d'un nouveau RAGTool — décrit comment l'outil entre dans l'arène.
 #
 # Copier ce dossier sous `mcp_servers/<slug_de_l_outil>/`, remplir les champs
-# ci-dessous, puis lancer `python scripts/register_tool.py <slug_de_l_outil>`
-# pour l'enregistrer automatiquement dans mcp_servers.json + code-ontology.yaml.
+# ci-dessous, puis lancer `python scripts/register_tool.py <slug_de_l_outil>`.
+# Ce script écrit dans `mcp_servers.external.json` (source de vérité des
+# outils standalone), régénère `mcp_servers.json` via le générateur, et
+# insère une ligne dans `code-ontology.yaml#rag_tool.currently_known_instances`.
 #
 # Source de vérité : knowledge-graph/code-ontology.yaml (entité RAGTool).
 

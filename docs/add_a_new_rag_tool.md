@@ -57,9 +57,19 @@ python scripts/register_tool.py <slug>
 
 Le script met à jour automatiquement :
 
-- `mcp_servers.json` (ajout de l'entrée — Railway / dispatcher).
-- `knowledge-graph/code-ontology.yaml` (ajout de l'instance sous l'entité
-  `RAGTool`).
+- `mcp_servers.external.json` (source de vérité pour les outils standalone
+  — c'est ce fichier qu'éditent les commits, jamais `mcp_servers.json`).
+- `mcp_servers.json` (régénéré par `scripts/generate_mcp_registry.py` à
+  partir de `rag_pill/pills/` + `mcp_servers.external.json` ; les deux
+  doivent être commités ensemble).
+- `knowledge-graph/code-ontology.yaml` : une ligne insérée dans
+  `rag_tool.metadata.currently_known_instances` (édition texte, donc
+  commentaires et formatage préservés).
+
+NB : les pills de `rag_pill` (LangChain, LlamaIndex, etc.) ne passent
+**pas** par ce script — elles sont matérialisées à partir de
+`mcp_servers/rag_pill/pills/*.yaml` par le générateur. Ce script ne sert
+qu'aux outils standalone (un dossier sous `mcp_servers/`).
 
 ### 5. Vérifier
 
