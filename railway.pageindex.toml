@@ -1,0 +1,28 @@
+# PageIndex MCP server — Railway service config.
+#
+# Mirrors the railway.cron.toml pattern: one Railway service per .toml file,
+# all sourcing the same repo. To wire this up in the Railway dashboard:
+#
+#   1. New service → "Empty service"
+#   2. Connect this repo
+#   3. Settings → Config-as-code → Config File Path = railway.pageindex.toml
+#   4. Settings → Variables: set OPENROUTER_API_KEY (PageIndex uses LiteLLM
+#      routed to OpenRouter, see mcp_servers/pageindex/server.py)
+#   5. After first deploy, copy the service's public URL and set it as
+#      MCP_PAGEINDEX_URL=https://<service>.up.railway.app/mcp on the BACKEND
+#      service — that's the convention-based override read by
+#      backend/tool_arena/config.py:164-172.
+
+[build]
+builder = "DOCKERFILE"
+dockerfilePath = "mcp_servers/pageindex/Dockerfile"
+
+[deploy]
+# PageIndex is a long-running HTTP server (FastMCP). Restart on crash; do
+# not retry forever to avoid runaway loops on OPENROUTER_API_KEY misconfig.
+restartPolicyType = "ON_FAILURE"
+restartPolicyMaxRetries = 5
+
+# Health-check endpoint (returns 200 "OK") — defined in server.py:46-48.
+healthcheckPath = "/health"
+healthcheckTimeout = 10
