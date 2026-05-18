@@ -377,7 +377,7 @@
   {
     "id": "pageindex",
     "name": "PageIndex",
-    "description": "RAG sans vecteurs : arbre hi\u00e9rarchique du document + raisonnement LLM pour r\u00e9pondre, fort sur les documents longs et structur\u00e9s.",
+    "description": "RAG sans vecteurs : arbre hiérarchique du document + raisonnement LLM pour répondre, fort sur les documents longs et structurés.",
     "endpoint": "http://localhost:8013/mcp",
     "transport": "streamablehttp",
     "tools": [
