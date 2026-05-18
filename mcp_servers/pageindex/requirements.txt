@@ -1,0 +1,10 @@
+# Runtime dependencies for the PageIndex MCP server.
+# PageIndex itself is vendored as a git submodule at vendor/PageIndex/ since
+# upstream ships no setup.py / pyproject.toml.
+fastmcp>=2.0.0
+# PageIndex's own deps (mirrors vendor/PageIndex/requirements.txt).
+litellm>=1.83.7
+pymupdf>=1.26.4
+PyPDF2>=3.0.1
+python-dotenv>=1.2.2
+pyyaml>=6.0

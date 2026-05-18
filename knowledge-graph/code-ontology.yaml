@@ -121,6 +121,7 @@ entities:
         - "clarifeye (agentic OAuth tool, external — currently disabled)"
         - "langchain_rag (LEGACY standalone, moved to _legacy_standalone_servers/)"
         - "llamaindex_rag (LEGACY standalone, moved to _legacy_standalone_servers/)"
+        - "pageindex (RAG sans vecteurs : arbre hiérarchique du document + raisonnement LLM pour répondre, fort sur les documents longs et structurés.)"
 
   - id: rag_engine
     type: DomainEntity

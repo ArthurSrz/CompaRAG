@@ -1,1 +1,25 @@
-[]
+[
+  {
+    "id": "pageindex",
+    "name": "PageIndex",
+    "description": "RAG sans vecteurs : arbre hiérarchique du document + raisonnement LLM pour répondre, fort sur les documents longs et structurés.",
+    "endpoint": "http://localhost:8013/mcp",
+    "transport": "streamablehttp",
+    "tools": [
+      "rag_query"
+    ],
+    "task_type": "qa",
+    "llm_id": "openrouter/mistralai/mistral-medium-3.1",
+    "sanitize": {
+      "url_patterns": [],
+      "metadata_keys": [],
+      "extra_terms": [
+        "PageIndex",
+        "pageindex",
+        "Vectify",
+        "VectifyAI",
+        "vectorless"
+      ]
+    }
+  }
+]

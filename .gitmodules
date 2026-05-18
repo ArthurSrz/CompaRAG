@@ -1,3 +1,6 @@
 [submodule "utils/ranking_methods"]
 	path = utils/ranking_methods
 	url = https://github.com/betagouv/ranking_methods/
+[submodule "mcp_servers/pageindex/vendor/PageIndex"]
+	path = mcp_servers/pageindex/vendor/PageIndex
+	url = https://github.com/VectifyAI/PageIndex.git
