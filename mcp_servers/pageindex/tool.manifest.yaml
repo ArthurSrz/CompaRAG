@@ -1,0 +1,42 @@
+# Manifeste PageIndex — RAGTool vectorless basé sur le raisonnement.
+#
+# PageIndex (https://github.com/VectifyAI/PageIndex) construit un arbre
+# hiérarchique (table-of-contents) du document et laisse un LLM raisonner
+# sur cet arbre pour retrouver et synthétiser une réponse. Pas de vecteurs,
+# pas de similarité cosinus — uniquement de la structure et du raisonnement.
+
+tool_id: pageindex
+
+display_name: PageIndex
+
+goal: |
+  RAG sans vecteurs : arbre hiérarchique du document + raisonnement LLM pour répondre, fort sur les documents longs et structurés.
+
+transport: streamable-http
+
+port: 8013
+
+endpoint: http://localhost:8013/mcp
+
+exposes:
+  - name: rag_query
+    args:
+      - {name: task,             type: str}
+      - {name: goal,             type: str}
+      - {name: document_content, type: str, default: ""}
+
+auth: none
+
+provider: openrouter
+
+task_type: qa
+
+sanitize:
+  url_patterns: []
+  metadata_keys: []
+  extra_terms:
+    - PageIndex
+    - pageindex
+    - Vectify
+    - VectifyAI
+    - vectorless

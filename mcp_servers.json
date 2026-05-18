@@ -373,5 +373,28 @@
         "chromadb"
       ]
     }
+  },
+  {
+    "id": "pageindex",
+    "name": "PageIndex",
+    "description": "RAG sans vecteurs : arbre hi\u00e9rarchique du document + raisonnement LLM pour r\u00e9pondre, fort sur les documents longs et structur\u00e9s.",
+    "endpoint": "http://localhost:8013/mcp",
+    "transport": "streamablehttp",
+    "tools": [
+      "rag_query"
+    ],
+    "task_type": "qa",
+    "llm_id": "openrouter/mistralai/mistral-medium-3.1",
+    "sanitize": {
+      "url_patterns": [],
+      "metadata_keys": [],
+      "extra_terms": [
+        "PageIndex",
+        "pageindex",
+        "Vectify",
+        "VectifyAI",
+        "vectorless"
+      ]
+    }
   }
 ]
