@@ -6,6 +6,7 @@ métier — il monte juste les routes des autres modules.
 Endpoints (par entité — cf. knowledge-graph/code-ontology.yaml) :
     POST /tool-arena/session     -> comparison/start_comparison_endpoint.py
     POST /tool-arena/compare     -> comparison/run_comparison_endpoint.py
+    POST /tool-arena/interview/* -> interview/run_interview_endpoints.py
     POST /tool-arena/vote        -> vote/cast_vote_endpoint.py
     GET  /tool-arena/reveal      -> blind_reveal/reveal_tool_identities_endpoint.py
     GET  /tool-arena/leaderboard -> leaderboard/show_leaderboard_endpoint.py
@@ -30,6 +31,7 @@ from backend.tool_arena.comparison.start_comparison_endpoint import (
     start_comparison_router,
 )
 from backend.tool_arena.document.serve_document_endpoint import documents_router
+from backend.tool_arena.interview.run_interview_endpoints import interview_router
 from backend.tool_arena.leaderboard.show_leaderboard_endpoint import leaderboard_router
 from backend.tool_arena.rag_tool.check_tools_are_ready_endpoint import dry_run_router
 from backend.tool_arena.vote.cast_vote_endpoint import vote_router
@@ -41,6 +43,7 @@ router.include_router(leaderboard_router)
 router.include_router(dry_run_router)
 router.include_router(start_comparison_router)
 router.include_router(run_comparison_router)
+router.include_router(interview_router)
 router.include_router(vote_router)
 router.include_router(reveal_router)
 

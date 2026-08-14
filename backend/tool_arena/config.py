@@ -112,7 +112,7 @@ class MCPServerConfig(BaseModel):
     # Task taxonomy for pill-based contestants. When set, the dispatcher will
     # only pair entries that share the same task_type (fairness invariant from
     # equifinality framework). None = legacy entry, eligible for any pairing.
-    task_type: Literal["summary", "qa", "extraction"] | None = None
+    task_type: Literal["summary", "qa", "extraction", "knowledge_capture"] | None = None
     # Identifier of the LLM used by this server to generate the answer.
     # Each MCP server is responsible for its own RAG generation; this field
     # only carries the model name through to MCPToolCall.llm_id for analytics.

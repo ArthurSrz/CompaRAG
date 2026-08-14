@@ -2082,6 +2082,11 @@
           "label": "Extraction",
           "prompt": "Extrait du document les informations clés sous forme structurée (liste, tableau).",
           "goal": "Obtenir les données précises extraites du document"
+        },
+        "knowledge_capture": {
+          "label": "Capture de connaissances",
+          "prompt": "Sur quel sujet êtes-vous expert ? Décrivez le domaine de votre expertise…",
+          "goal": "Rendre explicite ce que je sais mais n'ai jamais écrit"
         }
       },
       "suggestions": {
@@ -2132,6 +2137,19 @@
     "unavailable": {
       "title": "Outils temporairement indisponibles",
       "message": "Les outils RAG sont en cours de démarrage. Veuillez réessayer dans quelques instants."
+    },
+    "interview": {
+      "title": "Deux intervieweurs, votre expertise",
+      "subtitle": "Chaque intervieweur mène son propre entretien — répondez aux deux, puis comparez les synthèses produites.",
+      "panelA": "Intervieweur A",
+      "panelB": "Intervieweur B",
+      "turnCounter": "Tour",
+      "inputPlaceholder": "Votre réponse… (Ctrl+Entrée pour envoyer)",
+      "send": "Envoyer",
+      "finishEarly": "Terminer",
+      "waiting": "L'intervieweur réfléchit…",
+      "armDone": "Entretien terminé — la synthèse est prête.",
+      "errorArm": "Cet intervieweur a rencontré une erreur."
     }
   },
   "vote": {

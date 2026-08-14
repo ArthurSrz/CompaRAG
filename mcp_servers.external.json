@@ -22,5 +22,55 @@
         "vectorless"
       ]
     }
+  },
+  {
+    "id": "interview_grill",
+    "name": "Grill-me Interviewer",
+    "description": "Capture de connaissances par grilling : questions en rafales de « frontière » sur l'arbre des décisions de l'expert, chaque question accompagnée d'une réponse recommandée à confirmer ou corriger. D'après le skill grilling de Matt Pocock.",
+    "endpoint": "http://localhost:8014/mcp",
+    "transport": "streamablehttp",
+    "tools": [
+      "interview_move"
+    ],
+    "tool_args": {
+      "strategy": "grill"
+    },
+    "task_type": "knowledge_capture",
+    "llm_id": "openrouter/anthropic/claude-haiku-4.5",
+    "sanitize": {
+      "url_patterns": [],
+      "metadata_keys": [],
+      "extra_terms": [
+        "grill-me",
+        "grillme",
+        "grilling",
+        "Pocock"
+      ]
+    }
+  },
+  {
+    "id": "interview_gsd",
+    "name": "GSD Discuss Interviewer",
+    "description": "Capture de connaissances par discussion adaptative : identification des zones grises, une question ciblée par tour avec options lettrées et recommandation, chaque réponse guidant la suivante. D'après le workflow discuss-phase de get-shit-done.",
+    "endpoint": "http://localhost:8014/mcp",
+    "transport": "streamablehttp",
+    "tools": [
+      "interview_move"
+    ],
+    "tool_args": {
+      "strategy": "gsd_discuss"
+    },
+    "task_type": "knowledge_capture",
+    "llm_id": "openrouter/anthropic/claude-haiku-4.5",
+    "sanitize": {
+      "url_patterns": [],
+      "metadata_keys": [],
+      "extra_terms": [
+        "get-shit-done",
+        "discuss-phase",
+        "discuss phase",
+        "GSD"
+      ]
+    }
   }
 ]

@@ -217,6 +217,11 @@
           "label": "Summary",
           "prompt": "Summarize the document highlighting the key points and essential information.",
           "goal": "Get a clear and structured summary of the document"
+        },
+        "knowledge_capture": {
+          "label": "Žinių fiksavimas",
+          "prompt": "Kokios srities ekspertas esate? Aprašykite savo ekspertizės sritį…",
+          "goal": "Aiškiai išdėstyti tai, ką žinau, bet niekada neužrašiau"
         }
       },
       "suggestions": {
@@ -267,6 +272,19 @@
     "unavailable": {
       "title": "Tools temporarily unavailable",
       "message": "The tool is temporarily unavailable. Please try again later."
+    },
+    "interview": {
+      "title": "Du pašnekovai, jūsų ekspertizė",
+      "subtitle": "Kiekvienas pašnekovas veda savo interviu — atsakykite abiem ir palyginkite jų rezultatus.",
+      "panelA": "Pašnekovas A",
+      "panelB": "Pašnekovas B",
+      "turnCounter": "Raundas",
+      "inputPlaceholder": "Jūsų atsakymas… (siųsti: Ctrl+Enter)",
+      "send": "Siųsti",
+      "finishEarly": "Baigti",
+      "waiting": "Pašnekovas mąsto…",
+      "armDone": "Interviu baigtas — rezultatas paruoštas.",
+      "errorArm": "Šis pašnekovas susidūrė su klaida."
     }
   },
   "general": {

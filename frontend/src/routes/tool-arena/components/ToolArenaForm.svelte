@@ -38,7 +38,9 @@
   // (see backend/tool_arena/router.py::CompareRequest.task_type).
   // Phase 13 enables "qa" alongside "summary"; both run in sandbox mode
   // (document_content as ephemeral corpus). "extraction" stays hidden.
-  type TaskType = 'summary' | 'qa'
+  // "knowledge_capture" routes to the interview loop instead of /compare:
+  // the expert (the user) replaces the document as the invariant source.
+  type TaskType = 'summary' | 'qa' | 'knowledge_capture'
 
   const taskTypes: { value: TaskType; label: string; prompt: string; goalText: string }[] = [
     {
@@ -56,6 +58,12 @@
       // title-line instead of the user's question.
       prompt: '',
       goalText: m['toolArena.form.taskTypes.qa.goal']()
+    },
+    {
+      value: 'knowledge_capture',
+      label: m['toolArena.form.taskTypes.knowledge_capture.label'](),
+      prompt: '',
+      goalText: m['toolArena.form.taskTypes.knowledge_capture.goal']()
     }
   ]
 
@@ -73,8 +81,9 @@
 
   // QA in sandbox mode also requires document_content (backend validator
   // enforces non-empty doc for haystack='sandbox'). Benchmark mode (no doc,
-  // canned eval_query) is a separate future toggle.
-  const requiresDocument = $derived(true)
+  // canned eval_query) is a separate future toggle. knowledge_capture has no
+  // document at all — the expert being interviewed IS the source.
+  const requiresDocument = $derived(selectedTaskType !== 'knowledge_capture')
 
   const canSubmit = $derived(
     task.trim().length > 0 &&
@@ -222,7 +231,11 @@
       class="fr-input cg-border rounded-t-md! bg-white! rounded-b-none! border-solid!"
       rows="4"
       bind:value={task}
-      placeholder={selectedTaskType === 'qa' ? 'Posez votre question ici…' : m['toolArena.form.taskPlaceholder']()}
+      placeholder={selectedTaskType === 'qa'
+        ? 'Posez votre question ici…'
+        : selectedTaskType === 'knowledge_capture'
+          ? m['toolArena.form.taskTypes.knowledge_capture.prompt']()
+          : m['toolArena.form.taskPlaceholder']()}
       {disabled}
     ></textarea>
   </div>

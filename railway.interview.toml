@@ -1,0 +1,30 @@
+# Interview Pill MCP server — Railway service config.
+#
+# Mirrors the railway.pageindex.toml pattern: one Railway service per .toml
+# file, all sourcing the same repo. To wire this up in the Railway dashboard:
+#
+#   1. New service → "Empty service"
+#   2. Connect this repo
+#   3. Settings → Config-as-code → Config File Path = railway.interview.toml
+#   4. Settings → Variables: set OPENROUTER_API_KEY (LiteLLM → OpenRouter).
+#      Optional: INTERVIEW_LLM_ID (default openrouter/anthropic/claude-haiku-4.5
+#      — the LLMConstant shared by both interview strategies).
+#   5. After first deploy, copy the service's public URL and set BOTH
+#      MCP_INTERVIEW_GRILL_URL and MCP_INTERVIEW_GSD_URL to
+#      https://<service>.up.railway.app/mcp on the BACKEND service — the two
+#      registry entries share one server, the strategy travels in tool_args
+#      (convention-based override read by backend/tool_arena/config.py).
+
+[build]
+builder = "DOCKERFILE"
+dockerfilePath = "mcp_servers/interview_pill/Dockerfile"
+
+[deploy]
+# Long-running FastMCP HTTP server. Restart on crash; do not retry forever
+# to avoid runaway loops on OPENROUTER_API_KEY misconfig.
+restartPolicyType = "ON_FAILURE"
+restartPolicyMaxRetries = 5
+
+# Health-check endpoint (returns 200 "OK") — defined in server.py.
+healthcheckPath = "/health"
+healthcheckTimeout = 10

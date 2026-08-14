@@ -1,0 +1,65 @@
+# Manifeste Interview Pill — outils de capture de connaissances (knowledge capture).
+#
+# Un serveur, DEUX contestants : chaque stratégie d'entretien (InterviewStrategy)
+# est enregistrée comme une entrée distincte de mcp_servers.external.json, la
+# stratégie étant sélectionnée via tool_args. L'expert humain remplace le
+# document comme source invariante ; l'entretien est le variant.
+#
+# NOTE : ce manifeste documente le serveur. Les deux entrées registre
+# (interview_grill, interview_gsd) sont maintenues À LA MAIN dans
+# mcp_servers.external.json car scripts/register_tool.py n'émet ni tool_args
+# ni weight (limitation connue, voir plan Phase 2).
+
+tool_id: interview_pill
+
+display_name: Interview Pill
+
+goal: |
+  Capture de connaissances tacites : l'outil interroge l'expert humain à tours
+  multiples (stratégie propre à chaque bras) puis produit un artefact de
+  connaissance en markdown, comparé en aveugle dans l'arène.
+
+transport: streamable-http
+
+port: 8014
+
+endpoint: http://localhost:8014/mcp
+
+exposes:
+  - name: interview_move
+    args:
+      - {name: task,           type: str}
+      - {name: goal,           type: str}
+      - {name: transcript,     type: "list[dict]", default: []}
+      - {name: turn,           type: int, default: 1}
+      - {name: max_turns,      type: int, default: 10}
+      - {name: force_artifact, type: bool, default: false}
+      - {name: strategy,       type: str, default: grill}
+
+auth: none
+
+provider: openrouter
+
+task_type: knowledge_capture
+
+strategies:
+  - id: grill
+    display_name: Grill-me Interviewer
+    source: https://github.com/mattpocock/skills/tree/main/skills/productivity/grilling
+    prompt: prompts/grill_strategy.md
+  - id: gsd_discuss
+    display_name: GSD Discuss Interviewer
+    source: get-shit-done discuss-phase workflow (adaptive gray-area questioning)
+    prompt: prompts/gsd_discuss_strategy.md
+
+sanitize:
+  url_patterns: []
+  metadata_keys: []
+  extra_terms:
+    - grill-me
+    - grillme
+    - grilling
+    - Pocock
+    - get-shit-done
+    - discuss-phase
+    - GSD

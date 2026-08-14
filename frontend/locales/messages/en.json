@@ -1933,6 +1933,11 @@
           "label": "Extraction",
           "prompt": "Extract the key information from the document in a structured form (list, table).",
           "goal": "Get the precise data extracted from the document"
+        },
+        "knowledge_capture": {
+          "label": "Knowledge capture",
+          "prompt": "What are you an expert in? Describe your domain of expertise…",
+          "goal": "Make explicit what I know but never wrote down"
         }
       },
       "suggestions": {
@@ -1983,6 +1988,19 @@
     "unavailable": {
       "title": "Tools temporarily unavailable",
       "message": "The tool is temporarily unavailable. Please try again later."
+    },
+    "interview": {
+      "title": "Two interviewers, your expertise",
+      "subtitle": "Each interviewer runs its own interview — answer both, then compare the artifacts they produce.",
+      "panelA": "Interviewer A",
+      "panelB": "Interviewer B",
+      "turnCounter": "Turn",
+      "inputPlaceholder": "Your answer… (Ctrl+Enter to send)",
+      "send": "Send",
+      "finishEarly": "Finish",
+      "waiting": "The interviewer is thinking…",
+      "armDone": "Interview finished — the artifact is ready.",
+      "errorArm": "This interviewer encountered an error."
     }
   },
   "vote": {

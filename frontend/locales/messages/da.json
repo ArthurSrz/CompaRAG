@@ -1918,6 +1918,11 @@
           "label": "Summary",
           "prompt": "Summarize the document highlighting the key points and essential information.",
           "goal": "Get a clear and structured summary of the document"
+        },
+        "knowledge_capture": {
+          "label": "Vidensopsamling",
+          "prompt": "Hvad er du ekspert i? Beskriv dit ekspertiseområde…",
+          "goal": "Gøre det eksplicit, som jeg ved, men aldrig har skrevet ned"
         }
       },
       "suggestions": {
@@ -1968,6 +1973,19 @@
     "unavailable": {
       "title": "Tools temporarily unavailable",
       "message": "The tool is temporarily unavailable. Please try again later."
+    },
+    "interview": {
+      "title": "To interviewere, din ekspertise",
+      "subtitle": "Hver interviewer gennemfører sit eget interview — svar begge, og sammenlign derefter deres resultater.",
+      "panelA": "Interviewer A",
+      "panelB": "Interviewer B",
+      "turnCounter": "Runde",
+      "inputPlaceholder": "Dit svar… (Ctrl+Enter for at sende)",
+      "send": "Send",
+      "finishEarly": "Afslut",
+      "waiting": "Intervieweren tænker…",
+      "armDone": "Interviewet er afsluttet — resultatet er klar.",
+      "errorArm": "Denne interviewer stødte på en fejl."
     }
   },
   "vote": {

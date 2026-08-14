@@ -122,6 +122,8 @@ entities:
         - "langchain_rag (LEGACY standalone, moved to _legacy_standalone_servers/)"
         - "llamaindex_rag (LEGACY standalone, moved to _legacy_standalone_servers/)"
         - "pageindex (RAG sans vecteurs : arbre hiérarchique du document + raisonnement LLM pour répondre, fort sur les documents longs et structurés.)"
+        - "interview_grill (interview_pill strategy — knowledge capture par grilling frontier-rounds, d'après le skill grilling de Matt Pocock)"
+        - "interview_gsd (interview_pill strategy — knowledge capture par discussion adaptative des zones grises, d'après GSD discuss-phase)"
 
   - id: rag_engine
     type: DomainEntity

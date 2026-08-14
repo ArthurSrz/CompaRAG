@@ -1419,6 +1419,11 @@
           "label": "Summary",
           "prompt": "Summarize the document highlighting the key points and essential information.",
           "goal": "Get a clear and structured summary of the document"
+        },
+        "knowledge_capture": {
+          "label": "Kunskapsinsamling",
+          "prompt": "Vad är du expert på? Beskriv ditt expertområde…",
+          "goal": "Göra det explicit som jag vet men aldrig skrivit ned"
         }
       },
       "suggestions": {
@@ -1469,6 +1474,19 @@
     "unavailable": {
       "title": "Tools temporarily unavailable",
       "message": "The tool is temporarily unavailable. Please try again later."
+    },
+    "interview": {
+      "title": "Två intervjuare, din expertis",
+      "subtitle": "Varje intervjuare genomför sin egen intervju — svara på båda och jämför sedan deras resultat.",
+      "panelA": "Intervjuare A",
+      "panelB": "Intervjuare B",
+      "turnCounter": "Omgång",
+      "inputPlaceholder": "Ditt svar… (Ctrl+Enter för att skicka)",
+      "send": "Skicka",
+      "finishEarly": "Avsluta",
+      "waiting": "Intervjuaren tänker…",
+      "armDone": "Intervjun är klar — resultatet är redo.",
+      "errorArm": "Den här intervjuaren stötte på ett fel."
     }
   },
   "vote": {

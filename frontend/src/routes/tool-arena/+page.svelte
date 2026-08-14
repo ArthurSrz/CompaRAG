@@ -15,6 +15,15 @@
   import { ToolArenaForm, ToolResultCard, ToolRevealCard, ToolVoteArea } from './components'
   import ProgressCard from './components/ProgressCard.svelte'
   import ExpectedAnswerBanner from './components/ExpectedAnswerBanner.svelte'
+  import InterviewPanel from './components/InterviewPanel.svelte'
+  import {
+    startInterview,
+    sendReply,
+    finishArm,
+    finalizeInterview,
+    ToolUnavailableError,
+    type ArmState
+  } from './lib/interview-client'
   import { streamCompare, type SSEEvent } from './lib/sse-client'
   import { shouldShowExpectedAnswerBanner } from './lib/build-request'
   import { Button } from '$components/dsfr'
@@ -44,7 +53,7 @@
     tool_b: ToolRevealInfo
   }
 
-  let phase = $state<'input' | 'loading' | 'results' | 'revealed' | 'unavailable'>('input')
+  let phase = $state<'input' | 'loading' | 'interviewing' | 'results' | 'revealed' | 'unavailable'>('input')
   let sessionHash = $state<string | null>(null)
   let resultA = $state<string | null>(null)
   let resultB = $state<string | null>(null)
@@ -65,6 +74,23 @@
   // results so the user can judge whether either engine found the needle.
   let expectedAnswer = $state<string | null>(null)
 
+  // Knowledge-capture interview state. Each arm is fully independent (the
+  // ontology's Interview variant): its own message list, its own busy flag —
+  // busy also serializes per-arm writes so Redis read-modify-write can't race.
+  type InterviewMessage = { role: 'interviewer' | 'expert'; content: string }
+  type InterviewArm = {
+    messages: InterviewMessage[]
+    turn: number
+    done: boolean
+    error: string | null
+    busy: boolean
+  }
+  const emptyArm = (): InterviewArm => ({ messages: [], turn: 0, done: false, error: null, busy: false })
+  let interviewMaxTurns = $state(10)
+  let interviewArmA = $state<InterviewArm>(emptyArm())
+  let interviewArmB = $state<InterviewArm>(emptyArm())
+  let finalizing = $state(false)
+
   let secondHeader = $state<HTMLElement | undefined>(undefined)
   let secondHeaderSize = $derived(secondHeader?.offsetHeight ?? 0)
 
@@ -80,9 +106,13 @@
     task: string,
     goal: string,
     documentContent: string = '',
-    taskType: 'summary' | 'qa' | null = null,
+    taskType: 'summary' | 'qa' | 'knowledge_capture' | null = null,
     expectedAnswerInput: string = ''
   ) {
+    if (taskType === 'knowledge_capture') {
+      await startInterviewFlow(task, goal)
+      return
+    }
     phase = 'loading'
     compareError = null
     progressEventA = null
@@ -183,6 +213,104 @@
     }
   }
 
+  function armFor(key: 'a' | 'b'): InterviewArm {
+    return key === 'a' ? interviewArmA : interviewArmB
+  }
+
+  function applyArmState(key: 'a' | 'b', state: ArmState) {
+    const arm = armFor(key)
+    arm.turn = state.turn
+    arm.done = state.done
+    arm.error = state.error
+    if (state.type === 'question' && state.question) {
+      arm.messages.push({ role: 'interviewer', content: state.question })
+    }
+  }
+
+  async function startInterviewFlow(task: string, goal: string) {
+    phase = 'loading'
+    compareError = null
+    interviewArmA = emptyArm()
+    interviewArmB = emptyArm()
+    finalizing = false
+    try {
+      const data = await startInterview(task, goal)
+      sessionHash = data.session_hash
+      api.setSessionHash(data.session_hash)
+      interviewMaxTurns = data.max_turns
+      applyArmState('a', data.arm_a)
+      applyArmState('b', data.arm_b)
+      // Both interviewers failing to open leaves nothing to interview.
+      if (data.arm_a.error && data.arm_b.error) {
+        await maybeFinalize(true)
+        return
+      }
+      phase = 'interviewing'
+    } catch (err) {
+      if (err instanceof ToolUnavailableError) {
+        phase = 'unavailable'
+        return
+      }
+      compareError = (err as Error).message || m['toolArena.errorFallback']()
+      phase = 'input'
+    }
+  }
+
+  async function handleArmReply(key: 'a' | 'b', answer: string) {
+    const arm = armFor(key)
+    if (arm.busy || arm.done) return
+    arm.busy = true
+    arm.messages.push({ role: 'expert', content: answer })
+    try {
+      const data = await sendReply(sessionHash!, key, answer)
+      applyArmState(key, data.state)
+      if (data.both_done) await maybeFinalize()
+    } catch (err) {
+      console.error('Interview reply failed:', err)
+      arm.error = (err as Error).message || m['toolArena.errorFallback']()
+      arm.done = true
+      if (armFor(key === 'a' ? 'b' : 'a').done) await maybeFinalize()
+    } finally {
+      arm.busy = false
+    }
+  }
+
+  async function handleArmFinish(key: 'a' | 'b') {
+    const arm = armFor(key)
+    if (arm.busy || arm.done) return
+    arm.busy = true
+    try {
+      const data = await finishArm(sessionHash!, key)
+      applyArmState(key, data.state)
+      if (data.both_done) await maybeFinalize()
+    } catch (err) {
+      console.error('Interview finish failed:', err)
+      arm.error = (err as Error).message || m['toolArena.errorFallback']()
+      arm.done = true
+      if (armFor(key === 'a' ? 'b' : 'a').done) await maybeFinalize()
+    } finally {
+      arm.busy = false
+    }
+  }
+
+  async function maybeFinalize(failFast = false) {
+    if (finalizing) return
+    finalizing = true
+    phase = 'loading'
+    try {
+      const data = await finalizeInterview(sessionHash!)
+      resultA = data.result_a
+      resultB = data.result_b
+      errorA = data.error_a
+      errorB = data.error_b
+      phase = 'results'
+    } catch (err) {
+      compareError = (err as Error).message || m['toolArena.errorFallback']()
+      phase = failFast ? 'input' : 'interviewing'
+      finalizing = false
+    }
+  }
+
   async function handleVote(
     chosen: 'a' | 'b' | 'tie',
     preferences: { vote_goal_rating_a: number | null; vote_goal_rating_b: number | null }
@@ -223,6 +351,10 @@
     progressEventA = null
     progressEventB = null
     expectedAnswer = null
+    interviewArmA = emptyArm()
+    interviewArmB = emptyArm()
+    interviewMaxTurns = 10
+    finalizing = false
   }
 </script>
 
@@ -322,6 +454,45 @@
           {/if}
         </div>
       </div>
+    </div>
+
+  {:else if phase === 'interviewing'}
+    <div class="fr-container py-8 md:py-12">
+      <div class="text-center mb-6">
+        <h2 class="mb-2!" style="font-size: clamp(1.5rem, 2.5vw, 2rem); font-weight: 700;">
+          {m['toolArena.interview.title']()}
+        </h2>
+        <p class="fr-text--sm text-grey mb-0!">{m['toolArena.interview.subtitle']()}</p>
+      </div>
+      <div class="gap-10 md:grid-cols-2 md:gap-6 grid mb-8">
+        <InterviewPanel
+          label="A"
+          messages={interviewArmA.messages}
+          turn={interviewArmA.turn}
+          maxTurns={interviewMaxTurns}
+          done={interviewArmA.done}
+          error={interviewArmA.error}
+          busy={interviewArmA.busy}
+          onreply={(answer) => handleArmReply('a', answer)}
+          onfinish={() => handleArmFinish('a')}
+        />
+        <InterviewPanel
+          label="B"
+          messages={interviewArmB.messages}
+          turn={interviewArmB.turn}
+          maxTurns={interviewMaxTurns}
+          done={interviewArmB.done}
+          error={interviewArmB.error}
+          busy={interviewArmB.busy}
+          onreply={(answer) => handleArmReply('b', answer)}
+          onfinish={() => handleArmFinish('b')}
+        />
+      </div>
+      {#if compareError}
+        <div class="text-center py-4">
+          <p class="fr-text--sm text-red-600 mb-2">{compareError}</p>
+        </div>
+      {/if}
     </div>
 
   {:else if phase === 'results'}

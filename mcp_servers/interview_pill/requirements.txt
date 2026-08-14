@@ -1,0 +1,4 @@
+# Runtime dependencies for the Interview Pill MCP server.
+fastmcp>=2.0.0
+litellm>=1.83.7
+python-dotenv>=1.2.2
