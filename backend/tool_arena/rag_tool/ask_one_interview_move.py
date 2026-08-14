@@ -49,6 +49,15 @@ def parse_move(raw_text: str, force_artifact: bool) -> dict:
         if move.get("type") == "error":
             raise MCPToolError(str(move.get("error") or "interview tool error"))
         if move.get("type") == "question" and isinstance(move.get("question"), str):
+            if force_artifact:
+                # Assurance terminale : sous force, un outil qui répond encore
+                # une question (serveur obsolète, LLM récalcitrant) ne doit
+                # jamais laisser le bras ouvert — le texte devient l'artefact.
+                return {
+                    "type": "artifact",
+                    "artifact_markdown": move["question"],
+                    "artifact_subtype": None,
+                }
             return {"type": "question", "question": move["question"]}
         if move.get("type") == "artifact" and isinstance(
             move.get("artifact_markdown"), str

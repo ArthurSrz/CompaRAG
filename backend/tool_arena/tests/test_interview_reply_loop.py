@@ -175,3 +175,13 @@ def test_parse_move_garbage_under_force_becomes_artifact():
 def test_parse_move_error_payload_raises():
     with pytest.raises(MCPToolError):
         parse_move('{"type": "error", "error": "unknown strategy"}', force_artifact=False)
+
+
+def test_parse_move_question_under_force_becomes_artifact():
+    """Regression (prod 2026-08-14): on finish-early the tool re-emitted its
+    previous question; under force_artifact the arm must close regardless."""
+    move = parse_move(
+        '{"type": "question", "question": "Q4 again?"}', force_artifact=True
+    )
+    assert move["type"] == "artifact"
+    assert move["artifact_markdown"] == "Q4 again?"

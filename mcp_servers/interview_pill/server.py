@@ -119,6 +119,28 @@ def _build_messages(
                 ),
             }
         )
+    # La liste DOIT se terminer par un tour user : un dernier message assistant
+    # (cas finish-early — le transcript finit sur une question de
+    # l'intervieweur) est traité comme un préfixe à continuer par le modèle,
+    # qui ré-émet alors sa question au lieu d'obéir au force_artifact système.
+    if force_artifact:
+        messages.append(
+            {
+                "role": "user",
+                "content": (
+                    "(The interview has ended. Reply now with ONLY the "
+                    "artifact JSON as specified in the OUTPUT CONTRACT — "
+                    "no question, no other text.)"
+                ),
+            }
+        )
+    elif messages[-1]["role"] == "assistant":
+        messages.append(
+            {
+                "role": "user",
+                "content": "(Continue the interview per your instructions.)",
+            }
+        )
     return messages
 
 
@@ -137,6 +159,10 @@ def _parse_move(raw: str, force_artifact: bool) -> dict | None:
     if not isinstance(move, dict):
         return None
     if move.get("type") == "question" and isinstance(move.get("question"), str):
+        # Sous force_artifact, une question est un refus d'obéir — la traiter
+        # comme invalide déclenche la relance corrective puis le fallback.
+        if force_artifact:
+            return None
         return {"type": "question", "question": move["question"]}
     if move.get("type") == "artifact" and isinstance(move.get("artifact_markdown"), str):
         meta = move.get("metadata") if isinstance(move.get("metadata"), dict) else {}
@@ -157,13 +183,22 @@ def _parse_move(raw: str, force_artifact: bool) -> dict | None:
 def _fallback_move(raw: str, force_artifact: bool) -> dict:
     """Dernier recours : le texte brut devient le move — jamais d'échec qui
     consommerait le tour de l'expert."""
+    text = raw.strip()
     if force_artifact:
+        # Si le refus était un JSON question, récupérer le texte utile plutôt
+        # que d'emballer du JSON brut dans l'artefact.
+        try:
+            maybe = json.loads(text)
+            if isinstance(maybe, dict) and isinstance(maybe.get("question"), str):
+                text = maybe["question"]
+        except (json.JSONDecodeError, ValueError):
+            pass
         return {
             "type": "artifact",
-            "artifact_markdown": raw.strip(),
+            "artifact_markdown": text,
             "metadata": {"artifact_subtype": None},
         }
-    return {"type": "question", "question": raw.strip()}
+    return {"type": "question", "question": text}
 
 
 def _complete_sync(messages: list[dict]) -> str:
