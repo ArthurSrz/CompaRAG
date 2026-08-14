@@ -41,6 +41,7 @@ def interview_patches(store: FakeSessionStore, save_mock: MagicMock):
     return (
         patch(f"{INTERVIEW_MODULE}.registry", wire_registry(grill, gsd)),
         patch(f"{INTERVIEW_MODULE}.store_tool_session", store.store),
+        patch(f"{INTERVIEW_MODULE}.retrieve_tool_session", store.retrieve),
         patch(f"{INTERVIEW_MODULE}.save_tool_call_to_db", save_mock),
     )
 
@@ -53,8 +54,8 @@ async def test_finalize_requires_both_arms_done():
     session = finished_session()
     session["interview"]["arms"]["b"]["done"] = False
     store, save = FakeSessionStore(), MagicMock()
-    p1, p2, p3 = interview_patches(store, save)
-    with p1, p2, p3:
+    p1, p2, p3, p4 = interview_patches(store, save)
+    with p1, p2, p3, p4:
         with pytest.raises(HTTPException) as exc:
             await finalize(session_hash="h1", session=session)
     assert exc.value.status_code == 409
@@ -66,8 +67,8 @@ async def test_finalize_builds_vote_compatible_session_and_persists():
 
     session = finished_session()
     store, save = FakeSessionStore(), MagicMock()
-    p1, p2, p3 = interview_patches(store, save)
-    with p1, p2, p3:
+    p1, p2, p3, p4 = interview_patches(store, save)
+    with p1, p2, p3, p4:
         response = await finalize(session_hash="h1", session=session)
 
     assert response.result_a == "# Artifact A"
@@ -94,8 +95,8 @@ async def test_finalize_is_idempotent():
 
     session = finished_session()
     store, save = FakeSessionStore(), MagicMock()
-    p1, p2, p3 = interview_patches(store, save)
-    with p1, p2, p3:
+    p1, p2, p3, p4 = interview_patches(store, save)
+    with p1, p2, p3, p4:
         first = await finalize(session_hash="h1", session=session)
         second = await finalize(session_hash="h1", session=store.sessions["h1"])
 
@@ -112,8 +113,8 @@ async def test_failed_arm_surfaces_generic_error():
     arm_b["artifact"] = None
     arm_b["error"] = "TimeoutError: too slow"
     store, save = FakeSessionStore(), MagicMock()
-    p1, p2, p3 = interview_patches(store, save)
-    with p1, p2, p3:
+    p1, p2, p3, p4 = interview_patches(store, save)
+    with p1, p2, p3, p4:
         response = await finalize(session_hash="h1", session=session)
 
     assert response.result_a == "# Artifact A"
@@ -131,8 +132,8 @@ async def test_existing_vote_endpoint_accepts_finalized_session():
 
     session = finished_session()
     store, save = FakeSessionStore(), MagicMock()
-    p1, p2, p3 = interview_patches(store, save)
-    with p1, p2, p3:
+    p1, p2, p3, p4 = interview_patches(store, save)
+    with p1, p2, p3, p4:
         await finalize(session_hash="h1", session=session)
 
     finalized = store.sessions["h1"]

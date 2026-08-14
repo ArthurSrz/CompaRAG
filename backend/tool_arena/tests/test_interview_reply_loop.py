@@ -65,6 +65,7 @@ async def test_reply_appends_answer_and_next_question():
     with (
         registry_patch(),
         patch(f"{INTERVIEW_MODULE}.store_tool_session", store.store),
+        patch(f"{INTERVIEW_MODULE}.retrieve_tool_session", store.retrieve),
         patch(f"{INTERVIEW_MODULE}.single_interview_move", move),
     ):
         response = await reply(
@@ -126,6 +127,7 @@ async def test_tool_failure_marks_arm_error_not_500():
     with (
         registry_patch(),
         patch(f"{INTERVIEW_MODULE}.store_tool_session", store.store),
+        patch(f"{INTERVIEW_MODULE}.retrieve_tool_session", store.retrieve),
         patch(
             f"{INTERVIEW_MODULE}.single_interview_move",
             new_callable=AsyncMock,

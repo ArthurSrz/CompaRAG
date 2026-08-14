@@ -30,6 +30,8 @@ from __future__ import annotations
 import asyncio
 import logging
 import os
+import time
+from contextlib import asynccontextmanager
 
 from fastapi import APIRouter, Depends, HTTPException
 from fastapi.responses import JSONResponse
@@ -45,6 +47,7 @@ from backend.tool_arena.blind_reveal.identify_user_session import (
 )
 from backend.tool_arena.blind_reveal.remember_who_was_which import (
     create_tool_session,
+    retrieve_tool_session,
     store_tool_session,
 )
 # Late-bound module access (not from-imports): test_ask_two_tools_concurrently
@@ -95,6 +98,44 @@ def _placeholder_tool(server_id: str, llm_id: str) -> dict:
         "error": "interview in progress — not finalized",
         "duration_ms": 0,
     }
+
+
+@asynccontextmanager
+async def _session_lock(session_hash: str, timeout_s: float = 8.0):
+    """Verrou best-effort sur la mutation de session (SET NX + expiry).
+
+    Les deux bras avancent en parallèle (Terminer A + Terminer B) : chaque
+    requête lit la session, passe des secondes dans l'appel LLM, puis réécrit
+    la session ENTIÈRE — last-writer-wins écraserait le done/artifact de
+    l'autre bras. L'appel LLM reste HORS verrou ; seul le commit (relecture
+    fraîche + mutation + store) est sérialisé. Best-effort : si Redis refuse
+    le verrou (indispo, tests), on continue sans — comportement d'avant.
+    """
+    from utils.storage.redis import get_redis_client
+
+    key = f"tool_arena:lock:{session_hash}"
+    client = None
+    locked = False
+    try:
+        client = get_redis_client()
+        deadline = time.monotonic() + timeout_s
+        while not client.set(key, "1", nx=True, ex=10):
+            if time.monotonic() > deadline:
+                logger.warning("interview session lock timeout hash=%s", session_hash)
+                break
+            await asyncio.sleep(0.05)
+        else:
+            locked = True
+    except Exception as exc:
+        logger.warning("interview session lock unavailable: %s", exc)
+    try:
+        yield
+    finally:
+        if locked and client is not None:
+            try:
+                client.delete(key)
+            except Exception:
+                pass
 
 
 def _arm_state(arm: dict, max_turns: int) -> ArmState:
@@ -258,24 +299,79 @@ async def _advance_arm(
     if arm["done"]:
         raise HTTPException(status_code=409, detail="This interview arm is finished")
 
+    # Phase 1 — calcul sur un instantané, AUCUNE mutation de session : l'appel
+    # LLM dure des secondes et l'autre bras avance en parallèle.
+    transcript = [dict(e) for e in arm["transcript"]]
+    turn = arm["turn"]
     if answer is not None:
-        arm["transcript"].append({"role": "expert", "content": answer})
-        arm["turn"] += 1
+        transcript.append({"role": "expert", "content": answer})
+        turn += 1
 
     force_artifact = force or should_force_artifact(
-        expert_answers=arm["turn"],
+        expert_answers=turn,
         max_turns=interview["max_turns"],
         deadline_ts=interview["deadline_ts"],
     )
 
     server = _server_for_arm(interview, arm_key)
-    await _play_move(server, session, arm, force_artifact=force_artifact)
+    outcome: dict
+    try:
+        move, duration_ms = await asyncio.wait_for(
+            single_interview_move(
+                server=server,
+                task=session["task"],
+                goal=session["goal"],
+                transcript=transcript,
+                turn=turn + 1,  # contrat outil : réponses de l'expert + 1
+                max_turns=interview["max_turns"],
+                force_artifact=force_artifact,
+            ),
+            timeout=INTERVIEW_MOVE_TIMEOUT,
+        )
+        outcome = {"move": move, "duration_ms": duration_ms, "error": None}
+    except Exception as exc:
+        logger.error(
+            "interview move failed server=%s: %s: %s",
+            server.id, type(exc).__name__, exc,
+        )
+        outcome = {"move": None, "duration_ms": 0, "error": f"{type(exc).__name__}: {exc}"}
 
-    store_tool_session(session_hash, session)
-    arms = interview["arms"]
+    # Phase 2 — commit sérialisé sur l'état FRAIS : sans cela, deux commits
+    # concurrents (un par bras) s'écrasent mutuellement (last-writer-wins) et
+    # both_done ne devient jamais vrai.
+    async with _session_lock(session_hash):
+        try:
+            fresh = retrieve_tool_session(session_hash)
+        except ValueError:
+            fresh = session
+        fresh_interview = fresh.get("interview") or interview
+        fresh_arm = fresh_interview["arms"][arm_key]
+
+        fresh_arm["transcript"] = transcript
+        fresh_arm["turn"] = turn
+        fresh_arm["duration_ms_total"] = (
+            fresh_arm.get("duration_ms_total", 0) + outcome["duration_ms"]
+        )
+        if outcome["error"] is not None:
+            fresh_arm["error"] = outcome["error"]
+            fresh_arm["done"] = True
+        elif outcome["move"]["type"] == "artifact":
+            fresh_arm["artifact"] = outcome["move"]["artifact_markdown"]
+            fresh_arm["artifact_subtype"] = outcome["move"].get("artifact_subtype")
+            fresh_arm["done"] = True
+        else:
+            # BlindProtocol : la question est sanitisée AVANT d'entrer au
+            # transcript — c'est elle qui part à l'écran.
+            question = sanitize_output(outcome["move"]["question"], _all_servers())
+            fresh_arm["transcript"] = transcript + [
+                {"role": "interviewer", "content": question}
+            ]
+        store_tool_session(session_hash, fresh)
+
+    arms = fresh_interview["arms"]
     return InterviewReplyResponse(
         arm=arm_key,
-        state=_arm_state(arm, interview["max_turns"]),
+        state=_arm_state(fresh_arm, fresh_interview["max_turns"]),
         both_done=arms["a"]["done"] and arms["b"]["done"],
     )
 
@@ -315,6 +411,13 @@ async def finalize(
     sanitize_output, puis MCPToolCall + persistance. Idempotent — refaire
     l'appel rend la même CompareResponse depuis la session.
     """
+    # Relire l'état frais : la session injectée par Depends a pu être lue
+    # avant le dernier commit d'un bras (les commits sont sérialisés par
+    # _session_lock, pas les lectures des dépendances FastAPI).
+    try:
+        session = retrieve_tool_session(session_hash)
+    except ValueError:
+        pass
     interview = session.get("interview")
     if not interview:
         raise HTTPException(status_code=404, detail="No interview in this session")

@@ -52,6 +52,7 @@ async def test_start_pairs_only_knowledge_capture_servers():
         patch(f"{DISPATCHER_MODULE}.registry", mock_registry),
         patch(f"{INTERVIEW_MODULE}.registry", mock_registry),
         patch(f"{INTERVIEW_MODULE}.store_tool_session", store.store),
+        patch(f"{INTERVIEW_MODULE}.retrieve_tool_session", store.retrieve),
         patch(
             f"{INTERVIEW_MODULE}.single_interview_move",
             new_callable=AsyncMock,
@@ -102,6 +103,7 @@ async def test_start_sanitizes_opening_questions():
         patch(f"{DISPATCHER_MODULE}.registry", mock_registry),
         patch(f"{INTERVIEW_MODULE}.registry", mock_registry),
         patch(f"{INTERVIEW_MODULE}.store_tool_session", store.store),
+        patch(f"{INTERVIEW_MODULE}.retrieve_tool_session", store.retrieve),
         patch(
             f"{INTERVIEW_MODULE}.sanitize_output",
             side_effect=lambda text, servers: text.replace("grilling", "[redacted]"),
@@ -134,6 +136,7 @@ async def test_start_stores_vote_blocking_placeholders():
         patch(f"{DISPATCHER_MODULE}.registry", mock_registry),
         patch(f"{INTERVIEW_MODULE}.registry", mock_registry),
         patch(f"{INTERVIEW_MODULE}.store_tool_session", store.store),
+        patch(f"{INTERVIEW_MODULE}.retrieve_tool_session", store.retrieve),
         patch(
             f"{INTERVIEW_MODULE}.single_interview_move",
             new_callable=AsyncMock,

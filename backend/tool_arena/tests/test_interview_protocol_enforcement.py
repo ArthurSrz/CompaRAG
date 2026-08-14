@@ -50,6 +50,7 @@ async def test_reply_at_turn_cap_forces_artifact():
     with (
         registry_patch(),
         patch(f"{INTERVIEW_MODULE}.store_tool_session", store.store),
+        patch(f"{INTERVIEW_MODULE}.retrieve_tool_session", store.retrieve),
         patch(f"{INTERVIEW_MODULE}.single_interview_move", move),
     ):
         response = await reply(
@@ -73,6 +74,7 @@ async def test_reply_past_deadline_forces_artifact():
     with (
         registry_patch(),
         patch(f"{INTERVIEW_MODULE}.store_tool_session", store.store),
+        patch(f"{INTERVIEW_MODULE}.retrieve_tool_session", store.retrieve),
         patch(f"{INTERVIEW_MODULE}.single_interview_move", move),
     ):
         await reply(
@@ -84,6 +86,39 @@ async def test_reply_past_deadline_forces_artifact():
     assert move.await_args.kwargs["force_artifact"] is True
 
 
+async def test_concurrent_finishes_both_commit():
+    """Regression (prod 2026-08-14): Terminer A + Terminer B clicked together —
+    each request read the session before the other wrote, last-writer-wins
+    clobbered one arm's done and both_done never became true. The commit
+    phase must re-read fresh state so both arms survive."""
+    from backend.tool_arena.interview.run_interview_endpoints import finish_arm
+
+    session = make_session()
+    store = FakeSessionStore()
+    store.store("h1", session)
+    move = AsyncMock(return_value=(artifact_move("# Done"), 50))
+    with (
+        registry_patch(),
+        patch(f"{INTERVIEW_MODULE}.store_tool_session", store.store),
+        patch(f"{INTERVIEW_MODULE}.retrieve_tool_session", store.retrieve),
+        patch(f"{INTERVIEW_MODULE}.single_interview_move", move),
+    ):
+        import asyncio as aio
+        import copy
+        r_a, r_b = await aio.gather(
+            finish_arm(InterviewFinishRequest(arm="a"), session_hash="h1",
+                       session=copy.deepcopy(session)),
+            finish_arm(InterviewFinishRequest(arm="b"), session_hash="h1",
+                       session=copy.deepcopy(session)),
+        )
+
+    stored = store.sessions["h1"]["interview"]["arms"]
+    assert stored["a"]["done"] and stored["b"]["done"]
+    assert stored["a"]["artifact"] == "# Done" and stored["b"]["artifact"] == "# Done"
+    # At least the later commit must see both arms done.
+    assert r_a.both_done or r_b.both_done
+
+
 async def test_finish_early_forces_artifact_without_new_answer():
     from backend.tool_arena.interview.run_interview_endpoints import finish_arm
 
@@ -93,6 +128,7 @@ async def test_finish_early_forces_artifact_without_new_answer():
     with (
         registry_patch(),
         patch(f"{INTERVIEW_MODULE}.store_tool_session", store.store),
+        patch(f"{INTERVIEW_MODULE}.retrieve_tool_session", store.retrieve),
         patch(f"{INTERVIEW_MODULE}.single_interview_move", move),
     ):
         response = await finish_arm(

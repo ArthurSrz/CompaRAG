@@ -38,6 +38,7 @@ async def test_arm_b_call_never_contains_arm_a_content():
     with (
         registry_patch(),
         patch(f"{INTERVIEW_MODULE}.store_tool_session", store.store),
+        patch(f"{INTERVIEW_MODULE}.retrieve_tool_session", store.retrieve),
         patch(f"{INTERVIEW_MODULE}.single_interview_move", move),
     ):
         for secret in secrets:

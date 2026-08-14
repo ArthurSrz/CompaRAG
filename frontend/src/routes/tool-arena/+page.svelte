@@ -264,7 +264,9 @@
     try {
       const data = await sendReply(sessionHash!, key, answer)
       applyArmState(key, data.state)
-      if (data.both_done) await maybeFinalize()
+      // Local both-done check, not just the server's both_done: two arms
+      // finishing concurrently can each see the other as unfinished.
+      if (data.both_done || (interviewArmA.done && interviewArmB.done)) await maybeFinalize()
     } catch (err) {
       console.error('Interview reply failed:', err)
       arm.error = (err as Error).message || m['toolArena.errorFallback']()
@@ -282,7 +284,7 @@
     try {
       const data = await finishArm(sessionHash!, key)
       applyArmState(key, data.state)
-      if (data.both_done) await maybeFinalize()
+      if (data.both_done || (interviewArmA.done && interviewArmB.done)) await maybeFinalize()
     } catch (err) {
       console.error('Interview finish failed:', err)
       arm.error = (err as Error).message || m['toolArena.errorFallback']()

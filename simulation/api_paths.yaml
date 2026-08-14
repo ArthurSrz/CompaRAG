@@ -1,0 +1,102 @@
+# Every API path used by the CompaRAG tool arena frontend — the contract a
+# simulated user exercises. Base URLs:
+#   production : https://comparag-production.up.railway.app
+#   local dev  : http://localhost:8001
+#
+# Blind invariant (UX-01): no response below ever contains tool_id, server
+# name, endpoint, or strategy name before /vote.
+
+session_header:
+  name: X-Session-Hash
+  note: >
+    Returned by /interview/start (session_hash) or /compare (session_hash).
+    Required on reply / finish / finalize / vote / reveal.
+
+knowledge_capture_flow:   # task_type=knowledge_capture — the interview loop
+  - path: POST /tool-arena/interview/start
+    body: { task: string, goal: string }        # both non-empty; NO document
+    response:
+      session_hash: string
+      max_turns: int                            # InterviewProtocol cap (default 10)
+      deadline_ts: float                        # unix ts; session time budget (default 900s)
+      arm_a: &armstate
+        type: question | artifact | error
+        question: string | null                 # the interviewer's opening message
+        turn: int                               # expert answers given on this arm
+        max_turns: int
+        done: bool
+        error: string | null                    # generic message only
+      arm_b: *armstate
+    errors:
+      "503": '{error: tool_unavailable, ready_count: int} — fewer than 2 capture tools READY'
+
+  - path: POST /tool-arena/interview/reply
+    headers: [X-Session-Hash]
+    body: { arm: a | b, answer: string }        # answer non-empty; arms are ISOLATED —
+                                                # nothing sent to arm a reaches arm b
+    response: { arm: a | b, state: *armstate, both_done: bool }
+    notes: >
+      Serialize per arm (do not send two replies to the SAME arm concurrently);
+      replies to different arms may run in parallel. When state.type=artifact
+      the arm is closed; the artifact text is only returned by /finalize.
+      force-artifact triggers automatically at turn >= max_turns or past
+      deadline_ts.
+    errors:
+      "403": already voted
+      "409": arm already finished
+      "422": empty answer
+
+  - path: POST /tool-arena/interview/finish
+    headers: [X-Session-Hash]
+    body: { arm: a | b }                        # finish-early: forces the artifact, no new answer
+    response: { arm: a | b, state: *armstate, both_done: bool }
+
+  - path: POST /tool-arena/interview/finalize
+    headers: [X-Session-Hash]
+    body: {}                                    # idempotent; requires both arms done (409 otherwise)
+    response:                                   # same shape as /compare
+      session_hash: string
+      result_a: string | null                   # sanitized KnowledgeArtifact markdown
+      result_b: string | null
+      error_a: string | null                    # "Tool encountered an error" | null
+      error_b: string | null
+
+rag_flow:                 # task_type=summary|qa — the one-shot document loop
+  - path: POST /tool-arena/documents/extract
+    body: multipart form, field "file" (.pdf/.docx, 5MB max)
+    response: { document_content: string }
+  - path: POST /tool-arena/compare
+    body:
+      task: string
+      goal: string
+      document_content: string                  # required (sandbox mode)
+      task_type: summary | qa | extraction | null
+      haystack: sandbox                         # or benchmark + evaluation_query_id
+    response: { session_hash, result_a, result_b, error_a, error_b }
+    notes: Accept text/event-stream for the SSE progress variant (?stream=1 path).
+
+shared_tail:              # identical for both flows once results exist
+  - path: POST /tool-arena/vote
+    headers: [X-Session-Hash]
+    body:
+      chosen: a | b | tie
+      preferences: { vote_goal_rating_a: 1-5 | null, vote_goal_rating_b: 1-5 | null }
+    response:              # vote reveals in the same call
+      chosen: string
+      tool_a: { pos: a, name: string, description: string, duration_ms: int, error: string | null }
+      tool_b: { pos: b, name: string, description: string, duration_ms: int, error: string | null }
+    errors:
+      "403": already voted
+      "422": at least one tool failed (vote meaningless)
+  - path: GET /tool-arena/reveal
+    headers: [X-Session-Hash]
+    response: same ToolRevealResponse; 403 until voted
+  - path: GET /tool-arena/leaderboard
+
+contestants:              # revealed identities for task_type=knowledge_capture
+  interview_grill:
+    strategy_prompt: strategies/grill_strategy.md
+    style: frontier rounds — several numbered questions per turn, each with a recommended answer
+  interview_gsd:
+    strategy_prompt: strategies/gsd_discuss_strategy.md
+    style: one focused question per turn with 2-4 lettered options + recommendation

@@ -63,6 +63,9 @@ class FakeSessionStore:
         self.sessions[session_hash] = json.loads(json.dumps(data))
 
     def retrieve(self, session_hash: str) -> dict:
+        if session_hash not in self.sessions:
+            # Mirror retrieve_tool_session's contract (ValueError on miss).
+            raise ValueError(f"Tool arena session not found: {session_hash}")
         return self.sessions[session_hash]
 
 
