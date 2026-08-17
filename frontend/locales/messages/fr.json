@@ -2143,7 +2143,10 @@
       "provisional": "Provisoire",
       "loading": "Chargement du classement…",
       "empty": "Aucun résultat disponible pour l'instant.",
-      "eloExplanation": "Le score Elo mesure la performance relative de chaque outil sur la base des votes des utilisateurs."
+      "eloExplanation": "Le score Elo mesure la performance relative de chaque outil sur la base des votes des utilisateurs.",
+      "poolRag": "Outils RAG",
+      "poolKnowledgeCapture": "Intervieweurs de connaissances",
+      "poolNote": "Les scores Elo sont calculés indépendamment par type de tâche — ils ne sont pas comparables entre les onglets."
     },
     "anonymousToolA": "Outil A",
     "anonymousToolB": "Outil B",

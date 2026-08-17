@@ -1999,7 +1999,10 @@
       "provisional": "Provisional",
       "loading": "Loading rankings…",
       "empty": "No results available yet.",
-      "eloExplanation": "The Elo score measures each tool's relative performance based on user votes."
+      "eloExplanation": "The Elo score measures each tool's relative performance based on user votes.",
+      "poolRag": "RAG tools",
+      "poolKnowledgeCapture": "Knowledge interviewers",
+      "poolNote": "Elo scores are computed independently per task type — they are not comparable across tabs."
     },
     "unavailable": {
       "title": "Tools temporarily unavailable",

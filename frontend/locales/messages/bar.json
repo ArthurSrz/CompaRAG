@@ -1,0 +1,80 @@
+{
+  "a11y": {
+    "externalLink": "{text}"
+  },
+  "toolArena": {
+    "step1": {
+      "title": "What do you think of the results?",
+      "desc": "Read both answers and choose the best one"
+    },
+    "step2": {
+      "title": "The tools are revealed!",
+      "desc": "Discover which tools responded"
+    },
+    "newComparison": "New comparison",
+    "form": {
+      "taskLabel": "Describe the task",
+      "goalLabel": "Goal",
+      "submit": "Compare tools",
+      "taskType": "Task type",
+      "title": "Compare two RAG tools",
+      "taskPlaceholder": "Describe what you want to do with the document…",
+      "goalPlaceholder": "What result do you expect?",
+      "taskTypes": {
+        "summarize": {
+          "label": "Summary",
+          "prompt": "Summarize the document highlighting the key points and essential information.",
+          "goal": "Get a clear and structured summary of the document"
+        }
+      },
+      "suggestions": {
+        "1": {
+          "text": "Summarize this document in 5 key points"
+        },
+        "2": {
+          "text": "Extract the important figures and data"
+        },
+        "3": {
+          "text": "Identify the main topics covered"
+        },
+        "4": {
+          "text": "What are the main conclusions?"
+        }
+      }
+    },
+    "loading": {
+      "title": "Comparing tools...",
+      "subtitle": "This may take up to 30 seconds"
+    },
+    "reveal": {
+      "thanks": {
+        "title": "Thank you for your vote!",
+        "cta": "View leaderboard"
+      }
+    },
+    "revealButton": "Reveal tools",
+    "anonymousToolA": "Tool A",
+    "anonymousToolB": "Tool B",
+    "bothToolsFailed": "Both tools encountered errors.",
+    "tryAgain": "Try Again",
+    "errorFallback": "An unexpected error occurred",
+    "leaderboard": {
+      "title": "Tool Arena Leaderboard",
+      "backLink": "Back to Tool Arena",
+      "loading": "Loading rankings...",
+      "empty": "No rankings available yet. Rankings are computed after votes are cast.",
+      "rank": "Rank",
+      "toolName": "Tool Name",
+      "eloScore": "ELO Score",
+      "confidenceInterval": "Confidence Interval",
+      "matches": "Matches",
+      "winRate": "Win Rate",
+      "provisional": "Provisional",
+      "eloExplanation": "ELO scores computed using the Bradley-Terry model with bootstrap confidence intervals (p2.5 – p97.5). Tools marked \"Provisional\" have fewer than 50 matches."
+    },
+    "unavailable": {
+      "title": "Tools temporarily unavailable",
+      "message": "The MCP tools are starting up. Please try again in a moment."
+    }
+  }
+}

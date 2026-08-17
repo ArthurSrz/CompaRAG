@@ -41,7 +41,7 @@ from fastapi.encoders import jsonable_encoder
 import os
 import time
 import traceback
-from utils.storage.redis import REDIS_RANKING_KEY, REDIS_TOOL_RANKING_KEY, get_redis_client
+from utils.storage.redis import REDIS_RANKING_KEY, REDIS_TOOL_RANKING_KEY, REDIS_TOOL_RANKING_BY_TASK_KEY, get_redis_client
 
 CRON_DIAG_KEY = "ranking_cron:last_run_diag"
 _diag_steps: list[dict] = []
@@ -107,7 +107,7 @@ from utils.utils import (
 from .compute import DataGroup, RankingResult, compute_all_rankings
 from .hf_export import export_tool_votes_to_hf
 from .monitor import monitor
-from .tool_compute import compute_tool_rankings
+from .tool_compute import compute_tool_rankings, compute_tool_rankings_by_task_type
 
 logger = configure_logger(logging.getLogger("ranking.run"))
 
@@ -185,7 +185,12 @@ def main(mode: Literal["all", "redis", "json"] = "redis") -> None:
 
 
 def compute_and_store_tool_rankings() -> None:
-    """Compute tool rankings and store to Redis under REDIS_TOOL_RANKING_KEY."""
+    """Compute tool rankings and store to Redis.
+
+    Writes two keys:
+    - REDIS_TOOL_RANKING_KEY       — global (all task types merged, backward compat)
+    - REDIS_TOOL_RANKING_BY_TASK_KEY — dict[pool_name, ToolRankingResult] for per-tab UI
+    """
     try:
         result = compute_tool_rankings()
         if result is None:
@@ -196,7 +201,16 @@ def compute_and_store_tool_rankings() -> None:
             time=3600 * 24,
             value=json.dumps(jsonable_encoder(result)),
         )
-        logger.info("[ToolRanking] Stored tool rankings to Redis")
+        logger.info("[ToolRanking] Stored global tool rankings to Redis")
+
+        by_task = compute_tool_rankings_by_task_type()
+        if by_task is not None:
+            client.setex(
+                REDIS_TOOL_RANKING_BY_TASK_KEY,
+                time=3600 * 24,
+                value=json.dumps(jsonable_encoder(by_task)),
+            )
+            logger.info(f"[ToolRanking] Stored by-task-type rankings to Redis: pools={list(by_task.keys())}")
     except Exception as e:
         logger.error(f"[ToolRanking] Error storing tool rankings: {e}")
 

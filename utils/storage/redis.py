@@ -13,6 +13,7 @@ REDIS_VOTE_COUNT_KEY: Final[str] = "{country_code}_count"
 REDIS_RANKING_KEY: Final[str] = "rankings_and_prefs:{country_portal}"
 REDIS_LLM_RESPONSES_KEY: Final[str] = "llm_cache:{model_name}:{prompt_hash}"
 REDIS_TOOL_RANKING_KEY: Final[str] = "tool_arena:ranking"
+REDIS_TOOL_RANKING_BY_TASK_KEY: Final[str] = "tool_arena:ranking_by_task_type"
 
 
 @lru_cache

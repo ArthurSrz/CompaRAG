@@ -15,20 +15,64 @@
     provisional: boolean
   }
 
-  let tools = $state<ToolRanking[]>([])
+  type LeaderboardResponse = {
+    data_timestamp: number | null
+    tools: ToolRanking[]
+    by_task_type: Record<string, ToolRanking[]> | null
+  }
+
+  // Pool display metadata — order + label are defined here, not from the API,
+  // so the UI stays stable even if new pools appear in the data.
+  const POOLS: { key: string; label: string }[] = [
+    { key: 'rag', label: m['toolArena.leaderboard.poolRag']() },
+    { key: 'knowledge_capture', label: m['toolArena.leaderboard.poolKnowledgeCapture']() },
+  ]
+
   let loading = $state(true)
   let error = $state<string | null>(null)
+  // by_task_type from API; null means old backend (no per-pool data yet)
+  let byTaskType = $state<Record<string, ToolRanking[]> | null>(null)
+  // Fallback: global flat list (legacy or when by_task_type is missing)
+  let allTools = $state<ToolRanking[]>([])
+
+  // Active tab key; defaults to first pool with data
+  let activePool = $state<string>('rag')
 
   onMount(async () => {
     try {
-      const data = await api.request<{ data_timestamp: number | null; tools: ToolRanking[] }>('/tool-arena/leaderboard')
-      tools = [...data.tools].sort((a, b) => b.elo - a.elo)
+      const data = await api.request<LeaderboardResponse>('/tool-arena/leaderboard')
+      allTools = [...data.tools].sort((a, b) => b.elo - a.elo)
+      if (data.by_task_type) {
+        byTaskType = Object.fromEntries(
+          Object.entries(data.by_task_type).map(([pool, tools]) => [
+            pool,
+            [...tools].sort((a, b) => b.elo - a.elo),
+          ])
+        )
+        // Auto-select first pool that has data
+        const firstPoolWithData = POOLS.find(p => (byTaskType![p.key]?.length ?? 0) > 0)
+        if (firstPoolWithData) activePool = firstPoolWithData.key
+      }
     } catch (err) {
       error = (err as Error).message || m['toolArena.errorFallback']()
     } finally {
       loading = false
     }
   })
+
+  // Tools shown in the current view: per-pool if available, otherwise global
+  const displayedTools = $derived(
+    byTaskType
+      ? (byTaskType[activePool] ?? [])
+      : allTools
+  )
+
+  // Pools that actually have data (for tab visibility)
+  const activePools = $derived(
+    byTaskType
+      ? POOLS.filter(p => (byTaskType![p.key]?.length ?? 0) > 0)
+      : []
+  )
 </script>
 
 <SeoHead title={m['toolArena.leaderboard.title']()} />
@@ -53,7 +97,7 @@
         <p class="fr-text--sm text-red-600 mb-0!">{error}</p>
       </div>
 
-    {:else if tools.length === 0}
+    {:else if allTools.length === 0}
       <div class="cg-border rounded-lg bg-white p-8 text-center">
         <p class="fr-text--sm text-grey mb-0!">
           {m['toolArena.leaderboard.empty']()}
@@ -61,6 +105,31 @@
       </div>
 
     {:else}
+      <!-- Pool tabs — only rendered when the backend sends by_task_type data -->
+      {#if activePools.length > 1}
+        <div class="flex gap-2 mb-4 border-b border-grey-200">
+          {#each activePools as pool}
+            <button
+              type="button"
+              class="px-4 py-2 fr-text--sm font-medium transition-colors border-b-2 -mb-px"
+              class:border-primary={activePool === pool.key}
+              class:text-primary={activePool === pool.key}
+              class:border-transparent={activePool !== pool.key}
+              class:text-grey={activePool !== pool.key}
+              onclick={() => { activePool = pool.key }}
+            >
+              {pool.label}
+              <span class="ml-1 fr-text--xs text-grey">
+                ({byTaskType![pool.key]?.length ?? 0})
+              </span>
+            </button>
+          {/each}
+        </div>
+        <p class="fr-text--xs text-grey mb-4">
+          {m['toolArena.leaderboard.poolNote']()}
+        </p>
+      {/if}
+
       <div class="bg-white rounded-lg overflow-x-auto cg-border">
         <table class="w-full text-sm">
           <thead>
@@ -74,7 +143,7 @@
             </tr>
           </thead>
           <tbody>
-            {#each tools as tool, i}
+            {#each displayedTools as tool, i}
               <tr class="border-b border-grey-100 last:border-0 hover:bg-very-light-grey transition-colors">
                 <td class="px-4 py-3 font-semibold text-grey">{i + 1}</td>
                 <td class="px-4 py-3">

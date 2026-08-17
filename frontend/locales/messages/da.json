@@ -1984,7 +1984,10 @@
       "matches": "Matches",
       "winRate": "Win Rate",
       "provisional": "Provisional",
-      "eloExplanation": "ELO scores computed using the Bradley-Terry model with bootstrap confidence intervals (p2.5 – p97.5). Tools marked \"Provisional\" have fewer than 50 matches."
+      "eloExplanation": "ELO scores computed using the Bradley-Terry model with bootstrap confidence intervals (p2.5 – p97.5). Tools marked \"Provisional\" have fewer than 50 matches.",
+      "poolRag": "RAG-værktøjer",
+      "poolKnowledgeCapture": "Vidensinterviewere",
+      "poolNote": "Elo-scores beregnes uafhængigt pr. opgavetype — de er ikke sammenlignelige på tværs af faner."
     },
     "unavailable": {
       "title": "Tools temporarily unavailable",

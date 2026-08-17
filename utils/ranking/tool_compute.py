@@ -93,6 +93,35 @@ def _engine_name_map() -> dict[str, str]:
     return {s.id: s.name for s in load_mcp_servers()}
 
 
+def _task_type_map() -> dict[str, str]:
+    """tool_id → MCPServerConfig.task_type (or 'rag' when absent/None).
+
+    All non-knowledge_capture task types (summary, qa, extraction, …) are
+    treated as a single 'rag' pool — the co-tenant aggregation by engine name
+    already merges them for the leaderboard.
+    """
+    result: dict[str, str] = {}
+    for s in load_mcp_servers():
+        tt = s.task_type or "rag"
+        result[s.id] = tt if tt == "knowledge_capture" else "rag"
+    return result
+
+
+def _vote_task_group(vote: dict, task_type_of: dict[str, str]) -> str:
+    """Derive the leaderboard pool for a vote.
+
+    Uses tool_a_id as the authority (both sides of a match always share the
+    same task_type — the arena dispatcher enforces this). Falls back to
+    tool_b_id, then to 'rag' for legacy votes whose ids are no longer in the
+    registry.
+    """
+    return (
+        task_type_of.get(vote["tool_a_id"])
+        or task_type_of.get(vote["tool_b_id"])
+        or "rag"
+    )
+
+
 def _known_engine_names() -> set[str]:
     """Distinct ``name`` values across the current registry."""
     return {s.name for s in load_mcp_servers()}
@@ -200,30 +229,19 @@ def _aggregate_tool_preferences(
     return result
 
 
-def compute_tool_rankings() -> ToolRankingResult | None:
+def _compute_from_votes(
+    votes: list[dict],
+    name_of: dict[str, str],
+    known: set[str],
+) -> ToolRankingResult:
+    """Run Bradley-Terry + preferences on an arbitrary slice of votes.
+
+    Returns a ToolRankingResult with empty dicts when no battles survive
+    filtering (ties, intra-engine, retired).
     """
-    Main function for tool ranking computation.
-
-    Fetches votes from DB, converts to battles, runs Bradley-Terry with
-    bootstrap confidence intervals, computes rank bounds + mean win prob,
-    and aggregates per-side preferences.
-
-    Returns:
-        ToolRankingResult with empty rankings/preferences if no battles exist.
-        None only on unexpected failure.
-    """
-    try:
-        votes = fetch_tool_votes()
-    except Exception:
-        logger.error("[ToolRanking] Failed to fetch tool votes", exc_info=True)
-        return None
-
-    name_of = _engine_name_map()
-    known = _known_engine_names()
     battles = _tool_votes_to_battles(votes, name_of, known)
 
     if not battles:
-        logger.warning("[ToolRanking] No tool battles found, returning empty result")
         return ToolRankingResult(timestamp=time.time())
 
     ci = bootstrap_confidence_intervals(battles, n_samples=100)
@@ -289,3 +307,59 @@ def compute_tool_rankings() -> ToolRankingResult | None:
         rankings=rankings,
         preferences=preferences,
     )
+
+
+def compute_tool_rankings() -> ToolRankingResult | None:
+    """Compute a single global tool ranking (all task types merged).
+
+    Kept for backward-compat with callers that don't need per-task-type
+    breakdown. Internally delegates to ``_compute_from_votes``.
+
+    Returns:
+        ToolRankingResult, or None on unexpected DB failure.
+    """
+    try:
+        votes = fetch_tool_votes()
+    except Exception:
+        logger.error("[ToolRanking] Failed to fetch tool votes", exc_info=True)
+        return None
+
+    name_of = _engine_name_map()
+    known = _known_engine_names()
+    result = _compute_from_votes(votes, name_of, known)
+    if not result.rankings:
+        logger.warning("[ToolRanking] No tool battles found, returning empty result")
+    return result
+
+
+def compute_tool_rankings_by_task_type() -> dict[str, ToolRankingResult] | None:
+    """Compute one Bradley-Terry ranking per task-type pool.
+
+    Returns a dict keyed by pool name (e.g. ``"rag"``, ``"knowledge_capture"``)
+    where each value is an independent ToolRankingResult — ELO scores are not
+    comparable across pools.
+
+    Returns None only on DB failure; missing pools produce empty ToolRankingResult.
+    """
+    try:
+        votes = fetch_tool_votes()
+    except Exception:
+        logger.error("[ToolRanking] Failed to fetch tool votes for by-task ranking", exc_info=True)
+        return None
+
+    name_of = _engine_name_map()
+    known = _known_engine_names()
+    task_type_of = _task_type_map()
+
+    # Partition votes by pool
+    buckets: dict[str, list[dict]] = defaultdict(list)
+    for v in votes:
+        pool = _vote_task_group(v, task_type_of)
+        buckets[pool].append(v)
+
+    results: dict[str, ToolRankingResult] = {}
+    for pool, pool_votes in buckets.items():
+        logger.info(f"[ToolRanking] Computing pool={pool} n_votes={len(pool_votes)}")
+        results[pool] = _compute_from_votes(pool_votes, name_of, known)
+
+    return results
