@@ -237,6 +237,22 @@
         "4": {
           "text": "What are the main conclusions?"
         }
+      },
+      "titleCapture": "Užfiksuokite savo ekspertizę",
+      "submitCapture": "Pradėti interviu",
+      "captureSuggestions": {
+        "1": {
+          "text": "Gedimų diagnostika mano srityje"
+        },
+        "2": {
+          "text": "Naujokų integravimas į mano komandą"
+        },
+        "3": {
+          "text": "Darbas su sudėtingais klientais"
+        },
+        "4": {
+          "text": "Mano kasdieniai sprendimų kriterijai"
+        }
       }
     },
     "loading": {
@@ -284,7 +300,17 @@
       "finishEarly": "Baigti",
       "waiting": "Pašnekovas mąsto…",
       "armDone": "Interviu baigtas — rezultatas paruoštas.",
-      "errorArm": "Šis pašnekovas susidūrė su klaida."
+      "errorArm": "Šis pašnekovas susidūrė su klaida.",
+      "stepTitle": "Atsakykite abiem pašnekovams",
+      "stepDesc": "Kiekvienas pašnekovas veda savo interviu. Baigę su vienu, spauskite „Baigti“, kad gautumėte jo santrauką.",
+      "opening": {
+        "title": "Jūsų du pašnekovai ruošiasi",
+        "subtitle": "Kiekvienas ruošia pirmąjį klausimą — kelios sekundės…"
+      },
+      "finalizing": {
+        "title": "Pašnekovai rašo savo santraukas",
+        "subtitle": "Kiekvienas interviu tampa žinių dokumentu — kelios sekundės…"
+      }
     }
   },
   "general": {

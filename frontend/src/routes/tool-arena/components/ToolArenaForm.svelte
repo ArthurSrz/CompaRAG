@@ -22,7 +22,8 @@
 
   let {
     onsubmit,
-    disabled = false
+    disabled = false,
+    selectedTaskType = $bindable('summary' as TaskType)
   }: {
     onsubmit: (
       task: string,
@@ -32,6 +33,8 @@
       expectedAnswer: string
     ) => void
     disabled?: boolean
+    // Bindable : la page parente adapte titre/étapes au type de tâche choisi.
+    selectedTaskType?: TaskType
   } = $props()
 
   // Frontend-restricted subset of the backend's task_type Literal
@@ -67,7 +70,6 @@
     }
   ]
 
-  let selectedTaskType = $state<TaskType>(taskTypes[0].value)
   let task = $state(taskTypes[0].prompt)
   let goal = $state(taskTypes[0].goalText)
   let documentContent = $state('')
@@ -171,6 +173,17 @@
     { icon: 'fr-icon-search-line', text: m['toolArena.form.suggestions.3.text']() },
     { icon: 'fr-icon-question-line', text: m['toolArena.form.suggestions.4.text']() }
   ]
+
+  // En mode capture, les suggestions documentaires n'ont pas de sens — on
+  // propose des exemples de sujets d'expertise (remplissent task uniquement).
+  const captureSuggestions = [
+    { icon: 'fr-icon-tools-line', text: m['toolArena.form.captureSuggestions.1.text']() },
+    { icon: 'fr-icon-team-line', text: m['toolArena.form.captureSuggestions.2.text']() },
+    { icon: 'fr-icon-discuss-line', text: m['toolArena.form.captureSuggestions.3.text']() },
+    { icon: 'fr-icon-lightbulb-line', text: m['toolArena.form.captureSuggestions.4.text']() }
+  ]
+
+  const isCapture = $derived(selectedTaskType === 'knowledge_capture')
 </script>
 
 <form onsubmit={handleSubmit} class="gap-3 py-10 md:pb-12 md:pt-12 grid">
@@ -256,7 +269,7 @@
 
     <div class="md:col-span-2 flex justify-end items-start">
       <Button type="submit" data-testid="tool-arena-submit" disabled={!canSubmit}>
-        {m['toolArena.form.submit']()}
+        {isCapture ? m['toolArena.form.submitCapture']() : m['toolArena.form.submit']()}
       </Button>
     </div>
   </div>
@@ -285,20 +298,36 @@
 <div class="mt-2">
   <p class="font-bold mb-4">Suggestions</p>
   <div class="gap-4 md:grid-cols-4 grid grid-cols-2">
-    {#each suggestions as suggestion}
-      <button
-        type="button"
-        class="cg-border rounded-lg! bg-white p-4 text-left hover:bg-light-grey transition-colors cursor-pointer flex flex-col gap-3"
-        onclick={(e) => {
-          e.preventDefault()
-          task = suggestion.text
-          goal = m['toolArena.form.taskTypes.summarize.goal']()
-        }}
-      >
-        <span class={['text-primary text-xl', suggestion.icon]} aria-hidden="true"></span>
-        <span class="fr-text--sm text-dark-grey">{suggestion.text}</span>
-      </button>
-    {/each}
+    {#if isCapture}
+      {#each captureSuggestions as suggestion}
+        <button
+          type="button"
+          class="cg-border rounded-lg! bg-white p-4 text-left hover:bg-light-grey transition-colors cursor-pointer flex flex-col gap-3"
+          onclick={(e) => {
+            e.preventDefault()
+            task = suggestion.text
+          }}
+        >
+          <span class={['text-primary text-xl', suggestion.icon]} aria-hidden="true"></span>
+          <span class="fr-text--sm text-dark-grey">{suggestion.text}</span>
+        </button>
+      {/each}
+    {:else}
+      {#each suggestions as suggestion}
+        <button
+          type="button"
+          class="cg-border rounded-lg! bg-white p-4 text-left hover:bg-light-grey transition-colors cursor-pointer flex flex-col gap-3"
+          onclick={(e) => {
+            e.preventDefault()
+            task = suggestion.text
+            goal = m['toolArena.form.taskTypes.summarize.goal']()
+          }}
+        >
+          <span class={['text-primary text-xl', suggestion.icon]} aria-hidden="true"></span>
+          <span class="fr-text--sm text-dark-grey">{suggestion.text}</span>
+        </button>
+      {/each}
+    {/if}
   </div>
 </div>
 

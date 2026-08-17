@@ -2102,6 +2102,22 @@
         "4": {
           "text": "Quelles sont les conclusions principales ?"
         }
+      },
+      "titleCapture": "Faites capturer votre expertise",
+      "submitCapture": "Démarrer les entretiens",
+      "captureSuggestions": {
+        "1": {
+          "text": "Le diagnostic des pannes sur mon périmètre"
+        },
+        "2": {
+          "text": "L'intégration des nouveaux dans mon équipe"
+        },
+        "3": {
+          "text": "La gestion de mes clients difficiles"
+        },
+        "4": {
+          "text": "Mes critères de décision au quotidien"
+        }
       }
     },
     "loading": {
@@ -2149,7 +2165,17 @@
       "finishEarly": "Terminer",
       "waiting": "L'intervieweur réfléchit…",
       "armDone": "Entretien terminé — la synthèse est prête.",
-      "errorArm": "Cet intervieweur a rencontré une erreur."
+      "errorArm": "Cet intervieweur a rencontré une erreur.",
+      "stepTitle": "Répondez aux deux intervieweurs",
+      "stepDesc": "Chaque intervieweur mène son propre entretien. Quand vous avez fini avec l'un, cliquez sur « Terminer » pour obtenir sa synthèse.",
+      "opening": {
+        "title": "Vos deux intervieweurs se préparent",
+        "subtitle": "Chacun prépare sa première question — quelques secondes…"
+      },
+      "finalizing": {
+        "title": "Les intervieweurs rédigent leurs synthèses",
+        "subtitle": "Chaque entretien devient un document de connaissances — quelques secondes…"
+      }
     }
   },
   "vote": {

@@ -1439,6 +1439,22 @@
         "4": {
           "text": "What are the main conclusions?"
         }
+      },
+      "titleCapture": "Få din expertis infångad",
+      "submitCapture": "Starta intervjuerna",
+      "captureSuggestions": {
+        "1": {
+          "text": "Felsökning inom mitt arbetsområde"
+        },
+        "2": {
+          "text": "Introduktion av nya i mitt team"
+        },
+        "3": {
+          "text": "Hantering av mina svåra kunder"
+        },
+        "4": {
+          "text": "Mina dagliga beslutskriterier"
+        }
       }
     },
     "loading": {
@@ -1486,7 +1502,17 @@
       "finishEarly": "Avsluta",
       "waiting": "Intervjuaren tänker…",
       "armDone": "Intervjun är klar — resultatet är redo.",
-      "errorArm": "Den här intervjuaren stötte på ett fel."
+      "errorArm": "Den här intervjuaren stötte på ett fel.",
+      "stepTitle": "Svara båda intervjuarna",
+      "stepDesc": "Varje intervjuare genomför sin egen intervju. När du är klar med en, klicka på “Avsluta” för att få dess sammanfattning.",
+      "opening": {
+        "title": "Dina två intervjuare gör sig redo",
+        "subtitle": "Var och en förbereder sin första fråga — ett ögonblick…"
+      },
+      "finalizing": {
+        "title": "Intervjuarna skriver sina sammanfattningar",
+        "subtitle": "Varje intervju blir ett kunskapsdokument — ett ögonblick…"
+      }
     }
   },
   "vote": {

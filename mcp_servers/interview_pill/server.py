@@ -97,6 +97,9 @@ def _build_messages(
         f"- Topic the expert claims expertise on: {task}\n"
         f"- What the captured knowledge must enable: {goal}\n"
         f"- Expert answers so far: {turn - 1} of {max_turns} maximum.\n"
+        "- LANGUAGE: conduct the ENTIRE interview — and write the final "
+        "artifact — in the expert's language, i.e. the language of the topic "
+        "and goal above (and of their answers). Never switch languages.\n"
     )
     if force_artifact:
         system += (

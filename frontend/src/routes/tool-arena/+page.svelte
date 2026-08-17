@@ -91,6 +91,18 @@
   let interviewArmB = $state<InterviewArm>(emptyArm())
   let finalizing = $state(false)
 
+  // Type de tâche choisi dans le formulaire (bindable) — pilote le titre du
+  // formulaire, le bandeau d'étapes (2 temps RAG / 3 temps capture) et les
+  // libellés de chargement.
+  let formTaskType = $state<'summary' | 'qa' | 'knowledge_capture'>('summary')
+  const isCaptureFlow = $derived(formTaskType === 'knowledge_capture')
+
+  // Bandeau d'étapes : la capture a une étape de plus (les entretiens).
+  const stepTotal = $derived(isCaptureFlow ? 3 : 2)
+  const stepNum = $derived(
+    phase === 'interviewing' ? 1 : phase === 'results' ? (isCaptureFlow ? 2 : 1) : (isCaptureFlow ? 3 : 2)
+  )
+
   let secondHeader = $state<HTMLElement | undefined>(undefined)
   let secondHeaderSize = $derived(secondHeader?.offsetHeight ?? 0)
 
@@ -364,7 +376,7 @@
 
 <Header hideNavigation={phase !== 'input'} hideDiscussBtn hideVoteGauge small />
 
-{#if phase === 'results' || phase === 'revealed'}
+{#if phase === 'interviewing' || phase === 'results' || phase === 'revealed'}
   <div
     bind:this={secondHeader}
     id="second-header"
@@ -373,14 +385,22 @@
     <div class="fr-container gap-3 md:flex-row flex flex-col items-center">
       <div class="gap-3 md:flex-row flex basis-2/3 flex-col items-center">
         <div class="bg-primary px-4 py-2 font-bold text-white rounded-[3.75rem] text-nowrap">
-          {m['header.chatbot.step']()} {phase === 'results' ? 1 : 2}/2
+          {m['header.chatbot.step']()} {stepNum}/{stepTotal}
         </div>
         <div class="md:text-left flex flex-col text-center">
           <strong class="text-dark-grey">
-            {phase === 'results' ? m['toolArena.step1.title']() : m['toolArena.step2.title']()}
+            {phase === 'interviewing'
+              ? m['toolArena.interview.stepTitle']()
+              : phase === 'results'
+                ? m['toolArena.step1.title']()
+                : m['toolArena.step2.title']()}
           </strong>
           <p class="mt-2! mb-0! text-sm! leading-normal! text-grey md:mt-0!">
-            {phase === 'results' ? m['toolArena.step1.desc']() : m['toolArena.step2.desc']()}
+            {phase === 'interviewing'
+              ? m['toolArena.interview.stepDesc']()
+              : phase === 'results'
+                ? m['toolArena.step1.desc']()
+                : m['toolArena.step2.desc']()}
           </p>
         </div>
       </div>
@@ -409,7 +429,7 @@
     <div id="prompt-area" class="fr-container py-10 md:py-24">
       <div class="fr-col-xl-8 m-auto">
         <h2 class="mb-0! text-center" style="font-size: clamp(1.75rem, 3vw, 2.5rem); font-weight: 700;">
-          {m['toolArena.form.title']()}
+          {isCaptureFlow ? m['toolArena.form.titleCapture']() : m['toolArena.form.title']()}
         </h2>
 
         {#if compareError}
@@ -418,7 +438,7 @@
           </div>
         {/if}
 
-        <ToolArenaForm onsubmit={handleCompare} />
+        <ToolArenaForm onsubmit={handleCompare} bind:selectedTaskType={formTaskType} />
       </div>
     </div>
 
@@ -437,7 +457,11 @@
     <div class="fr-container py-10 md:py-24">
       <div class="fr-col-xl-8 m-auto text-center">
         <h2 class="mb-4!" style="font-size: clamp(1.75rem, 3vw, 2.5rem); font-weight: 700;">
-          {m['toolArena.loading.title']()}
+          {isCaptureFlow
+            ? finalizing
+              ? m['toolArena.interview.finalizing.title']()
+              : m['toolArena.interview.opening.title']()
+            : m['toolArena.loading.title']()}
         </h2>
         <div class="py-16">
           <div class="flex justify-center mb-6">
@@ -447,7 +471,13 @@
               <div class="c-bot-disk-b animate-pulse"></div>
             </div>
           </div>
-          <p class="fr-text--sm text-grey">{m['toolArena.loading.subtitle']()}</p>
+          <p class="fr-text--sm text-grey">
+            {isCaptureFlow
+              ? finalizing
+                ? m['toolArena.interview.finalizing.subtitle']()
+                : m['toolArena.interview.opening.subtitle']()
+              : m['toolArena.loading.subtitle']()}
+          </p>
           {#if streamingEnabled && (progressEventA || progressEventB)}
             <div class="gap-4 md:grid-cols-2 grid mt-6 max-w-xl mx-auto">
               <ProgressCard event={progressEventA} />

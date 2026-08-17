@@ -65,7 +65,7 @@
     </span>
   </div>
 
-  <div bind:this={scroller} class="flex-1 overflow-y-auto p-4 flex flex-col gap-3" style="max-height: 24rem; min-height: 12rem;">
+  <div bind:this={scroller} class="flex-1 overflow-y-auto p-4 flex flex-col gap-3" style="max-height: min(62vh, 36rem); min-height: 14rem;">
     {#each messages as message}
       {#if message.role === 'interviewer'}
         <div class="fr-text--sm text-dark-grey interview-md">
@@ -129,4 +129,13 @@
   }
   .interview-md :global(ul) { list-style-type: disc; }
   .interview-md :global(ol) { list-style-type: decimal; }
+
+  /* Les intervieweurs émettent des #/## : à taille pleine, un h1 écrase la
+     bulle de chat. On les ramène à une hiérarchie lisible en contexte. */
+  .interview-md :global(h1) { font-size: 1.05rem; margin: 0.5rem 0 0.25rem; }
+  .interview-md :global(h2) { font-size: 0.98rem; margin: 0.5rem 0 0.25rem; }
+  .interview-md :global(h3),
+  .interview-md :global(h4) { font-size: 0.92rem; margin: 0.4rem 0 0.2rem; }
+  .interview-md :global(p) { margin-bottom: 0.5rem; }
+  .interview-md :global(hr) { margin: 0.6rem 0; }
 </style>

@@ -1938,6 +1938,22 @@
         "4": {
           "text": "What are the main conclusions?"
         }
+      },
+      "titleCapture": "Få din ekspertise indfanget",
+      "submitCapture": "Start interviewene",
+      "captureSuggestions": {
+        "1": {
+          "text": "Fejlfinding på mit arbejdsområde"
+        },
+        "2": {
+          "text": "Onboarding af nye i mit team"
+        },
+        "3": {
+          "text": "Håndtering af mine svære kunder"
+        },
+        "4": {
+          "text": "Mine daglige beslutningskriterier"
+        }
       }
     },
     "loading": {
@@ -1985,7 +2001,17 @@
       "finishEarly": "Afslut",
       "waiting": "Intervieweren tænker…",
       "armDone": "Interviewet er afsluttet — resultatet er klar.",
-      "errorArm": "Denne interviewer stødte på en fejl."
+      "errorArm": "Denne interviewer stødte på en fejl.",
+      "stepTitle": "Svar begge interviewere",
+      "stepDesc": "Hver interviewer gennemfører sit eget interview. Når du er færdig med én, klik på “Afslut” for at få dens sammenfatning.",
+      "opening": {
+        "title": "Dine to interviewere gør sig klar",
+        "subtitle": "Hver forbereder sit første spørgsmål — et øjeblik…"
+      },
+      "finalizing": {
+        "title": "Interviewerne skriver deres sammenfatninger",
+        "subtitle": "Hvert interview bliver et vidensdokument — et øjeblik…"
+      }
     }
   },
   "vote": {

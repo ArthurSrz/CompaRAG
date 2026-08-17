@@ -1953,6 +1953,22 @@
         "4": {
           "text": "What are the main conclusions?"
         }
+      },
+      "titleCapture": "Have your expertise captured",
+      "submitCapture": "Start the interviews",
+      "captureSuggestions": {
+        "1": {
+          "text": "Troubleshooting in my area of work"
+        },
+        "2": {
+          "text": "Onboarding newcomers to my team"
+        },
+        "3": {
+          "text": "Handling my difficult clients"
+        },
+        "4": {
+          "text": "My day-to-day decision criteria"
+        }
       }
     },
     "loading": {
@@ -2000,7 +2016,17 @@
       "finishEarly": "Finish",
       "waiting": "The interviewer is thinking…",
       "armDone": "Interview finished — the artifact is ready.",
-      "errorArm": "This interviewer encountered an error."
+      "errorArm": "This interviewer encountered an error.",
+      "stepTitle": "Answer both interviewers",
+      "stepDesc": "Each interviewer runs its own interview. When you're done with one, click “Finish” to get its synthesis.",
+      "opening": {
+        "title": "Your two interviewers are getting ready",
+        "subtitle": "Each is preparing its first question — a few seconds…"
+      },
+      "finalizing": {
+        "title": "The interviewers are writing their syntheses",
+        "subtitle": "Each interview becomes a knowledge document — a few seconds…"
+      }
     }
   },
   "vote": {
