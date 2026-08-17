@@ -131,11 +131,13 @@
   .interview-md :global(ol) { list-style-type: decimal; }
 
   /* Les intervieweurs émettent des #/## : à taille pleine, un h1 écrase la
-     bulle de chat. On les ramène à une hiérarchie lisible en contexte. */
-  .interview-md :global(h1) { font-size: 1.05rem; margin: 0.5rem 0 0.25rem; }
-  .interview-md :global(h2) { font-size: 0.98rem; margin: 0.5rem 0 0.25rem; }
+     bulle de chat. On les ramène à une hiérarchie lisible en contexte.
+     !important : les styles de MarkdownCode (même spécificité, déclarés
+     après dans le bundle) gagnaient sinon — mesuré à 22px en prod. */
+  .interview-md :global(h1) { font-size: 1.05rem !important; margin: 0.5rem 0 0.25rem; }
+  .interview-md :global(h2) { font-size: 0.98rem !important; margin: 0.5rem 0 0.25rem; }
   .interview-md :global(h3),
-  .interview-md :global(h4) { font-size: 0.92rem; margin: 0.4rem 0 0.2rem; }
+  .interview-md :global(h4) { font-size: 0.92rem !important; margin: 0.4rem 0 0.2rem; }
   .interview-md :global(p) { margin-bottom: 0.5rem; }
   .interview-md :global(hr) { margin: 0.6rem 0; }
 </style>
