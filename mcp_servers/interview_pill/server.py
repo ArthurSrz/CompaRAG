@@ -114,17 +114,23 @@ def _build_system(
 ) -> list[dict]:
     """Build the Anthropic system prompt with prompt caching enabled.
 
-    The full system text (skill instructions + OUTPUT_CONTRACT + session block)
-    is wrapped in a single text block marked cache_control=ephemeral.
-    Anthropic caches this on the first call and serves it from cache on
-    subsequent calls within the ~5-minute TTL — at 0.1× the input token price.
+    Two separate blocks:
+    1. STATIC (cached): skill.instructions + OUTPUT_CONTRACT — identical across
+       all turns for a given strategy → marked cache_control=ephemeral.
+       Written to cache on turn 1, read from cache on turns 2-10 at 0.1× price.
+    2. DYNAMIC (not cached): session block with turn number, task, goal,
+       force_artifact flag — changes every turn so it must NOT be cached.
+
+    Previously these were merged into a single block, which caused the cache
+    to be re-written on every turn (different turn number → different hash →
+    cache miss) defeating the purpose entirely.
     """
-    full_text = (
-        skill.instructions
-        + OUTPUT_CONTRACT
-        + _session_block(task, goal, turn, max_turns, force_artifact)
-    )
-    return [{"type": "text", "text": full_text, "cache_control": {"type": "ephemeral"}}]
+    static_text = skill.instructions + OUTPUT_CONTRACT
+    dynamic_text = _session_block(task, goal, turn, max_turns, force_artifact)
+    return [
+        {"type": "text", "text": static_text, "cache_control": {"type": "ephemeral"}},
+        {"type": "text", "text": dynamic_text},
+    ]
 
 
 def _build_messages(
