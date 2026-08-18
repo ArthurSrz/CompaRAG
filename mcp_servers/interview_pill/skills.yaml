@@ -1,0 +1,23 @@
+# Interview skill definitions — loaded once at server startup.
+#
+# Each entry is one InterviewStrategy (ontology: variant of the interview).
+# The key matches the ``strategy`` argument in tool_args and in the
+# ``interview_move`` MCP tool call.
+#
+# Fields:
+#   display_name  — human-readable label (shown in the UI via mcp_servers.external.json)
+#   prompt_file   — path to the strategy markdown (relative to this file's directory)
+#   temperature   — LLM sampling temperature for this strategy
+#   max_tokens    — max tokens for a single interview move response
+
+grill:
+  display_name: "Grill-me Interviewer"
+  prompt_file: "prompts/grill_strategy.md"
+  temperature: 0.3
+  max_tokens: 4096
+
+gsd_discuss:
+  display_name: "GSD Discuss Interviewer"
+  prompt_file: "prompts/gsd_discuss_strategy.md"
+  temperature: 0.4
+  max_tokens: 4096
