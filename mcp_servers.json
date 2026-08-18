@@ -411,7 +411,7 @@
       "strategy": "grill"
     },
     "task_type": "knowledge_capture",
-    "llm_id": "openrouter/anthropic/claude-haiku-4.5",
+    "llm_id": "anthropic/claude-haiku-4-5-20251001",
     "sanitize": {
       "url_patterns": [],
       "metadata_keys": [],
@@ -436,7 +436,7 @@
       "strategy": "gsd_discuss"
     },
     "task_type": "knowledge_capture",
-    "llm_id": "openrouter/anthropic/claude-haiku-4.5",
+    "llm_id": "anthropic/claude-haiku-4-5-20251001",
     "sanitize": {
       "url_patterns": [],
       "metadata_keys": [],
