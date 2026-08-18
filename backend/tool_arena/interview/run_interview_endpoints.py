@@ -79,8 +79,9 @@ logger = logging.getLogger("languia")
 
 interview_router = APIRouter()
 
-# Un move = un seul appel LLM (pas d'indexation) — 60 s suffisent largement.
-INTERVIEW_MOVE_TIMEOUT = float(os.environ.get("INTERVIEW_MOVE_TIMEOUT", "60"))
+# Un move = un seul appel LLM. Haiku 4.5 : ~15 s max. Sonnet 4.5 : peut
+# atteindre ~70 s sur les tours artefact longs → 120 s par défaut.
+INTERVIEW_MOVE_TIMEOUT = float(os.environ.get("INTERVIEW_MOVE_TIMEOUT", "120"))
 
 GENERIC_ARM_ERROR = "Tool encountered an error"
 
