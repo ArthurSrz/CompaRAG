@@ -36,7 +36,7 @@
       "strategy": "grill"
     },
     "task_type": "knowledge_capture",
-    "llm_id": "anthropic/claude-haiku-4-5-20251001",
+    "llm_id": "anthropic/claude-sonnet-4-5-20250514",
     "sanitize": {
       "url_patterns": [],
       "metadata_keys": [],
@@ -61,7 +61,7 @@
       "strategy": "gsd_discuss"
     },
     "task_type": "knowledge_capture",
-    "llm_id": "anthropic/claude-haiku-4-5-20251001",
+    "llm_id": "anthropic/claude-sonnet-4-5-20250514",
     "sanitize": {
       "url_patterns": [],
       "metadata_keys": [],

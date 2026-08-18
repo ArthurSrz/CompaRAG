@@ -48,7 +48,7 @@ log = logging.getLogger("interview_pill")
 # LLMConstant : même modèle pour les deux stratégies (invariant d'équifinalité).
 # Anthropic Haiku 4.5 en direct — plus rapide que LiteLLM/OpenRouter et éligible
 # au prompt caching natif Anthropic (cache_control=ephemeral).
-MODEL = os.getenv("INTERVIEW_LLM_ID", "claude-haiku-4-5-20251001")
+MODEL = os.getenv("INTERVIEW_LLM_ID", "claude-sonnet-4-5-20250514")
 _client = anthropic.Anthropic(api_key=os.getenv("ANTHROPIC_API_KEY"))
 
 # Contrat de sortie partagé — vit ici (et pas dans chaque fichier stratégie)
