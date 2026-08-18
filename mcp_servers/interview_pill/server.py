@@ -182,10 +182,25 @@ def _build_messages(
     # Place cache breakpoint on second-to-last message so accumulated context
     # is cached on the next turn. Needs ≥2 messages and the cache target must
     # be a user message (Anthropic only caches at user-role turns).
+    #
+    # IMPORTANT: cache_control must live INSIDE a content block, not on the
+    # message object itself. Placing it on the message causes a silent no-op
+    # on short conversations and a 400 BadRequestError once message count
+    # grows (Anthropic validates: "Extra inputs are not permitted").
     if len(messages) >= 2:
         idx = len(messages) - 2
         if messages[idx]["role"] == "user":
-            messages[idx] = {**messages[idx], "cache_control": {"type": "ephemeral"}}
+            raw_content = messages[idx]["content"]
+            # Normalise to list-of-blocks so we can attach cache_control.
+            if isinstance(raw_content, str):
+                blocks: list[dict] = [{"type": "text", "text": raw_content}]
+            elif isinstance(raw_content, list):
+                blocks = list(raw_content)
+            else:
+                blocks = [{"type": "text", "text": str(raw_content)}]
+            # Attach cache_control to the last block.
+            blocks[-1] = {**blocks[-1], "cache_control": {"type": "ephemeral"}}
+            messages[idx] = {**messages[idx], "content": blocks}
 
     return messages
 
