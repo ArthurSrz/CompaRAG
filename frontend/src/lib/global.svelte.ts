@@ -25,7 +25,9 @@ export const HOST_TO_LOCALE = dev
       'aiarenaen.dk': 'da'
     }
 const ALL_LOCALES = [
-  { code: 'da', short: 'DA', long: 'DA - Dansk', host: dev ? '127.0.0.1:8080' : 'ai-arenaen.dk' },
+  // DA used to point at ai-arenaen.dk (compar:IA's Danish arena): picking
+  // Dansk sent CompaRAG users to another site. It now switches in place.
+  { code: 'da', short: 'DA', long: 'DA - Dansk', host: DEFAULT_HOST },
   { code: 'fr', short: 'FR', long: 'FR - Français', host: DEFAULT_HOST },
   { code: 'en', short: 'EN', long: 'EN - English', host: DEFAULT_HOST },
   { code: 'lt', short: 'LT', long: 'LT - Lietuvių', host: DEFAULT_HOST },
