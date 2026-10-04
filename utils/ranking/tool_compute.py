@@ -33,10 +33,29 @@ logger = configure_logger(logging.getLogger("ranking.tool_compute"))
 
 PROVISIONAL_THRESHOLD = 50
 
+# Bradley-Terry prior: virtual wins + losses per engine vs. an Elo-1000
+# reference. Tool pools are small (a few dozen votes per engine), so plain
+# MLE sends any 0-win engine to the 1e-12 floor (Elo -3800, CI collapsed to
+# a point). One virtual win/loss keeps ratings finite and barely moves
+# engines with real data.
+BT_PRIOR = 1.0
+
 # Engines withdrawn from the arena. Their historical votes stay in the DB
 # (audit trail) but are dropped from leaderboard inputs so the engine does
 # not surface under its raw tool_id once removed from the registry.
 RETIRED_ENGINES: frozenset[str] = frozenset({"clarifeye"})
+
+# Engine name -> ISO cutoff. Votes involving that engine cast BEFORE the
+# cutoff are dropped from leaderboard inputs (kept in the DB as audit trail).
+# Used when an engine shipped broken and its votes measure the bug, not the
+# engine.
+#   PageIndex: md_to_tree built an empty tree for any document without
+#   Markdown headings (every .txt, most PDF/DOCX) and answered "document is
+#   empty" -- fixed by mcp_servers/pageindex/sectioning.py. Set the cutoff to
+#   the moment the fixed pageindex service went live.
+QUARANTINED_ENGINE_VOTES: dict[str, str] = {
+    "PageIndex": "2026-10-04T23:59:59",
+}
 
 
 def _normalize(s: str) -> str:
@@ -154,6 +173,14 @@ def _resolve_engine(
     return tool_id
 
 
+def _is_quarantined(v: dict, a: str, b: str) -> bool:
+    for engine in (a, b):
+        cutoff = QUARANTINED_ENGINE_VOTES.get(engine)
+        if cutoff is not None and str(v.get("timestamp", "")) < cutoff:
+            return True
+    return False
+
+
 def _tool_votes_to_battles(
     votes: list[dict], name_of: dict[str, str], known: set[str]
 ) -> list[tuple[str, str, str]]:
@@ -162,7 +189,8 @@ def _tool_votes_to_battles(
     Drops ties (no winner), intra-engine battles (both sides resolve to the
     same engine name — these measure prompt-template quality, not engine
     quality, and would produce 'LangChain vs LangChain' rows in the BT input),
-    and any battle where either side references a retired engine.
+    any battle where either side references a retired engine, and votes
+    quarantined by QUARANTINED_ENGINE_VOTES.
     """
     battles = []
     for v in votes:
@@ -172,7 +200,7 @@ def _tool_votes_to_battles(
             continue
         a = _resolve_engine(v["tool_a_id"], name_of, known)
         b = _resolve_engine(v["tool_b_id"], name_of, known)
-        if a == b:
+        if a == b or _is_quarantined(v, a, b):
             continue
         winner = a if v["chosen"] == "a" else b
         battles.append((a, b, winner))
@@ -197,7 +225,7 @@ def _aggregate_tool_preferences(
             continue
         a = _resolve_engine(v["tool_a_id"], name_of, known)
         b = _resolve_engine(v["tool_b_id"], name_of, known)
-        if a == b:
+        if a == b or _is_quarantined(v, a, b):
             continue
         for side, engine in (("a", a), ("b", b)):
             total[engine] += 1
@@ -244,7 +272,7 @@ def _compute_from_votes(
     if not battles:
         return ToolRankingResult(timestamp=time.time())
 
-    ci = bootstrap_confidence_intervals(battles, n_samples=100)
+    ci = bootstrap_confidence_intervals(battles, n_samples=100, prior=BT_PRIOR)
 
     match_counts: dict[str, int] = defaultdict(int)
     win_counts: dict[str, int] = defaultdict(int)

@@ -34,6 +34,7 @@ COPY --from=pageindex-fetch /pageindex /app/mcp_servers/pageindex/vendor/PageInd
 
 # Our server code.
 COPY mcp_servers/pageindex/server.py /app/mcp_servers/pageindex/server.py
+COPY mcp_servers/pageindex/sectioning.py /app/mcp_servers/pageindex/sectioning.py
 COPY mcp_servers/pageindex/tool.manifest.yaml /app/mcp_servers/pageindex/tool.manifest.yaml
 
 # Make mcp_servers/ a package so `python -m mcp_servers.pageindex.server` works.

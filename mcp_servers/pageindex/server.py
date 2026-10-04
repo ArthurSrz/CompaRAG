@@ -5,7 +5,8 @@ arbre hiérarchique (table-of-contents) du document et laisse un LLM
 raisonner sur cet arbre pour répondre.
 
 Architecture :
-  1. document_content (texte/markdown) → fichier .md temporaire
+  1. document_content (texte/markdown) → ensure_sections (titres synthétiques
+     si le document n'en a pas, voir sectioning.py) → fichier .md temporaire
   2. pageindex.page_index_md.md_to_tree(...) → arbre hiérarchique avec résumés
   3. LLM (via LiteLLM → OpenRouter) reçoit l'arbre + la question → réponse
 
@@ -28,11 +29,14 @@ from fastmcp import FastMCP
 from starlette.requests import Request
 from starlette.responses import PlainTextResponse
 
-_VENDOR_DIR = Path(__file__).resolve().parent / "vendor" / "PageIndex"
-if str(_VENDOR_DIR) not in sys.path:
-    sys.path.insert(0, str(_VENDOR_DIR))
+_HERE = Path(__file__).resolve().parent
+_VENDOR_DIR = _HERE / "vendor" / "PageIndex"
+for _p in (_VENDOR_DIR, _HERE):
+    if str(_p) not in sys.path:
+        sys.path.insert(0, str(_p))
 
 from pageindex.page_index_md import md_to_tree  # noqa: E402
+from sectioning import ensure_sections  # noqa: E402
 
 import litellm  # noqa: E402
 
@@ -55,7 +59,9 @@ async def health_check(request: Request) -> PlainTextResponse:
 
 
 def _build_prompt(task: str, goal: str, tree: dict) -> str:
-    tree_json = json.dumps(tree, ensure_ascii=False, indent=2)
+    # Seule la structure est transmise : ``doc_name`` est le nom du fichier
+    # temporaire (tmpXXXX) et finissait cité tel quel dans les réponses.
+    tree_json = json.dumps(tree.get("structure", []), ensure_ascii=False, indent=2)
     return (
         "You are answering a question by reasoning over a hierarchical "
         "tree index of a document (titles, summaries, and text per "
@@ -74,7 +80,7 @@ def _run_pageindex_sync(document_content: str, task: str, goal: str) -> str:
     with tempfile.NamedTemporaryFile(
         mode="w", suffix=".md", delete=False, encoding="utf-8"
     ) as tmp:
-        tmp.write(document_content)
+        tmp.write(ensure_sections(document_content))
         md_path = tmp.name
 
     try:
