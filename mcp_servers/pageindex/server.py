@@ -71,7 +71,7 @@ def _build_prompt(task: str, goal: str, tree: dict) -> str:
         f"SUCCESS CRITERION: {goal}\n\n"
         "Answer the question using only the tree above. Be specific, "
         "cite section titles when relevant, and structure your answer "
-        "clearly."
+        "clearly. Write in the same language as the QUESTION."
     )
 
 
