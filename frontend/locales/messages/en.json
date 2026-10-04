@@ -1945,13 +1945,13 @@
           "text": "Summarize this document in 5 key points"
         },
         "2": {
-          "text": "Extract the important figures and data"
+          "text": "Summarise the document for a non-specialist audience"
         },
         "3": {
           "text": "Identify the main topics covered"
         },
         "4": {
-          "text": "What are the main conclusions?"
+          "text": "Summarise each part of the document in one sentence"
         }
       },
       "titleCapture": "Have your expertise captured",
@@ -1969,6 +1969,40 @@
         "4": {
           "text": "My day-to-day decision criteria"
         }
+      },
+      "document": "Document to analyse",
+      "documentHint": "Accepted formats: .txt, .md, .pdf, .docx (5 MB max)",
+      "chooseFile": "Choose a file",
+      "fileLoaded": "{name} loaded",
+      "extracting": "Extracting text from {name}…",
+      "fileTooBig": "The file is too large (5 MB max).",
+      "fileEmpty": "This file has no usable text. Try another document.",
+      "fileUnsupported": "Unsupported format. Use a .txt, .md, .pdf or .docx file.",
+      "extractFailed": "Could not extract text from the file (error {status}).",
+      "readFailed": "Could not read the file.",
+      "needDocument": "Add a document to start the comparison.",
+      "needTask": "Describe the task to start the comparison.",
+      "needQuestion": "Ask a question to start the comparison.",
+      "needTopic": "Describe your area of expertise to start.",
+      "waitExtraction": "Wait while the document is extracted.",
+      "qaPlaceholder": "Ask your question here…",
+      "expectedAnswer": "Expected answer (optional)",
+      "expectedAnswerHint": "If you know the right answer, write it down: it is shown next to both results so you can compare.",
+      "expectedAnswerPlaceholder": "E.g. Paris is the capital of France.",
+      "suggestionsTitle": "Suggestions",
+      "qaSuggestions": {
+        "1": {
+          "text": "What is the document's main conclusion?"
+        },
+        "2": {
+          "text": "Which key figures does the document mention?"
+        },
+        "3": {
+          "text": "Who are the people or organisations cited, and what is their role?"
+        },
+        "4": {
+          "text": "What limits or risks does the document identify?"
+        }
       }
     },
     "loading": {
@@ -1979,7 +2013,10 @@
       "thanks": {
         "title": "Thank you for your vote!",
         "cta": "View leaderboard"
-      }
+      },
+      "preferred": "Your pick",
+      "error": "Error",
+      "answersTitle": "Re-read the answers, tools unmasked"
     },
     "revealButton": "Reveal tools",
     "anonymousToolA": "Tool A",
@@ -2002,7 +2039,9 @@
       "eloExplanation": "The Elo score measures each tool's relative performance based on user votes.",
       "poolRag": "RAG tools",
       "poolKnowledgeCapture": "Knowledge interviewers",
-      "poolNote": "Elo scores are computed independently per task type — they are not comparable across tabs."
+      "poolNote": "Elo scores are computed independently per task type — they are not comparable across tabs.",
+      "tiedWithLeader": "Statistically tied with #1",
+      "intervalAria": "95% confidence interval: {low} to {high}"
     },
     "unavailable": {
       "title": "Tools temporarily unavailable",
@@ -2014,7 +2053,7 @@
       "panelA": "Interviewer A",
       "panelB": "Interviewer B",
       "turnCounter": "Turn",
-      "inputPlaceholder": "Your answer… (Ctrl+Enter to send)",
+      "inputPlaceholder": "Your answer… (Ctrl+Enter or ⌘+Enter to send)",
       "send": "Send",
       "finishEarly": "Finish",
       "waiting": "The interviewer is thinking…",
@@ -2029,7 +2068,20 @@
       "finalizing": {
         "title": "The interviewers are writing their syntheses",
         "subtitle": "Each interview becomes a knowledge document — a few seconds…"
-      }
+      },
+      "answerLabel": "Your answer to interviewer {label}",
+      "statusDone": "Finished",
+      "statusThinking": "Thinking…",
+      "statusError": "Error",
+      "waitOther": "This interview is finished. Finish the other one to compare the summaries."
+    },
+    "result": {
+      "error": "The tool encountered an error.",
+      "empty": "No result"
+    },
+    "vote": {
+      "ratingsOptional": "Optional: also rate each answer.",
+      "chooseFirst": "Pick the tool you prefer to reveal their identities."
     }
   },
   "vote": {

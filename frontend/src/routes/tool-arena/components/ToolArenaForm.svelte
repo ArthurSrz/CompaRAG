@@ -19,11 +19,15 @@
   // experience is consistent ("upload up to 5MB").
   const UPLOAD_MAX = 5 * 1024 * 1024
   const BINARY_EXTENSIONS = new Set(['pdf', 'docx'])
+  // `accept` only filters the native picker — drag-and-drop bypasses it.
+  const ACCEPTED_EXTENSIONS = new Set(['txt', 'md', 'pdf', 'docx'])
 
   let {
     onsubmit,
     disabled = false,
-    selectedTaskType = $bindable('summary' as TaskType)
+    selectedTaskType = $bindable('summary' as TaskType),
+    documentContent = $bindable(''),
+    fileName = $bindable('')
   }: {
     onsubmit: (
       task: string,
@@ -35,6 +39,10 @@
     disabled?: boolean
     // Bindable : la page parente adapte titre/étapes au type de tâche choisi.
     selectedTaskType?: TaskType
+    // Bindables : la page parente conserve le document d'une comparaison à
+    // l'autre (« Nouvelle comparaison » ne force plus à le recharger).
+    documentContent?: string
+    fileName?: string
   } = $props()
 
   // Frontend-restricted subset of the backend's task_type Literal
@@ -56,7 +64,7 @@
       value: 'qa',
       label: m['toolArena.form.taskTypes.qa.label'](),
       // Blank so the user types their actual question; the static
-      // "Réponds à la question..." instruction was misread as a complete
+      // "Réponds à la question…" default used to be concatenated with the
       // prompt and shipped verbatim, so the engine answered the document's
       // title-line instead of the user's question.
       prompt: '',
@@ -70,11 +78,14 @@
     }
   ]
 
-  let task = $state(taskTypes[0].prompt)
-  let goal = $state(taskTypes[0].goalText)
-  let documentContent = $state('')
-  let fileName = $state('')
+  const initial = taskTypes.find((t) => t.value === selectedTaskType) ?? taskTypes[0]
+  let task = $state(initial.prompt)
+  let goal = $state(initial.goalText)
   let fileError = $state('')
+  let extracting = $state(false)
+  // Each file pick gets a token; a slow extraction that finishes after the
+  // user picked another file must not overwrite the newer one.
+  let fileToken = 0
   // Optional ground-truth answer the user expects; rendered alongside the
   // blind A/B results so they can judge whether either engine found the
   // needle. Only shown for QA. Whitespace-only submissions are dropped at
@@ -86,13 +97,25 @@
   // canned eval_query) is a separate future toggle. knowledge_capture has no
   // document at all — the expert being interviewed IS the source.
   const requiresDocument = $derived(selectedTaskType !== 'knowledge_capture')
+  const isCapture = $derived(selectedTaskType === 'knowledge_capture')
+  const isQa = $derived(selectedTaskType === 'qa')
 
-  const canSubmit = $derived(
-    task.trim().length > 0 &&
-    goal.trim().length > 0 &&
-    (!requiresDocument || documentContent.trim().length > 0) &&
-    !disabled
-  )
+  // First unmet condition, shown under the button so a disabled button
+  // always says why. null = ready to submit.
+  const blocker = $derived.by(() => {
+    if (disabled) return null
+    if (requiresDocument && extracting) return m['toolArena.form.waitExtraction']()
+    if (requiresDocument && !documentContent.trim()) return m['toolArena.form.needDocument']()
+    if (!task.trim())
+      return isCapture
+        ? m['toolArena.form.needTopic']()
+        : isQa
+          ? m['toolArena.form.needQuestion']()
+          : m['toolArena.form.needTask']()
+    if (!goal.trim()) return m['toolArena.form.needTask']()
+    return null
+  })
+  const canSubmit = $derived(!disabled && blocker === null)
 
   function handleSubmit(e: SubmitEvent) {
     e.preventDefault()
@@ -115,63 +138,79 @@
     }
   }
 
+  function clearFile(error = '') {
+    documentContent = ''
+    fileName = ''
+    fileError = error
+  }
+
   async function handleFileChange(e: Event) {
     const input = e.target as HTMLInputElement
     const file = input.files?.[0]
+    const token = ++fileToken
     fileError = ''
+    extracting = false
     if (!file) {
-      documentContent = ''
-      fileName = ''
+      clearFile()
       return
     }
     const ext = file.name.split('.').pop()?.toLowerCase() ?? ''
-    const isBinary = BINARY_EXTENSIONS.has(ext)
-    if (file.size > UPLOAD_MAX) {
-      fileError = `Le fichier est trop volumineux (max 5 Mo).`
-      documentContent = ''
-      fileName = ''
+    if (!ACCEPTED_EXTENSIONS.has(ext)) {
+      clearFile(m['toolArena.form.fileUnsupported']())
       return
     }
+    if (file.size > UPLOAD_MAX) {
+      clearFile(m['toolArena.form.fileTooBig']())
+      return
+    }
+    documentContent = ''
     fileName = file.name
-    if (isBinary) {
-      try {
+    extracting = true
+    let text = ''
+    try {
+      if (BINARY_EXTENSIONS.has(ext)) {
         const form = new FormData()
         form.append('file', file)
         const resp = await fetch(`${backendBase()}/tool-arena/documents/extract`, {
           method: 'POST',
           body: form
         })
+        if (token !== fileToken) return
         if (!resp.ok) {
-          fileError = `Échec de l'extraction (${resp.status}).`
-          documentContent = ''
-          fileName = ''
+          clearFile(m['toolArena.form.extractFailed']({ status: String(resp.status) }))
           return
         }
         const body = (await resp.json()) as { document_content: string }
-        documentContent = body.document_content ?? ''
-      } catch {
-        fileError = 'Impossible de lire le fichier.'
-        documentContent = ''
-        fileName = ''
+        text = body.document_content ?? ''
+      } else {
+        text = await file.text()
       }
+    } catch {
+      if (token === fileToken) clearFile(m['toolArena.form.readFailed']())
+      return
+    } finally {
+      if (token === fileToken) extracting = false
+    }
+    if (token !== fileToken) return
+    if (!text.trim()) {
+      clearFile(m['toolArena.form.fileEmpty']())
       return
     }
-    const reader = new FileReader()
-    reader.onload = (ev) => {
-      documentContent = (ev.target?.result as string) ?? ''
-    }
-    reader.onerror = () => {
-      fileError = 'Impossible de lire le fichier.'
-      documentContent = ''
-    }
-    reader.readAsText(file)
+    documentContent = text
   }
 
   const suggestions = [
     { icon: 'fr-icon-file-text-line', text: m['toolArena.form.suggestions.1.text']() },
-    { icon: 'fr-icon-bar-chart-box-line', text: m['toolArena.form.suggestions.2.text']() },
+    { icon: 'fr-icon-team-line', text: m['toolArena.form.suggestions.2.text']() },
     { icon: 'fr-icon-search-line', text: m['toolArena.form.suggestions.3.text']() },
-    { icon: 'fr-icon-question-line', text: m['toolArena.form.suggestions.4.text']() }
+    { icon: 'fr-icon-list-unordered', text: m['toolArena.form.suggestions.4.text']() }
+  ]
+
+  const qaSuggestions = [
+    { icon: 'fr-icon-flag-line', text: m['toolArena.form.qaSuggestions.1.text']() },
+    { icon: 'fr-icon-bar-chart-box-line', text: m['toolArena.form.qaSuggestions.2.text']() },
+    { icon: 'fr-icon-team-line', text: m['toolArena.form.qaSuggestions.3.text']() },
+    { icon: 'fr-icon-warning-line', text: m['toolArena.form.qaSuggestions.4.text']() }
   ]
 
   // En mode capture, les suggestions documentaires n'ont pas de sens — on
@@ -183,13 +222,15 @@
     { icon: 'fr-icon-lightbulb-line', text: m['toolArena.form.captureSuggestions.4.text']() }
   ]
 
-  const isCapture = $derived(selectedTaskType === 'knowledge_capture')
+  // Suggestions only fill the task: the goal stays the one of the current
+  // task type, so a suggestion can never contradict it.
+  const activeSuggestions = $derived(isCapture ? captureSuggestions : isQa ? qaSuggestions : suggestions)
 </script>
 
 <form onsubmit={handleSubmit} class="gap-3 py-10 md:pb-12 md:pt-12 grid">
   <div class="fr-select-group">
     <label class="fr-label" for="tool-arena-task-type">
-      Type de tâche
+      {m['toolArena.form.taskType']()}
     </label>
     <select
       id="tool-arena-task-type"
@@ -198,7 +239,7 @@
       onchange={handleTaskTypeChange}
       {disabled}
     >
-      {#each taskTypes as taskType}
+      {#each taskTypes as taskType (taskType.value)}
         <option value={taskType.value}>{taskType.label}</option>
       {/each}
     </select>
@@ -207,8 +248,8 @@
   {#if requiresDocument}
     <div class="fr-upload-group" class:fr-upload-group--error={!!fileError}>
       <label class="fr-label" for="tool-arena-document">
-        Document à analyser
-        <span class="fr-hint-text">Formats acceptés : .txt, .md, .pdf, .docx (5 Mo max)</span>
+        {m['toolArena.form.document']()}
+        <span class="fr-hint-text">{m['toolArena.form.documentHint']()}</span>
       </label>
       <input
         id="tool-arena-document"
@@ -226,36 +267,77 @@
         aria-disabled={disabled}
       >
         <span class="i-ri-upload-2-line" aria-hidden="true"></span>
-        {fileName ? fileName : 'Choisir un fichier'}
+        {fileName ? fileName : m['toolArena.form.chooseFile']()}
       </label>
-      {#if fileError}
-        <p class="fr-error-text">{fileError}</p>
-      {/if}
-      {#if fileName && !fileError}
-        <p class="fr-valid-text">{fileName} chargé avec succès</p>
-      {/if}
+      <div aria-live="polite">
+        {#if fileError}
+          <p class="fr-error-text">{fileError}</p>
+        {:else if extracting}
+          <p class="fr-info-text animate-pulse">{m['toolArena.form.extracting']({ name: fileName })}</p>
+        {:else if fileName && documentContent}
+          <p class="fr-valid-text">{m['toolArena.form.fileLoaded']({ name: fileName })}</p>
+        {/if}
+      </div>
     </div>
   {/if}
 
+  <div class="mt-2">
+    <p class="font-bold mb-3 fr-text--sm">{m['toolArena.form.suggestionsTitle']()}</p>
+    <div class="gap-3 md:grid-cols-4 grid grid-cols-2">
+      {#each activeSuggestions as suggestion (suggestion.text)}
+        <button
+          type="button"
+          class="cg-border rounded-lg! bg-white p-3 text-left hover:bg-light-grey transition-colors cursor-pointer flex flex-col gap-2"
+          onclick={(e) => {
+            e.preventDefault()
+            task = suggestion.text
+          }}
+          {disabled}
+        >
+          <span class={['text-primary text-lg', suggestion.icon]} aria-hidden="true"></span>
+          <span class="fr-text--sm text-dark-grey mb-0!">{suggestion.text}</span>
+        </button>
+      {/each}
+    </div>
+  </div>
+
   <div class="fr-input-group">
-    <label class="fr-label hidden!" for="tool-arena-task">Task</label>
+    <label class="fr-label sr-only" for="tool-arena-task">{m['toolArena.form.taskLabel']()}</label>
     <textarea
       id="tool-arena-task"
       class="fr-input cg-border rounded-t-md! bg-white! rounded-b-none! border-solid!"
       rows="4"
       bind:value={task}
-      placeholder={selectedTaskType === 'qa'
-        ? 'Posez votre question ici…'
-        : selectedTaskType === 'knowledge_capture'
+      placeholder={isQa
+        ? m['toolArena.form.qaPlaceholder']()
+        : isCapture
           ? m['toolArena.form.taskTypes.knowledge_capture.prompt']()
           : m['toolArena.form.taskPlaceholder']()}
       {disabled}
     ></textarea>
   </div>
 
+  {#if isQa}
+    <div class="fr-input-group">
+      <label class="fr-label" for="tool-arena-expected-answer">
+        {m['toolArena.form.expectedAnswer']()}
+        <span class="fr-hint-text">{m['toolArena.form.expectedAnswerHint']()}</span>
+      </label>
+      <textarea
+        id="tool-arena-expected-answer"
+        data-testid="tool-arena-expected-answer"
+        class="fr-input cg-border rounded-md! bg-white! border-solid!"
+        rows="2"
+        bind:value={expectedAnswer}
+        placeholder={m['toolArena.form.expectedAnswerPlaceholder']()}
+        {disabled}
+      ></textarea>
+    </div>
+  {/if}
+
   <div class="gap-3 md:grid-flow-row-dense md:grid-cols-6 grid">
     <div class="fr-input-group md:col-span-4">
-      <label class="fr-label hidden!" for="tool-arena-goal">Goal</label>
+      <label class="fr-label sr-only" for="tool-arena-goal">{m['toolArena.form.goalLabel']()}</label>
       <input
         id="tool-arena-goal"
         data-testid="tool-arena-goal"
@@ -268,68 +350,25 @@
     </div>
 
     <div class="md:col-span-2 flex justify-end items-start">
-      <Button type="submit" data-testid="tool-arena-submit" disabled={!canSubmit}>
+      <Button
+        type="submit"
+        data-testid="tool-arena-submit"
+        disabled={!canSubmit}
+        aria-describedby="tool-arena-blocker"
+      >
         {isCapture ? m['toolArena.form.submitCapture']() : m['toolArena.form.submit']()}
       </Button>
     </div>
   </div>
-
-  {#if selectedTaskType === 'qa'}
-    <div class="fr-input-group">
-      <label class="fr-label" for="tool-arena-expected-answer">
-        Réponse attendue (optionnel)
-        <span class="fr-hint-text">
-          Quelle réponse devriez-vous obtenir ? (Sert à comparer visuellement les deux outils)
-        </span>
-      </label>
-      <textarea
-        id="tool-arena-expected-answer"
-        data-testid="tool-arena-expected-answer"
-        class="fr-input cg-border rounded-md! bg-white! border-solid!"
-        rows="2"
-        bind:value={expectedAnswer}
-        placeholder="Ex : Paris est la capitale de la France."
-        {disabled}
-      ></textarea>
-    </div>
-  {/if}
+  <p
+    id="tool-arena-blocker"
+    data-testid="tool-arena-blocker"
+    class="fr-text--sm text-grey text-right mb-0!"
+    aria-live="polite"
+  >
+    {blocker ?? ''}
+  </p>
 </form>
-
-<div class="mt-2">
-  <p class="font-bold mb-4">Suggestions</p>
-  <div class="gap-4 md:grid-cols-4 grid grid-cols-2">
-    {#if isCapture}
-      {#each captureSuggestions as suggestion}
-        <button
-          type="button"
-          class="cg-border rounded-lg! bg-white p-4 text-left hover:bg-light-grey transition-colors cursor-pointer flex flex-col gap-3"
-          onclick={(e) => {
-            e.preventDefault()
-            task = suggestion.text
-          }}
-        >
-          <span class={['text-primary text-xl', suggestion.icon]} aria-hidden="true"></span>
-          <span class="fr-text--sm text-dark-grey">{suggestion.text}</span>
-        </button>
-      {/each}
-    {:else}
-      {#each suggestions as suggestion}
-        <button
-          type="button"
-          class="cg-border rounded-lg! bg-white p-4 text-left hover:bg-light-grey transition-colors cursor-pointer flex flex-col gap-3"
-          onclick={(e) => {
-            e.preventDefault()
-            task = suggestion.text
-            goal = m['toolArena.form.taskTypes.summarize.goal']()
-          }}
-        >
-          <span class={['text-primary text-xl', suggestion.icon]} aria-hidden="true"></span>
-          <span class="fr-text--sm text-dark-grey">{suggestion.text}</span>
-        </button>
-      {/each}
-    {/if}
-  </div>
-</div>
 
 <style lang="postcss">
   .fr-input {
@@ -372,5 +411,13 @@
     opacity: 0.5;
     cursor: not-allowed;
     pointer-events: none;
+  }
+
+  /* A disabled submit must not look clickable (it turned orange on hover). */
+  :global([data-testid='tool-arena-submit']:disabled),
+  :global([data-testid='tool-arena-submit']:disabled:hover) {
+    background-color: var(--background-disabled-grey) !important;
+    color: var(--text-disabled-grey) !important;
+    cursor: not-allowed;
   }
 </style>
