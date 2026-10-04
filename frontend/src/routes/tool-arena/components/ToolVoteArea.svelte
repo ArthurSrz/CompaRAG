@@ -86,7 +86,8 @@
     </div>
   </fieldset>
 
-  <div class="mt-6 grid gap-4 md:grid-cols-2">
+  <p class="fr-text--sm text-grey text-center mt-6 mb-2!">{m['toolArena.vote.ratingsOptional']()}</p>
+  <div class="grid gap-4 md:grid-cols-2">
     <ToolPreferencesPanel side="a" bind:rating={ratingA} {disabled} />
     <ToolPreferencesPanel side="b" bind:rating={ratingB} {disabled} />
   </div>
@@ -96,9 +97,13 @@
       data-testid="tool-reveal-button"
       onclick={() => { if (chosen !== null) onvote(chosen, buildPayload()) }}
       disabled={disabled || chosen === null}
+      aria-describedby="tool-reveal-hint"
     >
       {m['toolArena.revealButton']()}
     </Button>
+    <p id="tool-reveal-hint" class="fr-text--sm text-grey mt-2 mb-0!" aria-live="polite">
+      {chosen === null ? m['toolArena.vote.chooseFirst']() : ''}
+    </p>
   </div>
 </div>
 
