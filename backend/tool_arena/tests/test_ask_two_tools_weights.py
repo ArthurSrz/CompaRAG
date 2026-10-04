@@ -170,3 +170,52 @@ async def test_dispatcher_uniform_when_weights_equal():
     for s in servers:
         p = counts[s.id] / trials
         assert abs(p - 2 / 3) < 0.03, f"P({s.id} in pair)={p:.3f}, expected 0.667"
+
+
+def _named(sid: str, name: str, weight: float = 1.0) -> MCPServerConfig:
+    srv = _srv(sid, "qa", weight=weight)
+    return srv.model_copy(update={"name": name})
+
+
+async def _draw_pairs(servers, trials: int):
+    from backend.tool_arena.comparison.ask_two_tools_concurrently import MCPDispatcher
+
+    mock_registry = MagicMock()
+    _wire(mock_registry, *servers)
+    reg = get_readiness_registry()
+    for s in servers:
+        reg.set_ready(s.id)
+    with patch("backend.tool_arena.comparison.ask_two_tools_concurrently.registry", mock_registry):
+        return [await MCPDispatcher().pick_pair("qa") for _ in range(trials)]
+
+
+async def test_dispatcher_never_pairs_two_configs_of_the_same_engine():
+    """Le classement agrège par moteur (``name``) et jette les votes a == b
+    (utils/ranking/tool_compute.py) : un duel LlamaIndex vs LlamaIndex est un
+    vote perdu. Le dispatcher ne doit donc jamais le proposer."""
+    servers = [
+        _named("qa_broad__llamaindex", "LlamaIndex"),
+        _named("qa_precise__llamaindex", "LlamaIndex"),
+        _named("qa_broad__txtai", "txtai"),
+        _named("qa_precise__txtai", "txtai"),
+        _named("pageindex", "PageIndex", weight=10.0),
+    ]
+    random.seed(0)
+    pairs = await _draw_pairs(servers, 2000)
+    assert all(a.name != b.name for a, b in pairs)
+    # Toutes les configs restent atteignables.
+    seen = {s.id for pair in pairs for s in pair}
+    assert seen == {s.id for s in servers}
+
+
+async def test_dispatcher_raises_when_pool_holds_a_single_engine():
+    from backend.tool_arena.comparison.ask_two_tools_concurrently import (
+        InsufficientReadyServersError,
+    )
+
+    servers = [
+        _named("qa_broad__llamaindex", "LlamaIndex"),
+        _named("qa_precise__llamaindex", "LlamaIndex"),
+    ]
+    with pytest.raises(InsufficientReadyServersError):
+        await _draw_pairs(servers, 1)

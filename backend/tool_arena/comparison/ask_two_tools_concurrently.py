@@ -130,11 +130,25 @@ class MCPDispatcher:
                 raise InsufficientReadyServersError(len(ready), snapshot)
             pool = random.choice(eligible_groups)
 
+        # Two configs of the same engine (same ``name``) must never race: the
+        # leaderboard aggregates by engine and drops a == b votes
+        # (utils/ranking/tool_compute.py), so such a duel wastes the vote.
+        if len({s.name for s in pool}) < 2:
+            snapshot = [r.to_dict() for r in readiness.snapshot()]
+            logger.warning(
+                "dispatcher: pool has a single engine (%s), no cross-engine pair",
+                pool[0].name,
+            )
+            raise InsufficientReadyServersError(len(pool), snapshot)
+
         if len(pool) == 2:
             return pool[0], pool[1], all_servers
         weights = [s.weight for s in pool]
         first_idx = random.choices(range(len(pool)), weights=weights, k=1)[0]
-        remaining = [i for i in range(len(pool)) if i != first_idx]
+        remaining = [
+            i for i in range(len(pool))
+            if i != first_idx and pool[i].name != pool[first_idx].name
+        ]
         rem_w = [weights[i] for i in remaining]
         second_idx = random.choices(remaining, weights=rem_w, k=1)[0]
         a, b = sorted([first_idx, second_idx])
