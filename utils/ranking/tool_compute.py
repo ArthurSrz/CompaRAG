@@ -51,10 +51,11 @@ RETIRED_ENGINES: frozenset[str] = frozenset({"clarifeye"})
 # engine.
 #   PageIndex: md_to_tree built an empty tree for any document without
 #   Markdown headings (every .txt, most PDF/DOCX) and answered "document is
-#   empty" -- fixed by mcp_servers/pageindex/sectioning.py. Set the cutoff to
-#   the moment the fixed pageindex service went live.
+#   empty" -- fixed by mcp_servers/pageindex/sectioning.py. The fixed
+#   container started 2026-10-04T15:19:30Z (deploy of ca26b62d); vote
+#   timestamps are naive UTC (backend container has no TZ set).
 QUARANTINED_ENGINE_VOTES: dict[str, str] = {
-    "PageIndex": "2026-10-04T23:59:59",
+    "PageIndex": "2026-10-04T15:20:00",
 }
 
 
