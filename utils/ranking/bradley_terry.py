@@ -29,16 +29,24 @@ def _fit_from_arrays(
     n: int,
     max_iter: int = 500,
     tol: float = 1e-6,
+    prior: float = 0.0,
 ) -> np.ndarray:
     """
     Core MM solver on pre-indexed arrays. Returns Elo ratings.
 
     Wins are constant across iterations so we compute them once.
     Uses np.bincount (histogram) instead of np.add.at (scatter-add) for speed.
+
+    ``prior`` > 0 adds, for every model, ``prior`` virtual wins and ``prior``
+    virtual losses against a fixed reference of strength 1 (Elo 1000). This
+    keeps the MLE finite for a model with 0 wins (or 0 losses) — without it
+    the strength collapses to the 1e-12 floor, i.e. Elo -3800 — and shrinks
+    thin-data models toward the mean. 0.0 = plain MLE (historical behaviour).
     """
     wins = np.bincount(ia, weights=winner_is_a, minlength=n) + np.bincount(
         ib, weights=~winner_is_a, minlength=n
     )
+    wins = wins + prior
 
     p = np.ones(n)
     log_p = np.zeros(n)  # log(p), starts at log(1) = 0
@@ -48,6 +56,8 @@ def _fit_from_arrays(
         denom = np.bincount(ia, weights=inv_psum, minlength=n) + np.bincount(
             ib, weights=inv_psum, minlength=n
         )
+        if prior:
+            denom = denom + 2.0 * prior / (p + 1.0)
 
         p = wins / np.maximum(denom, 1e-12)
 
@@ -69,6 +79,7 @@ def fit_bradley_terry(
     battles: list[tuple[str, str, str]],
     max_iter: int = 500,
     tol: float = 1e-6,
+    prior: float = 0.0,
 ) -> dict[str, float]:
     """
     Fit a Bradley-Terry model using the MM algorithm.
@@ -78,6 +89,8 @@ def fit_bradley_terry(
             winner must be either model_a or model_b.
         max_iter: Maximum number of iterations.
         tol: Convergence tolerance on log-strength change.
+        prior: virtual wins/losses per model vs. a strength-1 reference
+            (see ``_fit_from_arrays``). 0.0 = plain MLE.
 
     Returns:
         Dict mapping model name to Elo-like rating centered at 1000.
@@ -86,13 +99,14 @@ def fit_bradley_terry(
         return {}
 
     models, ia, ib, winner_is_a = _index_battles(battles)
-    elo = _fit_from_arrays(ia, ib, winner_is_a, len(models), max_iter, tol)
+    elo = _fit_from_arrays(ia, ib, winner_is_a, len(models), max_iter, tol, prior)
     return dict(zip(models, elo.tolist()))
 
 
 def bootstrap_confidence_intervals(
     battles: list[tuple[str, str, str]],
     n_samples: int = 100,
+    prior: float = 0.0,
 ) -> dict[str, tuple[float, float, float]]:
     """
     Compute bootstrap confidence intervals for Bradley-Terry ratings.
@@ -102,6 +116,7 @@ def bootstrap_confidence_intervals(
     Args:
         battles: List of (model_a, model_b, winner) tuples.
         n_samples: Number of bootstrap samples.
+        prior: forwarded to the solver (see ``_fit_from_arrays``).
 
     Returns:
         Dict mapping model name to (median_rating, lower_2.5, upper_97.5).
@@ -118,7 +133,9 @@ def bootstrap_confidence_intervals(
 
     for s in range(n_samples):
         idx = rng.integers(0, n_battles, size=n_battles)
-        all_elos[s] = _fit_from_arrays(ia[idx], ib[idx], winner_is_a[idx], n_models)
+        all_elos[s] = _fit_from_arrays(
+            ia[idx], ib[idx], winner_is_a[idx], n_models, prior=prior
+        )
 
     medians = np.median(all_elos, axis=0)
     lowers = np.percentile(all_elos, 2.5, axis=0)

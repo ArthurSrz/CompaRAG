@@ -33,6 +33,13 @@ logger = configure_logger(logging.getLogger("ranking.tool_compute"))
 
 PROVISIONAL_THRESHOLD = 50
 
+# Bradley-Terry prior: virtual wins + losses per engine vs. an Elo-1000
+# reference. Tool pools are small (a few dozen votes per engine), so plain
+# MLE sends any 0-win engine to the 1e-12 floor (Elo -3800, CI collapsed to
+# a point). One virtual win/loss keeps ratings finite and barely moves
+# engines with real data.
+BT_PRIOR = 1.0
+
 # Engines withdrawn from the arena. Their historical votes stay in the DB
 # (audit trail) but are dropped from leaderboard inputs so the engine does
 # not surface under its raw tool_id once removed from the registry.
@@ -244,7 +251,7 @@ def _compute_from_votes(
     if not battles:
         return ToolRankingResult(timestamp=time.time())
 
-    ci = bootstrap_confidence_intervals(battles, n_samples=100)
+    ci = bootstrap_confidence_intervals(battles, n_samples=100, prior=BT_PRIOR)
 
     match_counts: dict[str, int] = defaultdict(int)
     win_counts: dict[str, int] = defaultdict(int)
