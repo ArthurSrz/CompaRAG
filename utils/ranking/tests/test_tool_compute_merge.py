@@ -264,3 +264,22 @@ def test_compute_tool_rankings_collapses_eight_ids_to_three_engines(monkeypatch)
     assert result.rankings["LangChain"].n_match == 4
     assert result.rankings["LlamaIndex"].n_match == 5
     assert result.rankings["Acme"].n_match == 3
+
+
+def test_quarantined_engine_votes_before_cutoff_are_dropped():
+    """Votes PageIndex antérieurs au correctif (arbre vide sur les documents
+    sans titres) mesurent le bug, pas le moteur : exclus du classement."""
+    name_of = {**NAME_OF, "pageindex": "PageIndex"}
+    known = set(name_of.values())
+    before = {**_vote("pageindex", "qa_precise__langchain", "b", useful_b=True), "timestamp": "2026-10-01T10:00:00"}
+    after = {**_vote("pageindex", "qa_precise__langchain", "a"), "timestamp": "2026-10-06T10:00:00"}
+    other = {**_vote("qa_acme", "qa_precise__langchain", "a"), "timestamp": "2026-10-01T10:00:00"}
+    with patch.dict(
+        "utils.ranking.tool_compute.QUARANTINED_ENGINE_VOTES",
+        {"PageIndex": "2026-10-05T00:00:00"},
+        clear=True,
+    ):
+        battles = _tool_votes_to_battles([before, after, other], name_of, known)
+        prefs = _aggregate_tool_preferences([before, after, other], name_of, known)
+    assert battles == [("PageIndex", "LangChain", "PageIndex"), ("Acme", "LangChain", "Acme")]
+    assert prefs["LangChain"].useful == 0
