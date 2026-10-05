@@ -297,8 +297,12 @@ def _complete_sync(skill: InterviewSkill, system: list[dict], messages: list[dic
     response = _client.messages.create(
         model=MODEL,
         max_tokens=skill.max_tokens,
-        temperature=skill.temperature,
         system=system,
+        # anthropic 1.x removed `temperature` from messages.create() (TypeError);
+        # the API and claude-sonnet-4-5 still accept it, and each strategy's
+        # temperature is a deliberate per-arm setting (skills.yaml), so it is
+        # sent through extra_body instead of being dropped.
+        extra_body={"temperature": skill.temperature},
         messages=messages,
     )
     # Log cache usage to validate savings (visible in Railway logs).
