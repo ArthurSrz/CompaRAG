@@ -1,5 +1,6 @@
 <script lang="ts">
   import { Badge } from '$components/dsfr'
+  import { m } from '$lib/i18n/messages'
 
   let {
     pos,
@@ -31,10 +32,12 @@
   <div class="flex items-center justify-between">
     <div class="flex items-center">
       <div class="c-bot-disk-{pos}"></div>
-      <p class="ms-1! mb-0! font-bold">Tool {pos.toUpperCase()}</p>
+      <p class="ms-1! mb-0! font-bold">
+        {pos === 'a' ? m['toolArena.anonymousToolA']() : m['toolArena.anonymousToolB']()}
+      </p>
     </div>
     {#if selected}
-      <Badge small type="success">Winner</Badge>
+      <Badge size="sm" variant="green" text={m['toolArena.reveal.preferred']()} />
     {/if}
   </div>
 
@@ -45,9 +48,9 @@
 
   <div class="flex items-center gap-2 mt-auto">
     {#if error}
-      <Badge small type="error">Error</Badge>
+      <Badge size="sm" variant="red" text={m['toolArena.reveal.error']()} />
     {:else}
-      <Badge small type="info">{durationLabel}</Badge>
+      <Badge size="sm" variant="info" text={durationLabel} />
     {/if}
   </div>
 </div>

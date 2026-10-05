@@ -2094,13 +2094,13 @@
           "text": "Résume ce document en 5 points clés"
         },
         "2": {
-          "text": "Extrais les données chiffrées importantes"
+          "text": "Résume le document pour un public non spécialiste"
         },
         "3": {
           "text": "Identifie les sujets principaux abordés"
         },
         "4": {
-          "text": "Quelles sont les conclusions principales ?"
+          "text": "Résume chaque partie du document en une phrase"
         }
       },
       "titleCapture": "Faites capturer votre expertise",
@@ -2118,6 +2118,40 @@
         "4": {
           "text": "Mes critères de décision au quotidien"
         }
+      },
+      "document": "Document à analyser",
+      "documentHint": "Formats acceptés : .txt, .md, .pdf, .docx (5 Mo max)",
+      "chooseFile": "Choisir un fichier",
+      "fileLoaded": "{name} chargé",
+      "extracting": "Extraction du texte de {name}…",
+      "fileTooBig": "Le fichier est trop volumineux (5 Mo max).",
+      "fileEmpty": "Ce fichier ne contient aucun texte exploitable. Essayez un autre document.",
+      "fileUnsupported": "Format non pris en charge. Utilisez un fichier .txt, .md, .pdf ou .docx.",
+      "extractFailed": "Impossible d'extraire le texte du fichier (erreur {status}).",
+      "readFailed": "Impossible de lire le fichier.",
+      "needDocument": "Ajoutez un document pour lancer la comparaison.",
+      "needTask": "Décrivez la tâche pour lancer la comparaison.",
+      "needQuestion": "Posez une question pour lancer la comparaison.",
+      "needTopic": "Décrivez votre domaine d'expertise pour démarrer.",
+      "waitExtraction": "Patientez pendant l'extraction du document.",
+      "qaPlaceholder": "Posez votre question ici…",
+      "expectedAnswer": "Réponse attendue (facultatif)",
+      "expectedAnswerHint": "Si vous connaissez la bonne réponse, notez-la : elle s'affichera à côté des deux résultats pour les comparer.",
+      "expectedAnswerPlaceholder": "Ex : Paris est la capitale de la France.",
+      "suggestionsTitle": "Suggestions",
+      "qaSuggestions": {
+        "1": {
+          "text": "Quelle est la conclusion principale du document ?"
+        },
+        "2": {
+          "text": "Quels chiffres clés le document mentionne-t-il ?"
+        },
+        "3": {
+          "text": "Qui sont les acteurs cités et quel est leur rôle ?"
+        },
+        "4": {
+          "text": "Quelles limites ou risques le document identifie-t-il ?"
+        }
       }
     },
     "loading": {
@@ -2128,7 +2162,10 @@
       "thanks": {
         "title": "Merci pour votre vote !",
         "cta": "Voir le classement"
-      }
+      },
+      "preferred": "Votre choix",
+      "error": "Erreur",
+      "answersTitle": "Relisez les réponses, outils démasqués"
     },
     "revealButton": "Révéler les outils",
     "leaderboard": {
@@ -2146,7 +2183,9 @@
       "eloExplanation": "Le score Elo mesure la performance relative de chaque outil sur la base des votes des utilisateurs.",
       "poolRag": "Outils RAG",
       "poolKnowledgeCapture": "Intervieweurs de connaissances",
-      "poolNote": "Les scores Elo sont calculés indépendamment par type de tâche — ils ne sont pas comparables entre les onglets."
+      "poolNote": "Les scores Elo sont calculés indépendamment par type de tâche — ils ne sont pas comparables entre les onglets.",
+      "tiedWithLeader": "À égalité statistique avec le 1er",
+      "intervalAria": "Intervalle de confiance à 95 % : de {low} à {high}"
     },
     "anonymousToolA": "Outil A",
     "anonymousToolB": "Outil B",
@@ -2163,7 +2202,7 @@
       "panelA": "Intervieweur A",
       "panelB": "Intervieweur B",
       "turnCounter": "Tour",
-      "inputPlaceholder": "Votre réponse… (Ctrl+Entrée pour envoyer)",
+      "inputPlaceholder": "Votre réponse… (Ctrl+Entrée ou ⌘+Entrée pour envoyer)",
       "send": "Envoyer",
       "finishEarly": "Terminer",
       "waiting": "L'intervieweur réfléchit…",
@@ -2178,7 +2217,20 @@
       "finalizing": {
         "title": "Les intervieweurs rédigent leurs synthèses",
         "subtitle": "Chaque entretien devient un document de connaissances — quelques secondes…"
-      }
+      },
+      "answerLabel": "Votre réponse à l'intervieweur {label}",
+      "statusDone": "Terminé",
+      "statusThinking": "Réfléchit…",
+      "statusError": "Erreur",
+      "waitOther": "Cet entretien est terminé. Terminez l'autre pour comparer les synthèses."
+    },
+    "result": {
+      "error": "L'outil a rencontré une erreur.",
+      "empty": "Aucun résultat"
+    },
+    "vote": {
+      "ratingsOptional": "Facultatif : notez aussi chaque réponse.",
+      "chooseFirst": "Choisissez l'outil que vous préférez pour révéler les identités."
     }
   },
   "vote": {

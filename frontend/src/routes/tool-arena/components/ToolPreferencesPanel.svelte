@@ -31,7 +31,9 @@
     }
   }
 
-  const heading = $derived(side === 'a' ? 'Tool A' : 'Tool B')
+  const heading = $derived(
+    side === 'a' ? m['toolArena.anonymousToolA']() : m['toolArena.anonymousToolB']()
+  )
   const question = t(
     'vote.goalRating.question',
     'Cette réponse atteint-elle votre objectif ?'

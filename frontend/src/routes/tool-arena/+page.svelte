@@ -97,6 +97,19 @@
   let formTaskType = $state<'summary' | 'qa' | 'knowledge_capture'>('summary')
   const isCaptureFlow = $derived(formTaskType === 'knowledge_capture')
 
+  // Le document survit à « Nouvelle comparaison » : comparer plusieurs fois
+  // le même fichier ne doit pas imposer de le recharger à chaque fois.
+  let formDocumentContent = $state('')
+  let formFileName = $state('')
+
+  // Chaque changement d'étape repart du haut de page : sans cela, les
+  // résultats s'ouvraient à la position de défilement du formulaire (~350px)
+  // et l'utilisateur atterrissait au milieu d'une réponse.
+  $effect(() => {
+    void phase
+    if (browser) window.scrollTo({ top: 0 })
+  })
+
   // Bandeau d'étapes : la capture a une étape de plus (les entretiens).
   const stepTotal = $derived(isCaptureFlow ? 3 : 2)
   const stepNum = $derived(
@@ -438,7 +451,12 @@
           </div>
         {/if}
 
-        <ToolArenaForm onsubmit={handleCompare} bind:selectedTaskType={formTaskType} />
+        <ToolArenaForm
+          onsubmit={handleCompare}
+          bind:selectedTaskType={formTaskType}
+          bind:documentContent={formDocumentContent}
+          bind:fileName={formFileName}
+        />
       </div>
     </div>
 
@@ -571,6 +589,17 @@
       <div class="text-center mt-8 mb-8">
         <p class="fr-text--sm text-grey mb-4">{m['toolArena.reveal.thanks.title']()}</p>
         <Button onclick={resetArena}>{m['toolArena.newComparison']()}</Button>
+      </div>
+
+      <!-- Les réponses restent lisibles après la révélation, cette fois avec
+           le nom de chaque outil : on peut relire en sachant qui a écrit quoi. -->
+      <h3 class="fr-h6 text-center mt-12 mb-6!">{m['toolArena.reveal.answersTitle']()}</h3>
+      {#if shouldShowExpectedAnswerBanner('results', expectedAnswer)}
+        <ExpectedAnswerBanner {expectedAnswer} />
+      {/if}
+      <div class="gap-10 md:grid-cols-2 md:gap-6 grid mb-8">
+        <ToolResultCard label="A" toolName={revealData!.tool_a.name} result={resultA} error={errorA} />
+        <ToolResultCard label="B" toolName={revealData!.tool_b.name} result={resultB} error={errorB} />
       </div>
     </div>
   {/if}

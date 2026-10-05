@@ -67,6 +67,19 @@
       : allTools
   )
 
+  // Shared scale for the interval bars of the current tab.
+  const scale = $derived.by(() => {
+    if (displayedTools.length === 0) return { min: 0, max: 1 }
+    const min = Math.min(...displayedTools.map((t) => t.score_p2_5))
+    const max = Math.max(...displayedTools.map((t) => t.score_p97_5))
+    return { min, max: max > min ? max : min + 1 }
+  })
+  const pct = (v: number) => ((v - scale.min) / (scale.max - scale.min)) * 100
+
+  // A tool whose interval reaches the leader's is not distinguishable from it.
+  const leaderLow = $derived(displayedTools[0]?.score_p2_5 ?? Infinity)
+  const tiedWithLeader = (tool: ToolRanking, i: number) => i > 0 && tool.score_p97_5 >= leaderLow
+
   // Pools that actually have data (for tab visibility)
   const activePools = $derived(
     byTaskType
@@ -76,7 +89,9 @@
 </script>
 
 <SeoHead title={m['toolArena.leaderboard.title']()} />
-<Header small />
+<!-- Même en-tête que l'arène : sans jauge de votes compar:IA ni bouton
+     « Commencer à discuter » hérités de l'arène LLM. -->
+<Header small hideDiscussBtn hideVoteGauge />
 
 <main class="bg-very-light-grey min-h-screen">
   <div class="fr-container py-10 md:py-16">
@@ -108,7 +123,7 @@
       <!-- Pool tabs — only rendered when the backend sends by_task_type data -->
       {#if activePools.length > 1}
         <div class="flex gap-2 mb-4 border-b border-grey-200">
-          {#each activePools as pool}
+          {#each activePools as pool (pool.key)}
             <button
               type="button"
               class="px-4 py-2 fr-text--sm font-medium transition-colors border-b-2 -mb-px"
@@ -143,12 +158,17 @@
             </tr>
           </thead>
           <tbody>
-            {#each displayedTools as tool, i}
+            {#each displayedTools as tool, i (tool.tool_id)}
               <tr class="border-b border-grey-100 last:border-0 hover:bg-very-light-grey transition-colors">
                 <td class="px-4 py-3 font-semibold text-grey">{i + 1}</td>
                 <td class="px-4 py-3">
                   <div class="flex items-center gap-2 flex-wrap">
                     <span class="font-medium">{tool.tool_id}</span>
+                    {#if tiedWithLeader(tool, i)}
+                      <span class="fr-text--xs px-1.5 py-0.5 rounded tie-badge">
+                        {m['toolArena.leaderboard.tiedWithLeader']()}
+                      </span>
+                    {/if}
                     {#if tool.provisional}
                       <span
                         class="fr-text--xs px-1.5 py-0.5 rounded"
@@ -159,15 +179,32 @@
                     {/if}
                   </div>
                 </td>
-                <td class="px-4 py-3 text-right font-mono">
-                  {tool.elo.toFixed(1)}
+                <td class="px-4 py-3 text-right font-mono tabular-nums">
+                  {Math.round(tool.elo)}
                 </td>
-                <td class="px-4 py-3 text-right text-grey hidden md:table-cell font-mono fr-text--sm">
-                  {tool.score_p2_5.toFixed(1)} – {tool.score_p97_5.toFixed(1)}
+                <td class="px-4 py-3 hidden md:table-cell">
+                  <div
+                    class="ci"
+                    role="img"
+                    aria-label={m['toolArena.leaderboard.intervalAria']({
+                      low: String(Math.round(tool.score_p2_5)),
+                      high: String(Math.round(tool.score_p97_5))
+                    })}
+                    title="{Math.round(tool.score_p2_5)} – {Math.round(tool.score_p97_5)}"
+                  >
+                    <span
+                      class="ci-range"
+                      style="left: {pct(tool.score_p2_5)}%; width: {pct(tool.score_p97_5) - pct(tool.score_p2_5)}%"
+                    ></span>
+                    <span class="ci-point" style="left: {pct(tool.elo)}%"></span>
+                  </div>
+                  <div class="flex justify-between fr-text--xs text-grey font-mono tabular-nums mb-0! mt-1">
+                    <span>{Math.round(tool.score_p2_5)}</span><span>{Math.round(tool.score_p97_5)}</span>
+                  </div>
                 </td>
                 <td class="px-4 py-3 text-right text-grey">{tool.n_match}</td>
                 <td class="px-4 py-3 text-right text-grey hidden sm:table-cell">
-                  {(tool.win_rate * 100).toFixed(1)}%
+                  {Math.round(tool.win_rate * 100)} %
                 </td>
               </tr>
             {/each}
@@ -180,3 +217,34 @@
     {/if}
   </div>
 </main>
+
+<style>
+  .ci {
+    position: relative;
+    height: 0.6rem;
+    min-width: 10rem;
+    background: var(--background-alt-grey);
+    border-radius: 999px;
+  }
+  .ci-range {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    background: var(--blue-france-925-125);
+    border-radius: 999px;
+  }
+  .ci-point {
+    position: absolute;
+    top: -0.15rem;
+    width: 0.9rem;
+    height: 0.9rem;
+    margin-left: -0.45rem;
+    border-radius: 50%;
+    background: var(--blue-france-sun-113-625);
+    border: 2px solid var(--background-default-grey);
+  }
+  .tie-badge {
+    background: var(--warning-950-100);
+    color: var(--warning-425-625);
+  }
+</style>
