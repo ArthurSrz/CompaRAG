@@ -79,7 +79,7 @@
     <div class="flex items-center gap-2">
       {#if status}
         <span class="status {status.cls}" data-testid="interview-status-{label.toLowerCase()}">
-          {#if done && !error}<span aria-hidden="true">✓ </span>{/if}{status.text}
+          {#if done && !error}<span aria-hidden="true">✓&nbsp;</span>{/if}{status.text}
         </span>
       {/if}
       <span class="fr-text--sm text-grey mb-0!">
