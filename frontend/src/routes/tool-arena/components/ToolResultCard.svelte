@@ -26,7 +26,7 @@
   <div class="flex items-center">
     <div class="c-bot-disk-{label.toLowerCase()}"></div>
     <p class="ms-1! mb-0! font-bold">
-      {heading}{#if toolName}<span class="font-normal text-grey"> · {toolName}</span>{/if}
+      {heading}{#if toolName}<span class="font-normal text-grey">&nbsp;· {toolName}</span>{/if}
     </p>
   </div>
 
