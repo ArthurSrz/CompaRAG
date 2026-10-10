@@ -108,16 +108,22 @@ entities:
         - "summary_default__haystack (rag_pill pill — paragraph summary via Haystack)"
         - "summary_default__txtai (rag_pill pill — paragraph summary via txtai)"
         - "summary_default__chroma_baseline (rag_pill pill — paragraph summary via Chroma baseline)"
+        - "summary_default__bm25 (rag_pill pill — paragraph summary via BM25 Okapi, lexical, no embeddings)"
+        - "summary_default__hybrid (rag_pill pill — paragraph summary via hybrid BM25+dense, RRF fusion)"
         - "qa_broad__langchain (rag_pill pill — broad QA via LangChain+FAISS)"
         - "qa_broad__llamaindex (rag_pill pill — broad QA via LlamaIndex)"
         - "qa_broad__haystack (rag_pill pill — broad QA via Haystack)"
         - "qa_broad__txtai (rag_pill pill — broad QA via txtai)"
         - "qa_broad__chroma_baseline (rag_pill pill — broad QA via Chroma baseline)"
+        - "qa_broad__bm25 (rag_pill pill — broad QA via BM25 Okapi, lexical, no embeddings)"
+        - "qa_broad__hybrid (rag_pill pill — broad QA via hybrid BM25+dense, RRF fusion)"
         - "qa_precise__langchain (rag_pill pill — precise QA via LangChain+FAISS)"
         - "qa_precise__llamaindex (rag_pill pill — precise QA via LlamaIndex)"
         - "qa_precise__haystack (rag_pill pill — precise QA via Haystack)"
         - "qa_precise__txtai (rag_pill pill — precise QA via txtai)"
         - "qa_precise__chroma_baseline (rag_pill pill — precise QA via Chroma baseline)"
+        - "qa_precise__bm25 (rag_pill pill — precise QA via BM25 Okapi, lexical, no embeddings)"
+        - "qa_precise__hybrid (rag_pill pill — precise QA via hybrid BM25+dense, RRF fusion)"
         - "clarifeye (agentic OAuth tool, external — currently disabled)"
         - "langchain_rag (LEGACY standalone, moved to _legacy_standalone_servers/)"
         - "llamaindex_rag (LEGACY standalone, moved to _legacy_standalone_servers/)"
@@ -129,8 +135,12 @@ entities:
     type: DomainEntity
     name: RAGEngine
     goal: |
-      Un moteur RAG concret encapsulé par un RAGTool. Cinq moteurs existent
-      dans rag_pill : LangChain, LlamaIndex, Haystack, Txtai, Chroma.
+      Un moteur RAG concret encapsulé par un RAGTool. Huit moteurs existent
+      dans rag_pill. Cinq récupèrent par similarité d'embeddings (LangChain,
+      LlamaIndex, Haystack, Txtai, Chroma) ; BM25 récupère par mots exacts,
+      sans aucun embedding ; Hybride fusionne les deux par rang réciproque ;
+      ColPali récupère sur l'image des pages et reste expérimental, donc hors
+      du registre de l'arène (EngineMetadata.experimental).
     lives_in: mcp_servers/rag_pill/engines/
     metadata:
       shared_skeleton_target: mcp_servers/rag_pill/engines/_shared_engine_skeleton.py
