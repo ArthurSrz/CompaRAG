@@ -72,7 +72,33 @@ est inerte pour tout le monde aujourd'hui, pas seulement pour ColPali.
 `VisualCorpus` sert aussi les moteurs texte (`iter_documents()` rend des
 `CorpusDocument` ordinaires), donc un seul corpus PDF suffit pour les six.
 
-### 2. Une validation contre les vrais poids
+### 2a. Option retenue : inférence hébergée (API)
+
+`HTTPColPaliBackend` appelle un endpoint distant au lieu de charger les
+poids. Le moteur ne voit aucune différence : même Protocol, mêmes tableaux
+retournés. L'image reste légère (pas de torch), il n'y a pas de chargement
+à froid, et aucun GPU à provisionner.
+
+```bash
+COLPALI_ENABLED=1 \
+COLPALI_ENDPOINT_URL=https://<endpoint>.endpoints.huggingface.cloud \
+HF_TOKEN=hf_... \
+python -m mcp_servers.rag_pill.server
+```
+
+Deux points à régler avant que ça marche :
+
+- **ColPali n'est pas une tâche standard** de l'API d'inférence gratuite de
+  Hugging Face : il renvoie plusieurs vecteurs par page, ce qu'aucun
+  pipeline classique n'expose. Il faut très probablement un *Inference
+  Endpoint* dédié (payant, à provisionner) avec un petit handler maison.
+- **La forme exacte de la réponse n'est pas confirmée.** `_as_multivector`
+  accepte les trois encodages plausibles et **échoue bruyamment** sinon —
+  en particulier si l'endpoint renvoie un seul vecteur moyenné, auquel cas
+  l'interaction tardive aurait disparu sans que rien ne le signale. Un seul
+  appel réel tranche la question.
+
+### 2b. Validation contre les vrais poids
 
 Le backend `TransformersColPaliBackend` n'a **jamais tourné contre un vrai
 modèle** : le réseau de l'environnement de développement bloque

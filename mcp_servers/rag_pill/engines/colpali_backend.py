@@ -154,3 +154,117 @@ class TransformersColPaliBackend:
         processed = self._processor.process_queries([query]).to(self._model.device)
         with self._torch.no_grad():
             return self._to_numpy(self._model(**processed))[0]
+
+
+class HTTPColPaliBackend:
+    """Calls a hosted ColPali endpoint instead of loading the weights locally.
+
+    Trades a 2.5 GB image and a cold-start model load for a network hop. The
+    engine cannot tell the difference: both backends satisfy the same
+    Protocol and return the same (tokens, dim) arrays.
+
+    `transport` is the seam for tests — a callable taking the JSON-ready
+    request body and returning the decoded JSON response. The default posts
+    to `endpoint_url` with a bearer token.
+
+    UNVERIFIED: the exact response shape of a hosted ColPali endpoint has not
+    been confirmed against a live service (see COLPALI.md). `_as_multivector`
+    therefore accepts the three plausible encodings and fails loudly rather
+    than silently mis-parsing — one real call will settle which one applies.
+    """
+
+    def __init__(
+        self,
+        endpoint_url: str,
+        token: str,
+        model_id: str = "vidore/colSmol-256M",
+        timeout: int = 60,
+        batch_size: int = 4,
+        transport=None,
+    ) -> None:
+        if not endpoint_url:
+            raise ValueError("endpoint_url is required")
+        self.model_id = model_id
+        self._endpoint_url = endpoint_url
+        self._token = token
+        self._timeout = timeout
+        self._batch_size = batch_size
+        self._transport = transport or self._post
+
+    def _post(self, body: dict) -> object:
+        import json  # noqa: PLC0415
+        import urllib.request  # noqa: PLC0415
+
+        request = urllib.request.Request(
+            self._endpoint_url,
+            data=json.dumps(body).encode("utf-8"),
+            headers={
+                "Authorization": f"Bearer {self._token}",
+                "Content-Type": "application/json",
+            },
+            method="POST",
+        )
+        with urllib.request.urlopen(request, timeout=self._timeout) as response:
+            return json.loads(response.read().decode("utf-8"))
+
+    @staticmethod
+    def _as_multivector(payload: object, *, context: str) -> np.ndarray:
+        """Coerce one item's response into a (tokens, dim) array.
+
+        Accepts a bare 2-D list, or a dict keyed `embedding`/`embeddings`.
+        Anything else raises: a wrong guess here would silently corrupt every
+        ranking, which is far worse than a failed call.
+        """
+        if isinstance(payload, dict):
+            for key in ("embedding", "embeddings"):
+                if key in payload:
+                    payload = payload[key]
+                    break
+            else:
+                raise ValueError(
+                    f"{context}: response dict has no 'embedding'/'embeddings' key "
+                    f"(keys: {sorted(payload)})"
+                )
+        array = np.asarray(payload, dtype=np.float32)
+        if array.ndim == 3 and array.shape[0] == 1:
+            array = array[0]  # endpoint kept the batch axis
+        if array.ndim != 2:
+            raise ValueError(
+                f"{context}: expected a 2-D (tokens, dim) embedding, got shape "
+                f"{array.shape}. ColPali is multi-vector — a 1-D response means "
+                "the endpoint pooled it and the late-interaction signal is gone."
+            )
+        return array
+
+    def embed_pages(self, images: Sequence[bytes]) -> list[np.ndarray]:
+        import base64  # noqa: PLC0415
+
+        out: list[np.ndarray] = []
+        for start in range(0, len(images), self._batch_size):
+            batch = images[start : start + self._batch_size]
+            response = self._transport(
+                {
+                    "inputs": [
+                        base64.b64encode(raw).decode("ascii") for raw in batch
+                    ],
+                    "parameters": {"task": "image"},
+                }
+            )
+            if not isinstance(response, list) or len(response) != len(batch):
+                raise ValueError(
+                    f"expected {len(batch)} page embeddings, got "
+                    f"{len(response) if isinstance(response, list) else type(response).__name__}"
+                )
+            out.extend(
+                self._as_multivector(item, context=f"page {start + i}")
+                for i, item in enumerate(response)
+            )
+        return out
+
+    def embed_query(self, query: str) -> np.ndarray:
+        response = self._transport(
+            {"inputs": [query], "parameters": {"task": "query"}}
+        )
+        if isinstance(response, list) and len(response) == 1:
+            response = response[0]
+        return self._as_multivector(response, context="query")

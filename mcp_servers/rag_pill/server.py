@@ -62,11 +62,30 @@ async def lifespan(app):
     # has not installed requirements-colpali.txt keeps the slim image and
     # simply runs without it.
     if os.environ.get("COLPALI_ENABLED", "").lower() in ("1", "true", "yes"):
+        # Hosted inference when an endpoint is configured, local weights
+        # otherwise. The engine cannot tell the two apart.
+        endpoint_url = os.environ.get("COLPALI_ENDPOINT_URL", "")
+        backend = None
+        if endpoint_url:
+            from mcp_servers.rag_pill.engines.colpali_backend import (
+                HTTPColPaliBackend,
+            )
+
+            backend = HTTPColPaliBackend(
+                endpoint_url=endpoint_url,
+                token=os.environ.get("HF_TOKEN", ""),
+                model_id=os.environ.get("COLPALI_MODEL_ID", "vidore/colSmol-256M"),
+            )
+        log.info(
+            "colpali.backend %s",
+            json.dumps({"mode": "http" if endpoint_url else "local"}),
+        )
         engines.append(
             ColPaliEngine(
                 cache,
                 llm=llm,
                 embedding_config=embed_cfg,
+                backend=backend,
                 dpi=int(os.environ.get("COLPALI_DPI", "150")),
             )
         )
