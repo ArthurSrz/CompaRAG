@@ -95,6 +95,11 @@ Tous les checks doivent passer avant de pousser une PR.
 Cf. le plan de simplification — `knowledge-graph/code-ontology.yaml` ne liste
 que les RAGTool déjà intégrés. Candidats actuels (mai 2026) :
 
+Déjà intégrés depuis cette liste : **BM25** (`engines/bm25_engine.py`) et
+**l'hybride BM25 + dense par RRF** (`engines/hybrid_engine.py`), tous deux
+comme RAGEngine et non comme serveurs standalone — ils partagent le chunker
+de `engines/chunking.py`, donc leurs spans sont exacts.
+
 | Candidat | Type | Pourquoi |
 |---|---|---|
 | LightRAG (HKU) | Graph-RAG | Knowledge graph + recherche hybride, EMNLP 2025 |
