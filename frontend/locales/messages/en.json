@@ -2154,5 +2154,8 @@
     "send": "Send",
     "tooltip": "Tooltip",
     "validate": "Validate"
-  }
+  },
+  "toolArena.form.libraryLabel": "Or pick a ready-made document",
+  "toolArena.form.libraryPlaceholder": "Choose from the library…",
+  "toolArena.form.libraryFailed": "This document could not be loaded."
 }

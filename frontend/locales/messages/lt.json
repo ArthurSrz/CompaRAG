@@ -396,5 +396,8 @@
         "desc": "Use CompaRAG as a teaching aid to compare RAG pipelines and explain their differences to your audience."
       }
     }
-  }
+  },
+  "toolArena.form.libraryLabel": "Or pick a ready-made document",
+  "toolArena.form.libraryPlaceholder": "Choose from the library…",
+  "toolArena.form.libraryFailed": "This document could not be loaded."
 }
