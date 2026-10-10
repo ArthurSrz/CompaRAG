@@ -4,7 +4,7 @@ milestone: v1.2
 milestone_name: Document Context Selection
 status: Active
 stopped_at: Completed 14-engine-hardening 14-01-PLAN.md (Task 6 pending — Railway build verify)
-last_updated: "2026-10-10T19:30:00.000Z"
+last_updated: "2026-10-10T20:05:00.000Z"
 progress:
   total_phases: 5
   completed_phases: 1
@@ -61,6 +61,73 @@ Phase 11 document library fully complete. Both document endpoints wired with Cac
 - **Workflow change:** rag-pill now deploys via `git push` to develop, not `railway up --service rag-pill` (the CLI's chunked upload times out reliably from this machine — curl proves the endpoint is reachable in 260ms; the long-lived multipart stream is what fails). Documented in `CompaRAG/CLAUDE.md` and the corresponding memory entry.
 
 ## Deferred / Backlog
+
+### Outil B en erreur dans l'arène (différé, 2026-10-10)
+
+Observé en production sur https://comparag.vercel.app/tool-arena : duel QA sur
+`documents/manuel_station_pompage.md` (ou son jumeau PDF `test/pdfs/`), question
+« Quelle est la référence de la pièce de rechange du palier arrière de la
+turbine T3 ? ». **Outil A répond correctement** (`PAL-3300-B`, avec citation de
+la ligne source). **Outil B affiche « L'outil a rencontré une erreur. »**
+
+L'identité des deux outils n'a pas été relevée — l'écran de révélation n'a pas
+été consulté. C'est la première chose à faire au prochain essai.
+
+**Écarté, avec méthode.** Le chemin de production a été rejoué hors ligne :
+PDF réel → `read_uploaded_file_as_text.extract_text` (pypdf) → `EphemeralCorpus`
+→ `execute_with_embedding_retry`, avec `batched_embed` et
+`validate_vector_list` réels et seul le client OpenAI simulé.
+
+| Hypothèse | Verdict |
+|---|---|
+| BM25 ou Hybride plantent sur ce document | ❌ les 4 combinaisons (2 moteurs × `qa_precise`/`qa_broad`) passent |
+| Le registre casse le chargement backend | ❌ les 24 entrées se chargent |
+| Moteur absent d'un `rag-pill` non redéployé | ❌ ce cas renvoie la *chaîne* « Unknown pill or engine », pas une erreur (`server.py`, branche `except KeyError`) |
+| Le chemin réel de l'hybride (non couvert par les tests, qui injectent un faux embedder) | ❌ exercé depuis, il tient |
+
+**Hypothèse restante, la plus probable :** un des cinq moteurs à embeddings sur
+la dégradation OpenRouter déjà documentée plus haut dans ce fichier
+(`No embedding data received` / `'NoneType' object is not subscriptable`), dont
+le correctif `d9f5bf87` était encore marqué « Pending (in prod) ». Ce serait une
+panne connue, pas une régression des moteurs ajoutés le 2026-10-10.
+
+**Ce qu'il faut pour trancher** (nécessite un accès Railway, absent de
+l'environnement de développement : ni CLI, ni jeton, et le domaine est refusé
+par la politique réseau) :
+
+1. Logs du service `rag-pill`, ligne `rag_pill_query.failed` — elle porte
+   `engine_id`, `exc_type`, `exc_msg`, `doc_chars` et `duration_ms`
+   (`mcp_servers/rag_pill/server.py`).
+2. À défaut, refaire le duel et consulter l'écran de révélation : le nom de
+   l'outil B suffit à orienter. BM25 en erreur ⇒ forcément le code local, il ne
+   fait aucun appel réseau. Hybride ⇒ code local ou embeddings. Un des cinq
+   anciens ⇒ la panne connue.
+
+Par ailleurs : le message affiché à l'utilisateur est générique. Faire remonter
+`exc_type` jusqu'à l'écran, au moins en mode opérateur, éviterait cet
+aller-retour.
+
+### BM25 résume un fragment, pas le document (différé, 2026-10-10)
+
+Trouvé en instruisant le point précédent, sans lien avec lui. En `task_type:
+summary`, la requête passée au retriever est la consigne elle-même
+(« Résume ce document »), qui ne partage presque aucun terme avec le corpus.
+Mesuré sur le manuel : BM25 ne ramène que 1 à 3 passages sur 8 selon la
+formulation — il résume donc un fragment arbitraire.
+
+Ce n'est pas un bug mais une conséquence du paradigme : une recherche par mots
+exacts n'a rien à matcher quand la requête est une instruction. Trois sorties
+possibles, à trancher :
+
+- retirer BM25 des pills `summary` (`EngineMetadata.supports` ne garderait que
+  `qa`), ce qui est le plus honnête ;
+- en mode résumé, lui faire ignorer le retrieval et passer le document entier,
+  comme le faisaient les serveurs standalone d'origine ;
+- laisser tel quel et accepter que ses résumés perdent — c'est une information
+  sur le paradigme, que l'arène est précisément là pour mesurer.
+
+Le même raisonnement s'applique à l'hybride, à moitié : sa branche dense
+continue de fonctionner en mode résumé.
 
 ### ColPali — essai en conditions réelles (différé, 2026-10-10)
 
