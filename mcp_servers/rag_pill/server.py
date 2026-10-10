@@ -21,6 +21,7 @@ from starlette.responses import JSONResponse, PlainTextResponse, StreamingRespon
 from mcp_servers.rag_pill.cache import IndexCache
 from mcp_servers.rag_pill.engines import (
     ChromaBaselineEngine,
+    ColPaliEngine,
     HaystackEngine,
     LangChainEngine,
     LlamaIndexEngine,
@@ -57,6 +58,18 @@ async def lifespan(app):
         TxtaiEngine(cache, llm=llm, embedding_config=embed_cfg),
         ChromaBaselineEngine(cache, llm=llm, embedding_config=embed_cfg),
     ]
+    # ColPali carries torch + a vision model, so it is opt-in: a deploy that
+    # has not installed requirements-colpali.txt keeps the slim image and
+    # simply runs without it.
+    if os.environ.get("COLPALI_ENABLED", "").lower() in ("1", "true", "yes"):
+        engines.append(
+            ColPaliEngine(
+                cache,
+                llm=llm,
+                embedding_config=embed_cfg,
+                dpi=int(os.environ.get("COLPALI_DPI", "150")),
+            )
+        )
     # Loud-WARN any engine whose framework failed to import — silent capability
     # loss skews arena fairness, so make it visible at startup.
     for engine in engines:

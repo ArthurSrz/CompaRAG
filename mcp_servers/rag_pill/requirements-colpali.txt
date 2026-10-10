@@ -1,0 +1,8 @@
+# ColPali engine — deliberately NOT in the requirements.txt aggregator.
+# torch alone is ~2.5 GB; pulling it into the shared rag_pill image would
+# make every other engine pay for a paradigm it does not use. Install this
+# file explicitly on a deploy that sets COLPALI_ENABLED=1.
+colpali-engine>=0.3
+torch>=2.4
+pymupdf>=1.24
+pillow>=10.0

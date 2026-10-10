@@ -94,6 +94,11 @@ def _generate_internal_entries(pills: list[Pill]) -> list[dict]:
     for task_type in TASK_TYPE_ORDER:
         for pill in sorted(by_task.get(task_type, []), key=lambda p: p.name):
             for engine in ENGINES:
+                if engine.experimental:
+                    # Present in the codebase, absent from the arena until its
+                    # prerequisites land. Keeps a half-wired engine from being
+                    # voted on for the wrong reasons.
+                    continue
                 if pill.task_type not in engine.supports:
                     continue
                 entries.append(_entry_for(pill, engine))
