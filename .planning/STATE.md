@@ -4,7 +4,7 @@ milestone: v1.2
 milestone_name: Document Context Selection
 status: Active
 stopped_at: Completed 14-engine-hardening 14-01-PLAN.md (Task 6 pending — Railway build verify)
-last_updated: "2026-10-10T20:05:00.000Z"
+last_updated: "2026-10-10T20:20:00.000Z"
 progress:
   total_phases: 5
   completed_phases: 1
@@ -61,6 +61,42 @@ Phase 11 document library fully complete. Both document endpoints wired with Cac
 - **Workflow change:** rag-pill now deploys via `git push` to develop, not `railway up --service rag-pill` (the CLI's chunked upload times out reliably from this machine — curl proves the endpoint is reachable in 260ms; the long-lived multipart stream is what fails). Documented in `CompaRAG/CLAUDE.md` and the corresponding memory entry.
 
 ## Deferred / Backlog
+
+### Sélecteur de documents — test UI/UX à faire (2026-10-10)
+
+Livré dans `b50d2a5` (client + 10 tests) et `4ce92c0` (branchement dans
+`ToolArenaForm.svelte`). CI verte, `vite build` exit 0.
+
+**Jamais vu tourner.** Aucune vérification visuelle ni d'interaction réelle n'a
+été faite — l'environnement de développement ne peut pas rendre la page
+(le plugin paraglide se télécharge depuis un CDN refusé par la politique
+réseau, donc le module de traduction généré localement ne contient aucune clé
+`toolArena`). Ce qui est couvert : la logique du client, en pur TS, hors DOM.
+
+**À vérifier à l'écran :**
+
+1. Les trois clés `toolArena.form.library*` s'affichent bien traduites, dans les
+   5 langues. C'est le point le plus incertain : localement elles ne résolvent
+   pas, et seul un build avec réseau le dira.
+2. La liste apparaît avec les 4 documents et le manuel est sélectionnable.
+3. Choisir un document remplit bien le formulaire et le bouton se débloque.
+4. **Exclusion mutuelle dans les deux sens** : téléverser un fichier après avoir
+   choisi dans la liste doit vider la sélection, et inversement. C'est la partie
+   la plus facile à casser.
+5. Changement rapide de sélection : le garde anti-réponse-périmée (`fileToken`)
+   doit empêcher qu'un chargement lent écrase un choix plus récent.
+6. Rendu mobile — le duel de ce soir a été joué depuis un téléphone.
+7. Placement : la liste est sous le bouton de téléversement. À voir si c'est le
+   bon ordre, ou si un document prêt à l'emploi devrait venir en premier pour un
+   nouvel arrivant.
+
+**Contexte qui rend ce test nécessaire :** la CI ne construit jamais le
+frontend. `build-deploy-dev.yml` et `deploy-prd.yml` se déclenchent sur les
+branches `dev` et `prd`, qui n'existent pas dans ce fork — ce sont des restes du
+dépôt ComparIA d'origine et ils n'ont jamais tourné. Seule la suite de
+régression (Python) est active. Une régression frontend passerait donc
+inaperçue jusqu'au build Vercel. Deux chantiers séparés en découlent : ajouter
+le build frontend à la régression, et supprimer les deux workflows morts.
 
 ### Outil B en erreur dans l'arène (différé, 2026-10-10)
 
