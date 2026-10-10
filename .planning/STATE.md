@@ -4,7 +4,7 @@ milestone: v1.2
 milestone_name: Document Context Selection
 status: Active
 stopped_at: Completed 14-engine-hardening 14-01-PLAN.md (Task 6 pending — Railway build verify)
-last_updated: "2026-05-13T09:01:00.000Z"
+last_updated: "2026-10-10T19:30:00.000Z"
 progress:
   total_phases: 5
   completed_phases: 1
@@ -59,6 +59,61 @@ Phase 11 document library fully complete. Both document endpoints wired with Cac
 - **Verified (in prod):** chromadb race fix — 10-round browser-harness stress test against https://comparag.vercel.app/tool-arena returned 10/10 clean.
 - **Pending (in prod):** NoneType-subscript fix — Railway building `d9f5bf87` server-side; stress test to follow.
 - **Workflow change:** rag-pill now deploys via `git push` to develop, not `railway up --service rag-pill` (the CLI's chunked upload times out reliably from this machine — curl proves the endpoint is reachable in 260ms; the long-lived multipart stream is what fails). Documented in `CompaRAG/CLAUDE.md` and the corresponding memory entry.
+
+## Deferred / Backlog
+
+### ColPali — essai en conditions réelles (différé, 2026-10-10)
+
+Le moteur visuel est **écrit, testé et poussé** sur `feat/colpali-visual-engine`
+(`407422e`, `55156ba`, `e4b56ef`, `f1757d1`). Il est tenu **hors de l'arène**
+par `EngineMetadata.experimental=True` : `mcp_servers.json` est inchangé et
+`generate_mcp_registry.py --check` passe. 152 tests verts.
+
+Ce qui reste est un essai contre le vrai modèle — jamais exécuté, parce que
+`huggingface.co` et `openrouter.ai` sont refusés par la politique réseau de
+l'environnement de développement.
+
+**Prérequis à réunir (côté utilisateur) :**
+
+1. Autoriser les domaines Hugging Face dans *Network access* de l'environnement.
+2. Provisionner un *Inference Endpoint* dédié sur `vidore/colpali-v1.3-hf`
+   (tag `endpoints_compatible` → pas de handler maison à écrire ; facturé à
+   l'heure ; l'API serverless ne convient pas, la tâche
+   `visual-document-retrieval` rend plusieurs vecteurs par page).
+3. Fournir l'URL de l'endpoint + un jeton HF.
+
+**Puis :**
+
+```bash
+COLPALI_ENABLED=1 COLPALI_ENDPOINT_URL=https://<endpoint> HF_TOKEN=hf_... \
+  python -m mcp_servers.rag_pill.server
+```
+
+**Ce que l'essai doit trancher :**
+
+- La forme réelle de la réponse de l'endpoint. `HTTPColPaliBackend._as_multivector`
+  accepte trois encodages plausibles et **échoue bruyamment** sinon — en
+  particulier sur un vecteur unique moyenné, qui classerait quand même
+  quelque chose mais sans interaction tardive, perdant le paradigme sous test
+  en silence.
+- La latence réelle (le smoke test de l'arène exige < 60 s).
+- La qualité de récupération, qu'aucun test actuel ne couvre : la doublure de
+  modèle valide la plomberie, pas le classement.
+
+**Deux décisions restées ouvertes :**
+
+- **Corpus de l'arène.** `mcp_servers/corpus/` est vide et `FixedCorpus` n'y lit
+  que `*.md` — le mode corpus est inerte pour les six moteurs, pas seulement
+  pour ColPali. Quatre PDF de test existent dans `test/pdfs/` ; reste à décider
+  ce qui devient le corpus de production. `VisualCorpus` sert aussi les moteurs
+  texte, donc un seul corpus PDF suffit pour tous.
+- **Répondre depuis un scan.** ColPali trouve la page, mais le moteur passe
+  ensuite le *texte* de la page au LLM — et un scan n'en a pas. Sortie à
+  choisir : envoyer l'image au LLM (multimodal, parité préservée) ou OCR de
+  repli. Épinglé par
+  `test_colpali_on_test_pdfs.py::test_retrieving_a_scanned_page_hands_the_llm_nothing`.
+
+Détail complet : `mcp_servers/rag_pill/COLPALI.md`.
 
 ## Last Session
 

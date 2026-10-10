@@ -22,6 +22,7 @@ from mcp_servers.rag_pill.cache import IndexCache
 from mcp_servers.rag_pill.engines import (
     BM25Engine,
     ChromaBaselineEngine,
+    ColPaliEngine,
     HaystackEngine,
     HybridEngine,
     LangChainEngine,
@@ -61,6 +62,37 @@ async def lifespan(app):
         BM25Engine(cache, llm=llm, embedding_config=embed_cfg),
         HybridEngine(cache, llm=llm, embedding_config=embed_cfg),
     ]
+    # ColPali carries torch + a vision model, so it is opt-in: a deploy that
+    # has not installed requirements-colpali.txt keeps the slim image and
+    # simply runs without it.
+    if os.environ.get("COLPALI_ENABLED", "").lower() in ("1", "true", "yes"):
+        # Hosted inference when an endpoint is configured, local weights
+        # otherwise. The engine cannot tell the two apart.
+        endpoint_url = os.environ.get("COLPALI_ENDPOINT_URL", "")
+        backend = None
+        if endpoint_url:
+            from mcp_servers.rag_pill.engines.colpali_backend import (
+                HTTPColPaliBackend,
+            )
+
+            backend = HTTPColPaliBackend(
+                endpoint_url=endpoint_url,
+                token=os.environ.get("HF_TOKEN", ""),
+                model_id=os.environ.get("COLPALI_MODEL_ID", "vidore/colSmol-256M"),
+            )
+        log.info(
+            "colpali.backend %s",
+            json.dumps({"mode": "http" if endpoint_url else "local"}),
+        )
+        engines.append(
+            ColPaliEngine(
+                cache,
+                llm=llm,
+                embedding_config=embed_cfg,
+                backend=backend,
+                dpi=int(os.environ.get("COLPALI_DPI", "150")),
+            )
+        )
     # Loud-WARN any engine whose framework failed to import — silent capability
     # loss skews arena fairness, so make it visible at startup.
     for engine in engines:

@@ -19,6 +19,13 @@ class EngineMetadata:
     display_label: str  # full label appended to entry description, e.g. "LangChain + FAISS"
     supports: frozenset[str]  # task_types the engine can execute
     sanitize_terms: tuple[str, ...] = ()  # brand strings to scrub before reveal
+    # Experimental engines are instantiated by the server but kept OUT of the
+    # generated arena registry: they can be exercised directly while their
+    # prerequisites are missing, without being matched against the live
+    # engines and losing votes for a reason that is not about their quality.
+    experimental: bool = False
+    # Free-text note on what an experimental engine is still waiting for.
+    experimental_reason: str = ""
 
 
 ENGINES: tuple[EngineMetadata, ...] = (
@@ -63,6 +70,28 @@ ENGINES: tuple[EngineMetadata, ...] = (
         display_label="Hybride BM25 + dense, fusion par rang réciproque (RRF)",
         supports=frozenset({"summary", "qa"}),
         sanitize_terms=("BM25", "bm25", "Okapi", "RRF", "rrf", "hybride", "Hybrid"),
+    ),
+    EngineMetadata(
+        id="colpali",
+        name="ColPali",
+        display_label="ColPali — late interaction visuelle sur pages PDF (encodeur visuel propre)",
+        supports=frozenset({"summary", "qa"}),
+        sanitize_terms=(
+            "ColPali",
+            "colpali",
+            "ColQwen",
+            "colSmol",
+            "ColSmol",
+            "Vidore",
+            "vidore",
+            "PaliGemma",
+            "Idefics",
+        ),
+        experimental=True,
+        experimental_reason=(
+            "needs a PDF corpus in mcp_servers/corpus/ and a validated run "
+            "against real ColPali weights; see mcp_servers/rag_pill/COLPALI.md"
+        ),
     ),
     EngineMetadata(
         id="chroma_baseline",
