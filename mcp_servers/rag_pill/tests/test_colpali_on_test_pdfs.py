@@ -37,6 +37,7 @@ PDF_DIR = Path(__file__).resolve().parents[3] / "test" / "pdfs"
 
 EXPECTED_DOCUMENTS = {
     "formulaire_adhesion.pdf": 1,
+    "manuel_station_pompage.pdf": 3,
     "notice_technique.pdf": 2,
     "rapport_scanne.pdf": 2,
     "rapport_trimestriel.pdf": 2,
