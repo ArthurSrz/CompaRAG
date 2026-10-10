@@ -443,11 +443,152 @@ def build_rapport_scanne(path: Path) -> None:
     doc.close()
 
 
+def build_manuel_station_pompage(path: Path) -> None:
+    """The PDF twin of documents/manuel_station_pompage.md.
+
+    Same content, laid out as a real document so it exercises the arena's
+    PDF upload path (pypdf extraction) rather than the plain-text one. The
+    part references and fault codes are what BM25 is here to find, so the
+    tables must survive extraction with their values intact.
+    """
+    doc = pymupdf.open()
+
+    page = doc.new_page()
+    y = _title(page, "Manuel de maintenance - Station de pompage")
+    y = _paragraph(
+        page,
+        "Document interne. Version 4.2 - mise a jour du 14 mars 2025. "
+        "Redacteur : M. Berthier, responsable exploitation. La station comporte "
+        "quatre organes principaux, reperes sur le synoptique du local "
+        "technique. Chaque numero de serie est grave sur la plaque "
+        "signaletique fixee au carter.",
+        y,
+    )
+    y = _table(
+        page,
+        ["Repere", "Equipement", "Numero de serie", "Mise en service"],
+        [
+            ["P1", "Pompe de relevage n1", "VX-88114-A", "juin 2018"],
+            ["P2", "Pompe de relevage n2", "VX-88115-A", "juin 2018"],
+            ["T3", "Turbine de recirculation", "VX-21007-C", "mars 2021"],
+            ["V4", "Vanne motorisee amont", "VX-44902-M", "mars 2021"],
+        ],
+        y,
+        col_widths=[70, 180, 130, 103],
+    )
+    y = _paragraph(
+        page,
+        "Pieces de rechange referencees. Les references ci-dessous sont celles "
+        "du magasin central. Toute commande doit mentionner la reference "
+        "exacte : plusieurs organes se ressemblent et ne sont pas "
+        "interchangeables.",
+        y,
+    )
+    _table(
+        page,
+        ["Organe", "Reference", "Stock magasin"],
+        [
+            ["Palier avant turbine T3", "PAL-3300-A", "2"],
+            ["Palier arriere turbine T3", "PAL-3300-B", "1"],
+            ["Garniture mecanique P1 / P2", "GAR-1180-K", "4"],
+            ["Membrane de vase d'expansion", "MEM-0475-E", "0"],
+            ["Carte de commande V4", "CMD-7720-R", "1"],
+            ["Joint torique de bride DN150", "JTO-0150-N", "12"],
+        ],
+        y,
+        col_widths=[250, 130, 103],
+    )
+
+    page = doc.new_page()
+    y = _title(page, "Seuils d'alarme et codes defaut")
+    y = _paragraph(
+        page,
+        "L'automate remonte les defauts sous forme de codes a trois chiffres "
+        "precedes de la lettre E. Un code actif s'affiche en rouge sur le "
+        "pupitre et declenche l'envoi d'un message a l'astreinte.",
+        y,
+    )
+    y = _table(
+        page,
+        ["Code", "Condition", "Conduite a tenir"],
+        [
+            ["E-204", "Vibration superieure a 4,5 mm/s", "Alerte. Controle sous quinzaine."],
+            ["E-207", "Vibration superieure a 9,0 mm/s", "Arret immediat de la machine."],
+            ["E-112", "Temperature de palier > 85 C", "Arret immediat. Verifier le graissage."],
+            ["E-330", "Isolement moteur < 0,5 MOhm", "Consignation electrique obligatoire."],
+            ["E-451", "Perte du capteur de niveau amont", "Commande manuelle. Surveillance."],
+        ],
+        y,
+        col_widths=[70, 200, 213],
+    )
+    y = _paragraph(
+        page,
+        "Conduite a tenir en cas d'incident. Lorsque le niveau amont franchit "
+        "la cote 12,40 m NGF alors que les deux pompes tournent deja, "
+        "l'excedent s'evacue par le trop-plein vers le bassin tampon. Si le "
+        "deversement gagne la passerelle de service, fermer la vanne motorisee "
+        "V4, consigner l'installation et prevenir l'astreinte au "
+        "06 12 34 56 78. Ne jamais emprunter la passerelle tant que le "
+        "deversement n'a pas cesse.",
+        y,
+    )
+    _paragraph(
+        page,
+        "Demarrage impossible d'une pompe : verifier dans l'ordre la position "
+        "du sectionneur, la presence du code E-330, l'etat du relais thermique, "
+        "puis la rotation libre de l'arbre. Si l'arbre ne tourne pas "
+        "librement, ne pas forcer : la garniture mecanique est probablement "
+        "grippee.",
+        y,
+    )
+
+    page = doc.new_page()
+    y = _title(page, "Entretien periodique et journal")
+    y = _table(
+        page,
+        ["Operation", "Periodicite", "Duree"],
+        [
+            ["Releve vibratoire des quatre organes", "Mensuelle", "45 min"],
+            ["Graissage des paliers de turbine", "Trimestrielle", "1 h"],
+            ["Controle pression du vase d'expansion", "Semestrielle", "30 min"],
+            ["Mesure d'isolement des moteurs", "Annuelle", "2 h"],
+            ["Epreuve du clapet anti-retour", "Annuelle", "3 h"],
+        ],
+        y,
+        col_widths=[280, 110, 93],
+    )
+    y = _paragraph(
+        page,
+        "La pression du vase d'expansion doit rester comprise entre 1,0 et "
+        "1,5 bar a froid. Un ecart persistant signale une membrane percee et "
+        "impose le remplacement du vase complet. La membrane MEM-0475-E est en "
+        "rupture depuis janvier 2025 ; delai annonce par le fournisseur : six "
+        "semaines.",
+        y,
+    )
+    _paragraph(
+        page,
+        "Journal des interventions. 14 mars 2025 : releve vibratoire, turbine "
+        "T3 a 7,2 mm/s, au-dela du seuil d'alerte. Preconisation : arret "
+        "programme sous quinzaine et remplacement du palier arriere, reference "
+        "PAL-3300-B, disponible en magasin. 8 fevrier 2025 : remplacement de "
+        "la garniture mecanique de P2, reference GAR-1180-K. 19 janvier 2025 : "
+        "apparition du code E-451 pendant quatre heures, capteur encrasse. "
+        "6 decembre 2024 : controle d'isolement annuel, P1 a 42 MOhm, P2 a "
+        "38 MOhm, T3 a 51 MOhm.",
+        y,
+    )
+
+    doc.save(path)
+    doc.close()
+
+
 BUILDERS = {
     "rapport_trimestriel.pdf": build_rapport_trimestriel,
     "notice_technique.pdf": build_notice_technique,
     "formulaire_adhesion.pdf": build_formulaire_adhesion,
     "rapport_scanne.pdf": build_rapport_scanne,
+    "manuel_station_pompage.pdf": build_manuel_station_pompage,
 }
 
 
