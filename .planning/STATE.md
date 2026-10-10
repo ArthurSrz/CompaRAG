@@ -107,27 +107,40 @@ Par ailleurs : le message affiché à l'utilisateur est générique. Faire remon
 `exc_type` jusqu'à l'écran, au moins en mode opérateur, éviterait cet
 aller-retour.
 
-### BM25 résume un fragment, pas le document (différé, 2026-10-10)
+### BM25 ne concourt plus sur les résumés — décidé, à implémenter (2026-10-10)
 
-Trouvé en instruisant le point précédent, sans lien avec lui. En `task_type:
-summary`, la requête passée au retriever est la consigne elle-même
-(« Résume ce document »), qui ne partage presque aucun terme avec le corpus.
-Mesuré sur le manuel : BM25 ne ramène que 1 à 3 passages sur 8 selon la
-formulation — il résume donc un fragment arbitraire.
+**Constat.** En `task_type: summary`, la requête passée au retriever est la
+consigne elle-même (« Résume ce document »), qui ne partage presque aucun terme
+avec le corpus. Mesuré sur `documents/manuel_station_pompage.md` : BM25 ne
+ramène que 1 à 3 passages sur 8 selon la formulation — il résume donc un
+fragment arbitraire, pas le document.
 
 Ce n'est pas un bug mais une conséquence du paradigme : une recherche par mots
-exacts n'a rien à matcher quand la requête est une instruction. Trois sorties
-possibles, à trancher :
+exacts n'a rien à matcher quand la requête est une instruction.
 
-- retirer BM25 des pills `summary` (`EngineMetadata.supports` ne garderait que
-  `qa`), ce qui est le plus honnête ;
-- en mode résumé, lui faire ignorer le retrieval et passer le document entier,
-  comme le faisaient les serveurs standalone d'origine ;
-- laisser tel quel et accepter que ses résumés perdent — c'est une information
-  sur le paradigme, que l'arène est précisément là pour mesurer.
+**Décision (utilisateur, 2026-10-10) : BM25 ne concourt que sur les questions.**
+Les deux autres options envisagées — lui passer le document entier en mode
+résumé, ou le laisser perdre comme information sur le paradigme — sont écartées.
+Motif : l'arène compare des méthodes de récupération, et faire résumer un outil
+qui n'a pas de requête à chercher ne mesure rien.
 
-Le même raisonnement s'applique à l'hybride, à moitié : sa branche dense
-continue de fonctionner en mode résumé.
+**À changer :**
+
+1. `engines/metadata.py` — entrée `bm25` : `supports=frozenset({"qa"})`.
+2. `engines/bm25_engine.py` — `BM25Engine.SUPPORTS = {"qa"}`.
+3. `scripts/generate_mcp_registry.py` — régénérer : `summary_default__bm25`
+   disparaît, le registre passe de 24 à 23 entrées.
+4. `knowledge-graph/code-ontology.yaml` — retirer la ligne
+   `summary_default__bm25`, sinon `scripts/register_tool.py --check` échoue
+   (le contrôle vérifie les deux sens).
+5. Tests — `test_bm25_hybrid_engines.py` et `test_engine_signature.py` ne
+   paramètrent BM25 que sur `qa` ; ajouter un test qui épingle la décision,
+   pour qu'un futur ajout de pill `summary` ne le réintègre pas par accident.
+
+**L'hybride garde `summary`** : sa moitié dense continue de fonctionner quand la
+requête est une instruction, donc il n'a pas le même défaut. À surveiller tout
+de même — en mode résumé, sa branche lexicale ne contribue presque rien à la
+fusion, et son résultat devrait donc se rapprocher de celui d'un moteur dense.
 
 ### ColPali — essai en conditions réelles (différé, 2026-10-10)
 
