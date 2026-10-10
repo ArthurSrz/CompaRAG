@@ -16,5 +16,11 @@
     "title": "LlamaIndex Core Concepts",
     "description": "Overview of LlamaIndex primitives: documents, nodes, indexes, query engines, and retrievers for RAG pipelines.",
     "file": "documents/llamaindex_concepts.txt"
+  },
+  {
+    "id": "manuel_station_pompage",
+    "title": "Manuel de maintenance — Station de pompage",
+    "description": "Manuel technique fictif : références de pièces, codes défaut, seuils et procédures. Conçu pour faire ressortir l'écart entre recherche lexicale et recherche par sens — voir test/documents/README.md pour la fiche de questions.",
+    "file": "documents/manuel_station_pompage.md"
   }
 ]

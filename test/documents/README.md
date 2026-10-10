@@ -1,14 +1,17 @@
 # Document de test pour l'arène
 
-`manuel_station_pompage.md` — un manuel de maintenance fictif (5 200
-caractères), écrit pour rendre visible la différence entre les moteurs de
-recherche de l'arène.
+`documents/manuel_station_pompage.md` — un manuel de maintenance fictif
+(5 200 caractères), écrit pour rendre visible la différence entre les moteurs
+de recherche de l'arène.
+
+Il vit dans `documents/` et il est inscrit dans `documents_index.json`, donc
+le backend le sert via `GET /tool-arena/documents`.
 
 ## Comment s'en servir
 
 1. Ouvrir la Tool Arena, choisir la tâche **Question / Réponse**.
-2. Déposer `manuel_station_pompage.md` (le format `.md` est accepté, comme
-   `.txt`, `.pdf` et `.docx`).
+2. Déposer `documents/manuel_station_pompage.md` (le format `.md` est
+   accepté, comme `.txt`, `.pdf` et `.docx`).
 3. Poser une des questions ci-dessous et coller la réponse attendue dans le
    champ prévu : elle s'affiche à côté des deux réponses anonymes, ce qui
    permet de juger qui a réellement trouvé.
