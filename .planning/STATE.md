@@ -62,10 +62,16 @@ Phase 11 document library fully complete. Both document endpoints wired with Cac
 
 ## Deferred / Backlog
 
-### Sélecteur de documents — test UI/UX à faire (2026-10-10)
+### Formulaire de l'arène — test utilisateur / UI-UX à faire (2026-10-10)
 
-Livré dans `b50d2a5` (client + 10 tests) et `4ce92c0` (branchement dans
-`ToolArenaForm.svelte`). CI verte, `vite build` exit 0.
+Deux ajouts au même formulaire, à vérifier ensemble :
+
+- **Sélecteur de documents** — `b50d2a5` (client + 10 tests) et `4ce92c0`
+  (branchement dans `ToolArenaForm.svelte`).
+- **Mode benchmark** — `b3e7ee2` : sélecteur de mode, liste des six questions
+  de référence, et `GET /tool-arena/questions` côté backend.
+
+CI verte sur les deux, `vite build` exit 0.
 
 **Jamais vu tourner.** Aucune vérification visuelle ni d'interaction réelle n'a
 été faite — l'environnement de développement ne peut pas rendre la page
@@ -89,6 +95,27 @@ réseau, donc le module de traduction généré localement ne contient aucune cl
 7. Placement : la liste est sous le bouton de téléversement. À voir si c'est le
    bon ordre, ou si un document prêt à l'emploi devrait venir en premier pour un
    nouvel arrivant.
+
+**À vérifier pour le mode benchmark :**
+
+8. Le menu « Sur quoi comparer » apparaît, et bascule bien entre les deux modes.
+9. En mode benchmark, le formulaire se réduit comme prévu : plus de dépôt de
+   document, plus de zone de question, plus de suggestions, plus de champ
+   objectif — mais **le bouton Comparer reste visible**. Il vit dans la même
+   grille que le champ objectif, c'est le point le plus fragile de la mise en
+   page.
+10. Les six questions sont lisibles dans la liste. Certaines sont longues : à
+    voir si elles tiennent sur mobile sans être tronquées.
+11. Le duel part et revient avec deux réponses. C'est le premier passage réel en
+    `haystack: "benchmark"` — le chemin backend est testé, le bout-en-bout non.
+12. Après le vote : les scores automatiques sont-ils visibles quelque part ?
+    Le backend les enregistre (`judgement_a` / `judgement_b`), mais **rien ne
+    les affiche à l'écran**. C'est probablement le prochain morceau : un
+    benchmark dont personne ne voit le résultat ne sert à rien.
+13. Question de fond plutôt que d'affichage : le mode benchmark a-t-il sa place
+    dans l'arène grand public, ou devrait-il vivre dans une page séparée ? Un
+    visiteur venu voter sur son propre document n'a sans doute rien à faire
+    d'un corpus de maintenance de station de pompage.
 
 **Contexte qui rend ce test nécessaire :** la CI ne construit jamais le
 frontend. `build-deploy-dev.yml` et `deploy-prd.yml` se déclenchent sur les
