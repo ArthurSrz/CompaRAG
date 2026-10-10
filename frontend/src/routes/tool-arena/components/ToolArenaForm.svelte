@@ -1,8 +1,14 @@
 <script lang="ts">
+  import { onMount } from 'svelte'
   import { browser, dev } from '$app/environment'
   import { env as publicEnv } from '$env/dynamic/public'
   import { Button } from '$components/dsfr'
   import { m } from '$lib/i18n/messages'
+  import {
+    fetchLibraryDocumentContent,
+    fetchLibraryDocuments,
+    type LibraryDocument
+  } from '../lib/document-library'
 
   // Same resolution as +page.svelte:65-69 — keeps extract calls on the
   // same origin as POST /tool-arena/compare.
@@ -83,6 +89,11 @@
   let goal = $state(initial.goalText)
   let fileError = $state('')
   let extracting = $state(false)
+  // The arena's pre-loaded corpus (GET /tool-arena/documents). Empty until
+  // loaded, and stays empty if the backend cannot answer — the picker is an
+  // addition to the upload field, never a replacement for it.
+  let libraryDocs = $state<LibraryDocument[]>([])
+  let selectedLibraryId = $state('')
   // Each file pick gets a token; a slow extraction that finishes after the
   // user picked another file must not overwrite the newer one.
   let fileToken = 0
@@ -138,10 +149,42 @@
     }
   }
 
+  onMount(async () => {
+    if (!browser) return
+    libraryDocs = await fetchLibraryDocuments(backendBase())
+  })
+
   function clearFile(error = '') {
     documentContent = ''
     fileName = ''
     fileError = error
+    // The two sources are mutually exclusive: clearing one must not leave
+    // the other's selection showing as if it were still loaded.
+    selectedLibraryId = ''
+  }
+
+  async function handleLibraryChange() {
+    const id = selectedLibraryId
+    const token = ++fileToken
+    fileError = ''
+    if (!id) {
+      clearFile()
+      return
+    }
+    documentContent = ''
+    // Reuse fileName so the existing "loaded" / "extracting" messages and the
+    // blocker logic apply unchanged, whichever source the document came from.
+    fileName = libraryDocs.find((d) => d.id === id)?.title ?? id
+    extracting = true
+    try {
+      const text = await fetchLibraryDocumentContent(backendBase(), id)
+      if (token !== fileToken) return
+      documentContent = text
+    } catch {
+      if (token === fileToken) clearFile(m['toolArena.form.libraryFailed']())
+    } finally {
+      if (token === fileToken) extracting = false
+    }
   }
 
   async function handleFileChange(e: Event) {
@@ -164,6 +207,7 @@
       return
     }
     documentContent = ''
+    selectedLibraryId = ''
     fileName = file.name
     extracting = true
     let text = ''
@@ -269,6 +313,26 @@
         <span class="i-ri-upload-2-line" aria-hidden="true"></span>
         {fileName ? fileName : m['toolArena.form.chooseFile']()}
       </label>
+      {#if libraryDocs.length}
+        <div class="fr-select-group mt-3">
+          <label class="fr-label" for="tool-arena-library">
+            {m['toolArena.form.libraryLabel']()}
+          </label>
+          <select
+            id="tool-arena-library"
+            data-testid="tool-arena-library-select"
+            class="fr-select"
+            bind:value={selectedLibraryId}
+            onchange={handleLibraryChange}
+            {disabled}
+          >
+            <option value="">{m['toolArena.form.libraryPlaceholder']()}</option>
+            {#each libraryDocs as doc (doc.id)}
+              <option value={doc.id} title={doc.description}>{doc.title}</option>
+            {/each}
+          </select>
+        </div>
+      {/if}
       <div aria-live="polite">
         {#if fileError}
           <p class="fr-error-text">{fileError}</p>
