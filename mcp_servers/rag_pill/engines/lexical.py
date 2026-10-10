@@ -41,19 +41,39 @@ B = 0.75
 # several rankers like rather than one ranker's favourite.
 RRF_K = 60
 
-_TOKEN_RE = re.compile(r"\w+", re.UNICODE)
+# A run of word characters, optionally joined by hyphens: "palier",
+# "ci-dessous", "PAL-3300-B", "E-330".
+_RUN_RE = re.compile(r"\w+(?:-\w+)*", re.UNICODE)
 
 
 def tokenize(text: str) -> list[str]:
-    """Lowercase, strip accents, split on word characters.
+    """Lowercase, strip accents, and keep identifiers whole as well as split.
 
     Accent folding is a deliberate recall trade for French: a corpus written
     with accents must still answer a query typed without them. It costs the
     rare pair that differs only by an accent.
+
+    Hyphenated runs containing a digit are treated as identifiers — part
+    numbers, fault codes, serial numbers. Each emits BOTH a glued form and
+    its parts: "E-330" yields "e330" and "330". The glued form is what makes
+    an identifier searchable at all; splitting alone would reduce "E-330" to
+    the ubiquitous letter "e" plus a bare number, and the code would rank no
+    better than noise — measured on a real manual before this was fixed.
+    Glueing also absorbs the user typing "E330" without the hyphen.
+
+    Single letters are dropped (they carry no signal and dilute scoring);
+    single digits are kept, since a lone figure can be the answer.
     """
     folded = unicodedata.normalize("NFKD", text.lower())
     stripped = "".join(c for c in folded if not unicodedata.combining(c))
-    return _TOKEN_RE.findall(stripped)
+
+    tokens: list[str] = []
+    for run in _RUN_RE.findall(stripped):
+        parts = [p for p in run.split("-") if p]
+        if len(parts) > 1 and any(character.isdigit() for character in run):
+            tokens.append("".join(parts))
+        tokens.extend(p for p in parts if len(p) > 1 or p.isdigit())
+    return tokens
 
 
 class BM25Index:

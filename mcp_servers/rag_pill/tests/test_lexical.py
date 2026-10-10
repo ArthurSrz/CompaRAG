@@ -21,9 +21,45 @@ def test_tokenize_folds_case_and_accents() -> None:
     assert tokenize("Référence ÉLECTRIQUE") == ["reference", "electrique"]
 
 
-def test_tokenize_splits_identifiers_into_their_parts() -> None:
-    """A part number has to survive as searchable pieces, not one opaque blob."""
-    assert tokenize("PAL-3300-B") == ["pal", "3300", "b"]
+def test_identifiers_are_kept_whole_as_well_as_split() -> None:
+    """Regression. Splitting alone reduced "E-330" to the ubiquitous letter
+    "e" plus a bare number, and the fault code ranked no better than noise —
+    measured on a real maintenance manual, where the query "Que signifie le
+    code E-330 ?" returned the spare-parts table. The glued form is what
+    makes an identifier searchable at all."""
+    assert tokenize("E-330") == ["e330", "330"]
+    assert tokenize("PAL-3300-B") == ["pal3300b", "pal", "3300"]
+
+
+def test_identifier_matches_with_or_without_the_hyphen() -> None:
+    """Glueing also absorbs the user who types the reference without it."""
+    assert "e330" in tokenize("E-330")
+    assert "e330" in tokenize("E330")
+
+
+def test_near_identical_references_stay_distinguishable() -> None:
+    """The case dense retrieval cannot handle: two part numbers differing by
+    a single trailing letter. BM25 must separate them."""
+    index = BM25Index(
+        [
+            "Palier avant turbine T3 | PAL-3300-A | 2",
+            "Palier arriere turbine T3 | PAL-3300-B | 1",
+        ]
+    )
+    ranked = index.rank("PAL-3300-B", top_k=2)
+    assert ranked[0][0] == 1, "the wrong reference ranked first"
+    assert ranked[0][1] > ranked[1][1], "the two references scored identically"
+
+
+def test_single_letters_are_dropped_but_lone_digits_kept() -> None:
+    """A stray letter carries no signal and dilutes scoring; a lone figure
+    can be the answer."""
+    assert tokenize("a b 4 mm") == ["4", "mm"]
+
+
+def test_plain_hyphenated_words_are_only_split() -> None:
+    """No digit means it is prose, not a reference."""
+    assert tokenize("ci-dessous") == ["ci", "dessous"]
 
 
 def test_rare_terms_outweigh_common_ones() -> None:
