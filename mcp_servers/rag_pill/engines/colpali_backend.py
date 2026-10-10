@@ -167,6 +167,12 @@ class HTTPColPaliBackend:
     request body and returning the decoded JSON response. The default posts
     to `endpoint_url` with a bearer token.
 
+    Default model is `vidore/colpali-v1.3-hf` rather than the local backend's
+    colSmol: it is the only ColPali carrying Hugging Face's
+    `endpoints_compatible` tag *and* standalone weights. colSmol-256M ships
+    as a LoRA adapter (39 MB) that needs its base model loaded alongside,
+    which a stock endpoint will not do.
+
     UNVERIFIED: the exact response shape of a hosted ColPali endpoint has not
     been confirmed against a live service (see COLPALI.md). `_as_multivector`
     therefore accepts the three plausible encodings and fails loudly rather
@@ -177,7 +183,7 @@ class HTTPColPaliBackend:
         self,
         endpoint_url: str,
         token: str,
-        model_id: str = "vidore/colSmol-256M",
+        model_id: str = "vidore/colpali-v1.3-hf",
         timeout: int = 60,
         batch_size: int = 4,
         transport=None,

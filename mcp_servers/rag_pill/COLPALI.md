@@ -88,10 +88,11 @@ python -m mcp_servers.rag_pill.server
 
 Deux points à régler avant que ça marche :
 
-- **ColPali n'est pas une tâche standard** de l'API d'inférence gratuite de
-  Hugging Face : il renvoie plusieurs vecteurs par page, ce qu'aucun
-  pipeline classique n'expose. Il faut très probablement un *Inference
-  Endpoint* dédié (payant, à provisionner) avec un petit handler maison.
+- **Il faut un *Inference Endpoint* dédié** (payant, à provisionner), pas
+  l'API serverless : la tâche `visual-document-retrieval` renvoie plusieurs
+  vecteurs par page, ce qu'aucun pipeline serverless n'expose. En revanche
+  un handler maison n'est pas nécessaire — `vidore/colpali-v1.3-hf` et
+  `vidore/colqwen2-v1.0` portent le tag `endpoints_compatible`.
 - **La forme exacte de la réponse n'est pas confirmée.** `_as_multivector`
   accepte les trois encodages plausibles et **échoue bruyamment** sinon —
   en particulier si l'endpoint renvoie un seul vecteur moyenné, auquel cas
@@ -117,10 +118,11 @@ COLPALI_ENABLED=1 python -m mcp_servers.rag_pill.server
 
 ## Choix du modèle
 
-| Modèle | Taille | Pour qui |
-|---|---|---|
-| `vidore/colSmol-256M` (défaut) | 256M | CPU, Railway sans GPU |
-| `vidore/colpali-v1.3` | ~3B | GPU disponible, qualité de référence |
+| Modèle | Poids | Endpoint HF | Pour qui |
+|---|---|---|---|
+| `vidore/colpali-v1.3-hf` | 5,8 Go | ✅ `endpoints_compatible` | **API hébergée.** Architecture `ColPaliForRetrieval` native à `transformers` — `colpali-engine` devient inutile pour cette variante. |
+| `vidore/colqwen2-v1.0` | — | ✅ `endpoints_compatible` | API hébergée, le plus téléchargé de la famille (2,3 M). |
+| `vidore/colSmol-256M` | 39 Mo + modèle de base | ❌ | **Local uniquement.** C'est un adaptateur LoRA, pas un modèle autonome : il lui faut `vidore/ColSmolVLM-Instruct-256M-base` à côté. Le plus léger pour tourner sur CPU. |
 
 Bascule via `COLPALI_MODEL_ID` + l'argument `architecture` du backend
 (`idefics3` pour colSmol, `paligemma` pour colpali-v1.x, `qwen2` pour
