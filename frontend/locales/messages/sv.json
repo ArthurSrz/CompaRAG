@@ -1590,5 +1590,12 @@
   },
   "toolArena.form.libraryLabel": "Or pick a ready-made document",
   "toolArena.form.libraryPlaceholder": "Choose from the library…",
-  "toolArena.form.libraryFailed": "This document could not be loaded."
+  "toolArena.form.libraryFailed": "This document could not be loaded.",
+  "toolArena.form.haystackLabel": "What to compare on",
+  "toolArena.form.haystackSandbox": "My own document",
+  "toolArena.form.haystackBenchmark": "Reference questions (scored automatically)",
+  "toolArena.form.benchmarkQuestionLabel": "Reference question",
+  "toolArena.form.benchmarkQuestionHint": "The right answer is known: both tools are scored automatically, on top of your vote.",
+  "toolArena.form.benchmarkQuestionPlaceholder": "Choose a question…",
+  "toolArena.form.needBenchmarkQuestion": "Choose a reference question"
 }

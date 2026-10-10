@@ -9,6 +9,7 @@
  */
 import { describe, expect, it } from 'vitest'
 import {
+  BenchmarkRequestError,
   buildToolArenaRequest,
   shouldShowExpectedAnswerBanner
 } from './build-request'
@@ -84,5 +85,48 @@ describe('shouldShowExpectedAnswerBanner', () => {
 
   it('false during revealed phase (slice 2.4)', () => {
     expect(shouldShowExpectedAnswerBanner('revealed', 'Paris')).toBe(false)
+  })
+})
+
+describe('buildToolArenaRequest — benchmark mode', () => {
+  const input = {
+    task: 'ma question',
+    goal: 'mon objectif',
+    documentContent: 'mon document',
+    taskType: 'qa' as const,
+    expectedAnswer: 'ma reponse',
+    haystack: 'benchmark' as const,
+    evaluationQueryId: 'ref_palier_arriere_vaux'
+  }
+
+  it('sends only the query id', () => {
+    expect(buildToolArenaRequest(input)).toEqual({
+      task: '',
+      goal: '',
+      document_content: '',
+      task_type: 'qa',
+      haystack: 'benchmark',
+      evaluation_query_id: 'ref_palier_arriere_vaux'
+    })
+  })
+
+  it('drops the user document, question and expected answer', () => {
+    const payload = buildToolArenaRequest(input)
+    expect(payload.document_content).toBe('')
+    expect(payload.task).toBe('')
+    // The server already holds the ground truth; the user's guess would only
+    // pollute it.
+    expect(payload.expected_answer).toBeUndefined()
+  })
+
+  it('refuses benchmark mode without a query id', () => {
+    expect(() =>
+      buildToolArenaRequest({ ...input, evaluationQueryId: undefined })
+    ).toThrow(BenchmarkRequestError)
+  })
+
+  it('still defaults to sandbox when no mode is given', () => {
+    const { haystack, evaluationQueryId, ...sandboxInput } = input
+    expect(buildToolArenaRequest(sandboxInput).haystack).toBe('sandbox')
   })
 })

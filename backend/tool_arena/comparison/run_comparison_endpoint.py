@@ -16,8 +16,6 @@ Deux modes de Question :
 from __future__ import annotations
 
 import logging
-import os
-from pathlib import Path
 
 from fastapi import APIRouter, Request
 from fastapi.responses import JSONResponse
@@ -34,31 +32,19 @@ from backend.tool_arena.comparison.contracts import CompareRequest, CompareRespo
 from backend.tool_arena.judge_verdict.score_against_ground_truth import GroundTruthJudge
 from backend.tool_arena.models import ToolCallRecord, save_tool_call_to_db
 from backend.tool_arena.question.list_questions_with_known_answers import (
-    EvaluationCatalog,
+    evaluation_catalog,
 )
 
 logger = logging.getLogger("languia")
 
 run_comparison_router = APIRouter()
 
-# EvaluationCatalog — backend-side metadata loader for benchmark queries.
-# Path resolution: prefer EVAL_QUERIES_PATH env var (Dockerfile copies the
-# YAML in), fall back to the in-repo corpus path for local dev. Empty
-# catalog when file absent — the validator rejects benchmark requests in
-# that case (returns 422, never 500).
-_EVAL_QUERIES_PATH = Path(
-    os.environ.get(
-        "EVAL_QUERIES_PATH",
-        str(
-            Path(__file__).resolve().parents[3]
-            / "mcp_servers"
-            / "corpus"
-            / "evaluation"
-            / "queries.yaml"
-        ),
-    )
-)
-_eval_catalog = EvaluationCatalog(_EVAL_QUERIES_PATH)
+# The evaluation catalogue is a singleton owned by the question package —
+# see backend/tool_arena/question/list_questions_with_known_answers.py.
+# GET /questions reads the same instance, so the two endpoints cannot
+# disagree about which queries exist.
+_eval_catalog = evaluation_catalog
+
 _retrieval_judge = GroundTruthJudge()
 
 

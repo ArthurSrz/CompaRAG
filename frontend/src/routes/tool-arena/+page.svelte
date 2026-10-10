@@ -25,7 +25,10 @@
     type ArmState
   } from './lib/interview-client'
   import { streamCompare, type SSEEvent } from './lib/sse-client'
-  import { shouldShowExpectedAnswerBanner } from './lib/build-request'
+  import {
+    buildToolArenaRequest,
+    shouldShowExpectedAnswerBanner
+  } from './lib/build-request'
   import { Button } from '$components/dsfr'
   import Header from '$components/header/Header.svelte'
   import SeoHead from '$components/SEOHead.svelte'
@@ -132,7 +135,9 @@
     goal: string,
     documentContent: string = '',
     taskType: 'summary' | 'qa' | 'knowledge_capture' | null = null,
-    expectedAnswerInput: string = ''
+    expectedAnswerInput: string = '',
+    haystack: 'sandbox' | 'benchmark' = 'sandbox',
+    evaluationQueryId: string = ''
   ) {
     if (taskType === 'knowledge_capture') {
       await startInterviewFlow(task, goal)
@@ -143,7 +148,23 @@
     progressEventA = null
     progressEventB = null
     const trimmedExpected = expectedAnswerInput.trim()
-    expectedAnswer = trimmedExpected.length > 0 ? trimmedExpected : null
+    // In benchmark mode the server holds the ground truth; showing the user's
+    // own guess alongside it would be noise.
+    expectedAnswer =
+      haystack === 'benchmark' || trimmedExpected.length === 0 ? null : trimmedExpected
+
+    // One payload for both transports. They used to build the body inline,
+    // twice, which is how `haystack` stayed hardcoded to sandbox in two
+    // places at once.
+    const payload = buildToolArenaRequest({
+      task,
+      goal,
+      documentContent,
+      taskType: (taskType ?? 'summary') as 'summary' | 'qa',
+      expectedAnswer: expectedAnswerInput,
+      haystack,
+      evaluationQueryId: evaluationQueryId || undefined
+    })
 
     if (streamingEnabled) {
       try {
@@ -153,13 +174,7 @@
             ? 'http://localhost:8001'
             : publicEnv.PUBLIC_API_URL || window.location.origin || 'http://localhost:8001'
         for await (const ev of streamCompare(
-          {
-            task,
-            goal,
-            document_content: documentContent,
-            haystack: 'sandbox',
-            task_type: taskType ?? undefined
-          },
+          { ...payload, task_type: taskType ?? undefined },
           { url: `${base}/tool-arena/compare` }
         )) {
           if (ev.type === 'session') {
@@ -208,7 +223,7 @@
       const response = await fetch(url, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ task, goal, document_content: documentContent, task_type: taskType })
+        body: JSON.stringify({ ...payload, task_type: taskType })
       })
 
       if (response.status === 503) {

@@ -33,12 +33,14 @@ from backend.tool_arena.comparison.start_comparison_endpoint import (
 from backend.tool_arena.document.serve_document_endpoint import documents_router
 from backend.tool_arena.interview.run_interview_endpoints import interview_router
 from backend.tool_arena.leaderboard.show_leaderboard_endpoint import leaderboard_router
+from backend.tool_arena.question.serve_questions_endpoint import questions_router
 from backend.tool_arena.rag_tool.check_tools_are_ready_endpoint import dry_run_router
 from backend.tool_arena.vote.cast_vote_endpoint import vote_router
 
 # Public-facing arena routes.
 router = APIRouter(prefix="/tool-arena", tags=["tool-arena"])
 router.include_router(documents_router)
+router.include_router(questions_router)
 router.include_router(leaderboard_router)
 router.include_router(dry_run_router)
 router.include_router(start_comparison_router)

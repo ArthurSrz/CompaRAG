@@ -21,6 +21,7 @@ by shipping the same YAML to both surfaces).
 
 from __future__ import annotations
 
+import os
 from dataclasses import dataclass, field
 from functools import cached_property
 from pathlib import Path
@@ -77,3 +78,27 @@ class EvaluationCatalog:
 
     def list_ids(self) -> list[str]:
         return list(self._by_id.keys())
+
+
+# Path resolution: prefer EVAL_QUERIES_PATH (the Dockerfile copies the YAML
+# in), fall back to the in-repo corpus path for local dev. The file may be
+# absent — lookups then return empty, the compare validator rejects
+# benchmark requests with 422, and GET /questions serves an empty list.
+_EVAL_QUERIES_PATH = Path(
+    os.environ.get(
+        "EVAL_QUERIES_PATH",
+        str(
+            Path(__file__).resolve().parents[3]
+            / "mcp_servers"
+            / "corpus"
+            / "evaluation"
+            / "queries.yaml"
+        ),
+    )
+)
+
+# Module-level singleton. Both the compare endpoint (which needs the canned
+# task/goal and the expected spans) and the questions endpoint (which needs
+# only the metadata) read this one instance, so they cannot drift onto
+# different files.
+evaluation_catalog = EvaluationCatalog(_EVAL_QUERIES_PATH)

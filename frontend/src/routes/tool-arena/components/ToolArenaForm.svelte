@@ -5,6 +5,10 @@
   import { Button } from '$components/dsfr'
   import { m } from '$lib/i18n/messages'
   import {
+    fetchBenchmarkQuestions,
+    type BenchmarkQuestion
+  } from '../lib/benchmark-questions'
+  import {
     fetchLibraryDocumentContent,
     fetchLibraryDocuments,
     type LibraryDocument
@@ -40,7 +44,9 @@
       goal: string,
       documentContent: string,
       taskType: TaskType,
-      expectedAnswer: string
+      expectedAnswer: string,
+      haystack: 'sandbox' | 'benchmark',
+      evaluationQueryId: string
     ) => void
     disabled?: boolean
     // Bindable : la page parente adapte titre/étapes au type de tâche choisi.
@@ -94,6 +100,13 @@
   // addition to the upload field, never a replacement for it.
   let libraryDocs = $state<LibraryDocument[]>([])
   let selectedLibraryId = $state('')
+  // Benchmark mode: questions whose answer the backend already knows, so it
+  // scores both tools automatically alongside the human vote. Empty until
+  // loaded, and empty for good if no corpus is mounted — the option then
+  // never appears, rather than offering a mode the server would reject.
+  let benchmarkQuestions = $state<BenchmarkQuestion[]>([])
+  let selectedQuestionId = $state('')
+  let haystack = $state<'sandbox' | 'benchmark'>('sandbox')
   // Each file pick gets a token; a slow extraction that finishes after the
   // user picked another file must not overwrite the newer one.
   let fileToken = 0
@@ -107,7 +120,17 @@
   // enforces non-empty doc for haystack='sandbox'). Benchmark mode (no doc,
   // canned eval_query) is a separate future toggle. knowledge_capture has no
   // document at all — the expert being interviewed IS the source.
-  const requiresDocument = $derived(selectedTaskType !== 'knowledge_capture')
+  const isBenchmark = $derived(haystack === 'benchmark')
+  // Benchmark mode brings its own corpus and its own question, so the
+  // document field, the task box and the goal box all go away with it.
+  const requiresDocument = $derived(
+    selectedTaskType !== 'knowledge_capture' && !isBenchmark
+  )
+  // The mode switch only makes sense where a catalogue exists and the task
+  // actually reads a document — an interview has no haystack at all.
+  const canChooseHaystack = $derived(
+    benchmarkQuestions.length > 0 && selectedTaskType !== 'knowledge_capture'
+  )
   const isCapture = $derived(selectedTaskType === 'knowledge_capture')
   const isQa = $derived(selectedTaskType === 'qa')
 
@@ -115,6 +138,9 @@
   // always says why. null = ready to submit.
   const blocker = $derived.by(() => {
     if (disabled) return null
+    if (isBenchmark) {
+      return selectedQuestionId ? null : m['toolArena.form.needBenchmarkQuestion']()
+    }
     if (requiresDocument && extracting) return m['toolArena.form.waitExtraction']()
     if (requiresDocument && !documentContent.trim()) return m['toolArena.form.needDocument']()
     if (!task.trim())
@@ -136,7 +162,9 @@
         goal.trim(),
         documentContent,
         selectedTaskType,
-        expectedAnswer
+        expectedAnswer,
+        haystack,
+        selectedQuestionId
       )
     }
   }
@@ -151,7 +179,11 @@
 
   onMount(async () => {
     if (!browser) return
-    libraryDocs = await fetchLibraryDocuments(backendBase())
+    const base = backendBase()
+    ;[libraryDocs, benchmarkQuestions] = await Promise.all([
+      fetchLibraryDocuments(base),
+      fetchBenchmarkQuestions(base)
+    ])
   })
 
   function clearFile(error = '') {
@@ -289,6 +321,47 @@
     </select>
   </div>
 
+  {#if canChooseHaystack}
+    <div class="fr-select-group">
+      <label class="fr-label" for="tool-arena-haystack">
+        {m['toolArena.form.haystackLabel']()}
+      </label>
+      <select
+        id="tool-arena-haystack"
+        data-testid="tool-arena-haystack-select"
+        class="fr-select"
+        bind:value={haystack}
+        {disabled}
+      >
+        <option value="sandbox">{m['toolArena.form.haystackSandbox']()}</option>
+        <option value="benchmark">{m['toolArena.form.haystackBenchmark']()}</option>
+      </select>
+    </div>
+  {/if}
+
+  {#if isBenchmark}
+    <div class="fr-select-group">
+      <label class="fr-label" for="tool-arena-benchmark-question">
+        {m['toolArena.form.benchmarkQuestionLabel']()}
+        <span class="fr-hint-text">{m['toolArena.form.benchmarkQuestionHint']()}</span>
+      </label>
+      <select
+        id="tool-arena-benchmark-question"
+        data-testid="tool-arena-benchmark-select"
+        class="fr-select"
+        bind:value={selectedQuestionId}
+        {disabled}
+      >
+        <option value="">{m['toolArena.form.benchmarkQuestionPlaceholder']()}</option>
+        {#each benchmarkQuestions as question (question.id)}
+          <option value={question.id} title={question.goal_text}>
+            {question.query_text}
+          </option>
+        {/each}
+      </select>
+    </div>
+  {/if}
+
   {#if requiresDocument}
     <div class="fr-upload-group" class:fr-upload-group--error={!!fileError}>
       <label class="fr-label" for="tool-arena-document">
@@ -345,6 +418,7 @@
     </div>
   {/if}
 
+  {#if !isBenchmark}
   <div class="mt-2">
     <p class="font-bold mb-3 fr-text--sm">{m['toolArena.form.suggestionsTitle']()}</p>
     <div class="gap-3 md:grid-cols-4 grid grid-cols-2">
@@ -380,8 +454,9 @@
       {disabled}
     ></textarea>
   </div>
+  {/if}
 
-  {#if isQa}
+  {#if isQa && !isBenchmark}
     <div class="fr-input-group">
       <label class="fr-label" for="tool-arena-expected-answer">
         {m['toolArena.form.expectedAnswer']()}
@@ -400,6 +475,7 @@
   {/if}
 
   <div class="gap-3 md:grid-flow-row-dense md:grid-cols-6 grid">
+    {#if !isBenchmark}
     <div class="fr-input-group md:col-span-4">
       <label class="fr-label sr-only" for="tool-arena-goal">{m['toolArena.form.goalLabel']()}</label>
       <input
@@ -412,6 +488,7 @@
         {disabled}
       />
     </div>
+    {/if}
 
     <div class="md:col-span-2 flex justify-end items-start">
       <Button
