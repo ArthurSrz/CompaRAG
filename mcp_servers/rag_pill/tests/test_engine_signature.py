@@ -10,8 +10,10 @@ import inspect
 import pytest
 
 from mcp_servers.rag_pill.engines import (
+    BM25Engine,
     ChromaBaselineEngine,
     HaystackEngine,
+    HybridEngine,
     LangChainEngine,
     LlamaIndexEngine,
     TxtaiEngine,
@@ -36,8 +38,10 @@ def test_rag_engine_protocol_takes_corpus_not_document_content() -> None:
 @pytest.mark.parametrize(
     "engine_cls",
     [
+        BM25Engine,
         ChromaBaselineEngine,
         HaystackEngine,
+        HybridEngine,
         LangChainEngine,
         LlamaIndexEngine,
         TxtaiEngine,
@@ -57,8 +61,10 @@ def test_concrete_engine_accepts_corpus_param(engine_cls) -> None:
 @pytest.mark.parametrize(
     "engine_cls",
     [
+        BM25Engine,
         ChromaBaselineEngine,
         HaystackEngine,
+        HybridEngine,
         LangChainEngine,
         LlamaIndexEngine,
         TxtaiEngine,

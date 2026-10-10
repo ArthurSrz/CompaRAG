@@ -20,8 +20,10 @@ from starlette.responses import JSONResponse, PlainTextResponse, StreamingRespon
 
 from mcp_servers.rag_pill.cache import IndexCache
 from mcp_servers.rag_pill.engines import (
+    BM25Engine,
     ChromaBaselineEngine,
     HaystackEngine,
+    HybridEngine,
     LangChainEngine,
     LlamaIndexEngine,
     TxtaiEngine,
@@ -56,6 +58,8 @@ async def lifespan(app):
         HaystackEngine(cache, llm=llm, embedding_config=embed_cfg),
         TxtaiEngine(cache, llm=llm, embedding_config=embed_cfg),
         ChromaBaselineEngine(cache, llm=llm, embedding_config=embed_cfg),
+        BM25Engine(cache, llm=llm, embedding_config=embed_cfg),
+        HybridEngine(cache, llm=llm, embedding_config=embed_cfg),
     ]
     # Loud-WARN any engine whose framework failed to import — silent capability
     # loss skews arena fairness, so make it visible at startup.

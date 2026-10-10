@@ -51,6 +51,20 @@ ENGINES: tuple[EngineMetadata, ...] = (
         sanitize_terms=("txtai", "TXTAI", "NeuML"),
     ),
     EngineMetadata(
+        id="bm25",
+        name="BM25",
+        display_label="BM25 Okapi — recherche lexicale, sans embeddings",
+        supports=frozenset({"summary", "qa"}),
+        sanitize_terms=("BM25", "bm25", "Okapi", "okapi"),
+    ),
+    EngineMetadata(
+        id="hybrid",
+        name="Hybride",
+        display_label="Hybride BM25 + dense, fusion par rang réciproque (RRF)",
+        supports=frozenset({"summary", "qa"}),
+        sanitize_terms=("BM25", "bm25", "Okapi", "RRF", "rrf", "hybride", "Hybrid"),
+    ),
+    EngineMetadata(
         id="chroma_baseline",
         name="Chroma (baseline)",
         display_label="Chroma + naive retriever",
