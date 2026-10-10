@@ -20,9 +20,11 @@ from starlette.responses import JSONResponse, PlainTextResponse, StreamingRespon
 
 from mcp_servers.rag_pill.cache import IndexCache
 from mcp_servers.rag_pill.engines import (
+    BM25Engine,
     ChromaBaselineEngine,
     ColPaliEngine,
     HaystackEngine,
+    HybridEngine,
     LangChainEngine,
     LlamaIndexEngine,
     TxtaiEngine,
@@ -57,6 +59,8 @@ async def lifespan(app):
         HaystackEngine(cache, llm=llm, embedding_config=embed_cfg),
         TxtaiEngine(cache, llm=llm, embedding_config=embed_cfg),
         ChromaBaselineEngine(cache, llm=llm, embedding_config=embed_cfg),
+        BM25Engine(cache, llm=llm, embedding_config=embed_cfg),
+        HybridEngine(cache, llm=llm, embedding_config=embed_cfg),
     ]
     # ColPali carries torch + a vision model, so it is opt-in: a deploy that
     # has not installed requirements-colpali.txt keeps the slim image and
