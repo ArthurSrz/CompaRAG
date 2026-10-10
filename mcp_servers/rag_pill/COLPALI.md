@@ -59,13 +59,15 @@ texte les retrouvent par `str.find()` (`engines/base.locate_span`).
 
 ## Les deux prérequis avant mise en service
 
-### 1. Un corpus PDF
+### 1. Un corpus PDF — ✅ fait, à déplacer
 
-`mcp_servers/corpus/` est **vide aujourd'hui**, et `FixedCorpus` ne lit que
-`*.md`. ColPali n'a donc rien à récupérer. Il faut y déposer des PDF qui
-justifient le paradigme — des documents où l'information vit dans des
-tableaux, des schémas, une mise en page — sinon ColPali n'a aucun avantage
-à démontrer et la comparaison ne dit rien.
+Quatre documents générés vivent dans `test/pdfs/` (voir `test/README.md`) :
+un tableau + graphique, un schéma annoté, un formulaire deux colonnes, et
+un scan sans aucune couche texte. Ils servent les tests.
+
+Reste à décider ce qui devient le corpus **de l'arène** : `mcp_servers/corpus/`
+est toujours vide et `FixedCorpus` n'y lit que `*.md`, donc le mode corpus
+est inerte pour tout le monde aujourd'hui, pas seulement pour ColPali.
 
 `VisualCorpus` sert aussi les moteurs texte (`iter_documents()` rend des
 `CorpusDocument` ordinaires), donc un seul corpus PDF suffit pour les six.
@@ -97,6 +99,25 @@ COLPALI_ENABLED=1 python -m mcp_servers.rag_pill.server
 Bascule via `COLPALI_MODEL_ID` + l'argument `architecture` du backend
 (`idefics3` pour colSmol, `paligemma` pour colpali-v1.x, `qwen2` pour
 ColQwen2).
+
+## Limite connue : répondre depuis un scan
+
+ColPali sait **trouver** une page scannée — c'est tout l'intérêt. Mais ce
+moteur passe ensuite le *texte* de la page au LLM, et un scan n'en a pas :
+le LLM reçoit une chaîne vide. La récupération est juste, la réponse est
+vide. C'est épinglé par
+`tests/test_colpali_on_test_pdfs.py::test_retrieving_a_scanned_page_hands_the_llm_nothing`.
+
+Deux sorties possibles, à trancher :
+
+- **Envoyer l'image au LLM.** `mistral-medium-3.1` est multimodal. La parité
+  tient (même modèle pour tous), seule la modalité du contexte change — et
+  c'est sans doute le vrai pipeline ColPali. À vérifier contre OpenRouter.
+- **OCR de repli** sur les pages retenues sans couche texte. Plus simple,
+  mais on réintroduit l'extraction que ColPali était censé éviter.
+
+Tant que ce n'est pas fait, l'avantage de ColPali se joue sur les tableaux,
+les schémas et les mises en page — pas sur les scans purs.
 
 ## Limite connue : les documents uploadés
 
