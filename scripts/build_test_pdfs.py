@@ -1,7 +1,11 @@
 """
 BUT : fabriquer un petit corpus PDF où l'information vit dans la FORME —
-tableaux, graphiques, schémas, page scannée — pour que les moteurs visuels
-aient quelque chose à montrer que les moteurs texte ne peuvent pas voir.
+tableaux, graphiques, schémas, page scannée.
+
+Écrit à l'origine pour un moteur visuel (ColPali, projet annulé le
+2026-10-11). Conservé pour deux usages indépendants : le manuel de
+maintenance sert aux essais d'interface sur BM25, et le rapport scanné
+documente ce que l'extraction de texte perd — il rend zéro caractère.
 
 Build the visual test corpus into test/pdfs/.
 

@@ -12,7 +12,6 @@ import pytest
 from mcp_servers.rag_pill.engines import (
     BM25Engine,
     ChromaBaselineEngine,
-    ColPaliEngine,
     HaystackEngine,
     HybridEngine,
     LangChainEngine,
@@ -41,8 +40,7 @@ def test_rag_engine_protocol_takes_corpus_not_document_content() -> None:
     [
         BM25Engine,
         ChromaBaselineEngine,
-        ColPaliEngine,
-        HaystackEngine,
+            HaystackEngine,
         HybridEngine,
         LangChainEngine,
         LlamaIndexEngine,
@@ -65,8 +63,7 @@ def test_concrete_engine_accepts_corpus_param(engine_cls) -> None:
     [
         BM25Engine,
         ChromaBaselineEngine,
-        ColPaliEngine,
-        HaystackEngine,
+            HaystackEngine,
         HybridEngine,
         LangChainEngine,
         LlamaIndexEngine,

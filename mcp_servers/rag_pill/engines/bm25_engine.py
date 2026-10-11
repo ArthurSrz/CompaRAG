@@ -4,7 +4,7 @@ appel d'API à l'indexation, le classement par mots exacts.
 
 BM25 engine adapter — the arena's lexical floor.
 
-Every other engine but ColPali retrieves by embedding similarity. Without a
+Every other engine retrieves by embedding similarity. Without a
 lexical contestant the arena cannot answer the question underneath all the
 others: *do the embeddings earn their cost?* BM25 is the control. It indexes
 in milliseconds, costs nothing, calls no API, and on the queries it suits —

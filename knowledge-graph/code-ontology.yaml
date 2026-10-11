@@ -135,12 +135,10 @@ entities:
     type: DomainEntity
     name: RAGEngine
     goal: |
-      Un moteur RAG concret encapsulé par un RAGTool. Huit moteurs existent
+      Un moteur RAG concret encapsulé par un RAGTool. Sept moteurs existent
       dans rag_pill. Cinq récupèrent par similarité d'embeddings (LangChain,
       LlamaIndex, Haystack, Txtai, Chroma) ; BM25 récupère par mots exacts,
-      sans aucun embedding ; Hybride fusionne les deux par rang réciproque ;
-      ColPali récupère sur l'image des pages et reste expérimental, donc hors
-      du registre de l'arène (EngineMetadata.experimental).
+      sans aucun embedding ; Hybride fusionne les deux par rang réciproque.
     lives_in: mcp_servers/rag_pill/engines/
     metadata:
       shared_skeleton_target: mcp_servers/rag_pill/engines/_shared_engine_skeleton.py

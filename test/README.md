@@ -1,8 +1,14 @@
 # Corpus PDF de test
 
-Quatre documents générés, où l'information vit dans la **forme** et pas
-seulement dans les mots. C'est le corpus qui permet de faire concourir un
-moteur visuel (ColPali) contre les moteurs texte.
+Cinq documents générés, où l'information vit dans la **forme** et pas
+seulement dans les mots.
+
+Ils ont été construits pour un moteur visuel (ColPali), projet annulé le
+2026-10-11 — voir `.planning/STATE.md`. Ils restent utiles pour deux raisons
+indépendantes : `manuel_station_pompage.pdf` sert aux essais d'interface sur
+BM25 (fiche de questions plus bas), et `rapport_scanne.pdf` documente ce que
+l'extraction de texte perd — zéro caractère sur un document parfaitement
+lisible à l'œil.
 
 Régénérer :
 
@@ -21,9 +27,6 @@ reconstruire à l'identique.
 | `formulaire_adhesion.pdf` | 1 | 409 car. | Un formulaire sur deux colonnes. L'extraction mélange l'ordre de lecture : un champ et sa valeur se séparent. |
 | `rapport_scanne.pdf` | 2 | **0 car.** | Un scan. Chaque page est une photographie de texte : l'extraction ne rend **rien**. |
 
-La dernière ligne est le cas témoin. Elle démontre l'écart que ColPali
-existe pour combler, sans avoir besoin du modèle : un moteur texte qui
-indexe ce document obtient zéro, par construction.
-
-Les tests qui s'appuient sur ce corpus sont dans
-`mcp_servers/rag_pill/tests/test_colpali_on_test_pdfs.py`.
+La dernière ligne est le cas témoin, et elle reste vraie sans ColPali : un
+moteur texte qui indexe ce document obtient zéro, par construction. C'est la
+limite du paradigme en vigueur dans l'arène, mesurée plutôt qu'affirmée.

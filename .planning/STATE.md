@@ -4,7 +4,7 @@ milestone: v1.2
 milestone_name: Document Context Selection
 status: Active
 stopped_at: Completed 14-engine-hardening 14-01-PLAN.md (Task 6 pending — Railway build verify)
-last_updated: "2026-10-11T09:00:00.000Z"
+last_updated: "2026-10-11T09:30:00.000Z"
 progress:
   total_phases: 5
   completed_phases: 1
@@ -233,25 +233,31 @@ d'attente**, alors que le smoke test de l'arène exige une réponse en moins de
 s'il perdait ses duels, on ne saurait pas si c'est le paradigme visuel ou le
 modèle, soit 40 $/mois pour une mesure ambiguë.
 
-**Ce qui reste dans le dépôt, dormant :** environ 1 570 lignes —
-`engines/colpali_engine.py`, `engines/colpali_backend.py`,
-`corpus/visual.py`, leurs tests, `requirements-colpali.txt` et `COLPALI.md`.
-Le coût de les laisser est nul : le moteur n'entre pas dans le registre
-(`experimental=True`, `mcp_servers.json` inchangé), il n'est instancié que si
-`COLPALI_ENABLED=1`, et ses dépendances (torch, ~2,5 Go) ne sont pas dans
-l'agrégateur `requirements.txt`, donc l'image reste légère.
+**Code supprimé le 2026-10-11**, sur décision utilisateur, dans la foulée de
+l'annulation. Retirés : `engines/colpali_engine.py`,
+`engines/colpali_backend.py`, `corpus/visual.py`, `requirements-colpali.txt`,
+`COLPALI.md` et cinq fichiers de tests — environ 1 570 lignes, 40 tests. La
+suite `rag_pill` passe de 202 à 162 tests.
 
-**Reste à décider : supprimer ce code ou le laisser en veille.** Argument pour
-le garder : il est complet et testé, et redevient utile si les tarifs baissent
-ou si un GPU devient disponible. Argument pour le supprimer : du code que
-personne n'exécute pourrit en silence — c'est déjà arrivé une fois ici, un
-test listant quatre PDF alors qu'il y en avait cinq, invisible en CI parce que
-le module entier y est ignoré faute de PyMuPDF.
+Le mécanisme `EngineMetadata.experimental` est parti avec, ainsi que sa garde
+dans `generate_mcp_registry.py` : plus aucun moteur ne s'en servait, et il
+n'était couvert par aucun test. À réintroduire si un futur moteur a besoin
+d'être présent sans concourir.
 
-**À garder dans tous les cas**, indépendamment de ColPali :
-`test/pdfs/manuel_station_pompage.pdf`, qui sert aux essais d'interface sur
-BM25, et le reste de `test/pdfs/`, qui documente ce que l'extraction de texte
-perd sur un scan.
+Motif de la suppression plutôt que de la mise en veille : du code que personne
+n'exécute pourrit en silence — c'était déjà arrivé ici, un test listant quatre
+PDF alors qu'il y en avait cinq, invisible en CI parce que le module entier y
+était ignoré faute de PyMuPDF.
+
+Tout reste récupérable dans l'historique git (`f1df78b` et ses parents) si le
+dossier est rouvert.
+
+**Conservés**, pour des raisons indépendantes de ColPali : `test/pdfs/` et son
+générateur `scripts/build_test_pdfs.py`. Le manuel sert aux essais d'interface
+sur BM25 ; le rapport scanné documente ce que l'extraction de texte perd — zéro
+caractère sur un document lisible à l'œil, ce qui reste une limite mesurée du
+paradigme en vigueur dans l'arène. Leur documentation (`test/README.md`) a été
+recadrée en conséquence.
 
 **Ce qui rouvrirait le dossier :** un GPU déjà payé par ailleurs, une baisse
 des tarifs horaires, ou un corpus client où l'information vit réellement dans
