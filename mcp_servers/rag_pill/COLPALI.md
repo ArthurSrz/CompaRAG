@@ -1,5 +1,21 @@
 # ColPali dans l'arène — état, limites, mise en service
 
+> **⛔ PROJET ANNULÉ le 2026-10-11 — décision utilisateur, motif : coût.**
+>
+> Le code ci-dessous reste dans le dépôt mais **n'est pas destiné à être mis
+> en service**. Il ne tourne pas : `EngineMetadata.experimental=True` le tient
+> hors du registre de l'arène, et il n'est instancié que si `COLPALI_ENABLED=1`.
+>
+> Les chiffres qui ont tranché et les conditions qui rouvriraient le dossier
+> sont dans `.planning/STATE.md`, section « ColPali — PROJET ANNULÉ ».
+> En deux mots : pas d'API serverless gratuite pour cette tâche, donc un
+> endpoint dédié facturé à l'heure (~75 à 360 $/mois selon l'usage), ou un
+> auto-hébergement CPU à ~30-50 $/mois qui n'autorise que le plus petit modèle
+> de la famille.
+>
+> Le reste de ce document décrit ce qui a été construit, et reste valable si
+> le sujet est rouvert.
+
 ColPali est le premier moteur de CompaRAG dont le signal de récupération
 n'est pas du texte. Il est **implémenté et testé, mais volontairement hors
 de l'arène** (`EngineMetadata.experimental=True`) tant que les deux

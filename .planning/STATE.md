@@ -4,7 +4,7 @@ milestone: v1.2
 milestone_name: Document Context Selection
 status: Active
 stopped_at: Completed 14-engine-hardening 14-01-PLAN.md (Task 6 pending — Railway build verify)
-last_updated: "2026-10-10T20:20:00.000Z"
+last_updated: "2026-10-11T09:00:00.000Z"
 progress:
   total_phases: 5
   completed_phases: 1
@@ -205,58 +205,59 @@ requête est une instruction, donc il n'a pas le même défaut. À surveiller to
 de même — en mode résumé, sa branche lexicale ne contribue presque rien à la
 fusion, et son résultat devrait donc se rapprocher de celui d'un moteur dense.
 
-### ColPali — essai en conditions réelles (différé, 2026-10-10)
+### ColPali — PROJET ANNULÉ (2026-10-11)
 
-Le moteur visuel est **écrit, testé et poussé** sur `feat/colpali-visual-engine`
-(`407422e`, `55156ba`, `e4b56ef`, `f1757d1`). Il est tenu **hors de l'arène**
-par `EngineMetadata.experimental=True` : `mcp_servers.json` est inchangé et
-`generate_mcp_registry.py --check` passe. 152 tests verts.
+**Décision utilisateur : l'intégration de ColPali est abandonnée. Motif : coût.**
 
-Ce qui reste est un essai contre le vrai modèle — jamais exécuté, parce que
-`huggingface.co` et `openrouter.ai` sont refusés par la politique réseau de
-l'environnement de développement.
+Le moteur était écrit, testé et fusionné dans `develop`, mais tenu hors de
+l'arène par `EngineMetadata.experimental=True`. Il n'a jamais tourné contre
+de vrais poids.
 
-**Prérequis à réunir (côté utilisateur) :**
+**Les chiffres qui ont tranché** (tarifs relevés le 2026-10-11, à reconsidérer
+s'ils bougent) :
 
-1. Autoriser les domaines Hugging Face dans *Network access* de l'environnement.
-2. Provisionner un *Inference Endpoint* dédié sur `vidore/colpali-v1.3-hf`
-   (tag `endpoints_compatible` → pas de handler maison à écrire ; facturé à
-   l'heure ; l'API serverless ne convient pas, la tâche
-   `visual-document-retrieval` rend plusieurs vecteurs par page).
-3. Fournir l'URL de l'endpoint + un jeton HF.
+| Chemin | Coût |
+|---|---|
+| Inference Endpoint Hugging Face, T4 | 0,50 $/h — ~75 $/mois en usage sporadique, ~360 $/mois en continu |
+| Inference Endpoint, L4 | 0,70–0,80 $/h |
+| Auto-hébergement Railway, CPU, `colSmol-256M` | ~30 à 50 $/mois en continu |
 
-**Puis :**
+Pas d'API serverless gratuite : la tâche `visual-document-retrieval` renvoie
+plusieurs vecteurs par page, ce qu'aucun pipeline serverless n'expose. Un
+endpoint dédié est donc le seul chemin hébergé, et il se facture à l'heure.
 
-```bash
-COLPALI_ENABLED=1 COLPALI_ENDPOINT_URL=https://<endpoint> HF_TOKEN=hf_... \
-  python -m mcp_servers.rag_pill.server
-```
+Deux pièges relevés au passage, qui ont pesé dans la balance : le
+scale-to-zero coupe la facture mais renvoie 502/503 au réveil **sans file
+d'attente**, alors que le smoke test de l'arène exige une réponse en moins de
+60 s ; et l'option CPU impose `colSmol-256M`, le plus petit de la famille —
+s'il perdait ses duels, on ne saurait pas si c'est le paradigme visuel ou le
+modèle, soit 40 $/mois pour une mesure ambiguë.
 
-**Ce que l'essai doit trancher :**
+**Ce qui reste dans le dépôt, dormant :** environ 1 570 lignes —
+`engines/colpali_engine.py`, `engines/colpali_backend.py`,
+`corpus/visual.py`, leurs tests, `requirements-colpali.txt` et `COLPALI.md`.
+Le coût de les laisser est nul : le moteur n'entre pas dans le registre
+(`experimental=True`, `mcp_servers.json` inchangé), il n'est instancié que si
+`COLPALI_ENABLED=1`, et ses dépendances (torch, ~2,5 Go) ne sont pas dans
+l'agrégateur `requirements.txt`, donc l'image reste légère.
 
-- La forme réelle de la réponse de l'endpoint. `HTTPColPaliBackend._as_multivector`
-  accepte trois encodages plausibles et **échoue bruyamment** sinon — en
-  particulier sur un vecteur unique moyenné, qui classerait quand même
-  quelque chose mais sans interaction tardive, perdant le paradigme sous test
-  en silence.
-- La latence réelle (le smoke test de l'arène exige < 60 s).
-- La qualité de récupération, qu'aucun test actuel ne couvre : la doublure de
-  modèle valide la plomberie, pas le classement.
+**Reste à décider : supprimer ce code ou le laisser en veille.** Argument pour
+le garder : il est complet et testé, et redevient utile si les tarifs baissent
+ou si un GPU devient disponible. Argument pour le supprimer : du code que
+personne n'exécute pourrit en silence — c'est déjà arrivé une fois ici, un
+test listant quatre PDF alors qu'il y en avait cinq, invisible en CI parce que
+le module entier y est ignoré faute de PyMuPDF.
 
-**Deux décisions restées ouvertes :**
+**À garder dans tous les cas**, indépendamment de ColPali :
+`test/pdfs/manuel_station_pompage.pdf`, qui sert aux essais d'interface sur
+BM25, et le reste de `test/pdfs/`, qui documente ce que l'extraction de texte
+perd sur un scan.
 
-- **Corpus de l'arène.** `mcp_servers/corpus/` est vide et `FixedCorpus` n'y lit
-  que `*.md` — le mode corpus est inerte pour les six moteurs, pas seulement
-  pour ColPali. Quatre PDF de test existent dans `test/pdfs/` ; reste à décider
-  ce qui devient le corpus de production. `VisualCorpus` sert aussi les moteurs
-  texte, donc un seul corpus PDF suffit pour tous.
-- **Répondre depuis un scan.** ColPali trouve la page, mais le moteur passe
-  ensuite le *texte* de la page au LLM — et un scan n'en a pas. Sortie à
-  choisir : envoyer l'image au LLM (multimodal, parité préservée) ou OCR de
-  repli. Épinglé par
-  `test_colpali_on_test_pdfs.py::test_retrieving_a_scanned_page_hands_the_llm_nothing`.
-
-Détail complet : `mcp_servers/rag_pill/COLPALI.md`.
+**Ce qui rouvrirait le dossier :** un GPU déjà payé par ailleurs, une baisse
+des tarifs horaires, ou un corpus client où l'information vit réellement dans
+l'image (PDF scannés, tableaux complexes) — auquel cas la question « est-ce que
+le paradigme gagne ? » redeviendrait rentable à poser, pour moins d'un dollar
+d'essai ponctuel.
 
 ## Last Session
 

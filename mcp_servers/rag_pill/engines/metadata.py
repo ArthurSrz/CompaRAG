@@ -89,8 +89,10 @@ ENGINES: tuple[EngineMetadata, ...] = (
         ),
         experimental=True,
         experimental_reason=(
-            "needs a PDF corpus in mcp_servers/corpus/ and a validated run "
-            "against real ColPali weights; see mcp_servers/rag_pill/COLPALI.md"
+            "CANCELLED 2026-10-11 on cost: no free serverless endpoint exists "
+            "for visual-document-retrieval, so hosting means an hourly "
+            "dedicated endpoint. Kept dormant, not awaiting work — see "
+            "mcp_servers/rag_pill/COLPALI.md"
         ),
     ),
     EngineMetadata(
