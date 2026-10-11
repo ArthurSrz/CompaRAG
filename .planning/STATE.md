@@ -4,7 +4,7 @@ milestone: v1.2
 milestone_name: Document Context Selection
 status: Active
 stopped_at: Completed 14-engine-hardening 14-01-PLAN.md (Task 6 pending — Railway build verify)
-last_updated: "2026-10-11T09:30:00.000Z"
+last_updated: "2026-10-11T10:00:00.000Z"
 progress:
   total_phases: 5
   completed_phases: 1
@@ -61,6 +61,52 @@ Phase 11 document library fully complete. Both document endpoints wired with Cac
 - **Workflow change:** rag-pill now deploys via `git push` to develop, not `railway up --service rag-pill` (the CLI's chunked upload times out reliably from this machine — curl proves the endpoint is reachable in 260ms; the long-lived multipart stream is what fails). Documented in `CompaRAG/CLAUDE.md` and the corresponding memory entry.
 
 ## Deferred / Backlog
+
+### Le rerank est annoncé mais n'existe pas (2026-10-11)
+
+**Les sept entrées `qa_broad` de `mcp_servers.json` affichent « top_k=8,
+rerank » en production, et aucun moteur ne reclasse quoi que ce soit.**
+Vérifié le 2026-10-11 : zéro occurrence de `pill.rerank` dans
+`mcp_servers/rag_pill/engines/`.
+
+Le champ existe pourtant partout ailleurs : `QAPill.rerank` dans
+`schemas.py:42`, `rerank: true` dans `pills/qa_broad.yaml`, et la page
+d'explication de l'arène cite le reranker parmi les choix d'architecture
+comparés (`frontend/locales/messages/*.json`, clé `toolArena…desc`).
+
+Ce n'est donc pas une fonctionnalité manquante mais une **information fausse
+affichée aux votants** : ils comparent deux outils en croyant qu'un
+reclassement a lieu, alors qu'aucun n'en fait. C'est le seul point de ce
+backlog qui soit incorrect en production plutôt qu'incomplet.
+
+**Deux sorties, à trancher :**
+
+1. **L'implémenter.** C'est le gain le mieux documenté du RAG — une seconde
+   passe qui retrie les candidats avec un modèle plus fin que la similarité
+   de première passe. Recommandé.
+2. **Cesser de l'annoncer.** Retirer `rerank` du schéma, des pills et des
+   libellés. Honnête et immédiat, mais on perd un axe de comparaison que
+   l'arène prétend mesurer.
+
+**Si on l'implémente — l'architecture compte.** Le rerank est un paradigme
+*transverse*, pas un trait de moteur : il s'applique **après** le `retrieve()`
+de n'importe quel moteur, sur les `RetrievedSpan` déjà normalisés par
+`EngineResult`. Il s'écrit donc **une fois** dans `providers/`, branché autour
+de `execute_with_spans()`, et profite aux sept moteurs d'un coup — pas sept
+implémentations qui réintroduiraient la variable qu'on cherche à isoler.
+
+Concrètement : récupérer un vivier plus large que `top_k` (le moteur a déjà
+`CANDIDATE_POOL_MULTIPLIER` côté hybride), retrier, tronquer à `top_k`. Un
+cross-encoder hébergé (Cohere Rerank) ou local (`bge-reranker`) ; le premier
+ajoute un coût par requête, le second du poids à l'image — même arbitrage que
+ColPali, mais sur des modèles bien plus petits, donc à chiffrer avant de
+choisir.
+
+**Mesurable immédiatement** : le benchmark existe maintenant
+(`mcp_servers/corpus/evaluation/queries.yaml`). Recall@K avant et après
+rerank, sur les six questions, dit si le gain est réel sur ce corpus plutôt
+que supposé — y compris sur les deux questions à plusieurs sauts, où BM25
+plafonne aujourd'hui à 0,50 en Recall@3.
 
 ### Formulaire de l'arène — test utilisateur / UI-UX à faire (2026-10-10)
 
