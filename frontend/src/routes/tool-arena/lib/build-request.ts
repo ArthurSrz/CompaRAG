@@ -31,6 +31,8 @@ export type BuildRequestInput = {
   expectedAnswer: string
   haystack?: ArenaHaystack
   evaluationQueryId?: string
+  // Operator debug (?debug=1): asks the backend to name a side that failed.
+  debug?: boolean
 }
 
 export type ToolArenaRequest = {
@@ -41,6 +43,7 @@ export type ToolArenaRequest = {
   haystack: ArenaHaystack
   expected_answer?: string
   evaluation_query_id?: string
+  debug?: boolean
 }
 
 export class BenchmarkRequestError extends Error {}
@@ -54,7 +57,7 @@ export function buildToolArenaRequest(input: BuildRequestInput): ToolArenaReques
     // two from its catalogue and reads the corpus from disk. The expected
     // answer is ground truth the server already holds, so sending the user's
     // guess would only pollute it.
-    return {
+    const benchmark: ToolArenaRequest = {
       task: '',
       goal: '',
       document_content: '',
@@ -62,6 +65,8 @@ export function buildToolArenaRequest(input: BuildRequestInput): ToolArenaReques
       haystack: 'benchmark',
       evaluation_query_id: input.evaluationQueryId
     }
+    if (input.debug) benchmark.debug = true
+    return benchmark
   }
 
   const base: ToolArenaRequest = {
@@ -75,6 +80,7 @@ export function buildToolArenaRequest(input: BuildRequestInput): ToolArenaReques
   if (input.taskType === 'qa' && trimmed.length > 0) {
     base.expected_answer = trimmed
   }
+  if (input.debug) base.debug = true
   return base
 }
 

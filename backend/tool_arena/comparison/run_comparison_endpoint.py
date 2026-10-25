@@ -28,7 +28,11 @@ from backend.tool_arena.comparison.ask_two_tools_concurrently import (
     InsufficientReadyServersError,
     MCPDispatcher,
 )
-from backend.tool_arena.comparison.contracts import CompareRequest, CompareResponse
+from backend.tool_arena.comparison.contracts import (
+    CompareRequest,
+    CompareResponse,
+    ToolFailureDebug,
+)
 from backend.tool_arena.judge_verdict.score_against_ground_truth import GroundTruthJudge
 from backend.tool_arena.models import ToolCallRecord, save_tool_call_to_db
 from backend.tool_arena.question.list_questions_with_known_answers import (
@@ -153,6 +157,16 @@ async def _compare_streaming(body: CompareRequest):
     )
 
 
+def _failure_debug(call) -> ToolFailureDebug | None:
+    """Name the tool behind a failed side, with its real exception.
+
+    None for a side that succeeded: debug mode unmasks failures, not the duel.
+    """
+    if call.error is None:
+        return None
+    return ToolFailureDebug(tool_id=call.tool_id, error=call.error)
+
+
 async def _compare_sync(body: CompareRequest):
     """Synchronous path: return CompareResponse with blind result_a/result_b."""
     from backend.tool_arena.vote.save_vote_to_database import (  # noqa: F401 (kept for parity)
@@ -253,4 +267,6 @@ async def _compare_sync(body: CompareRequest):
         result_b=result_b,
         error_a=error_a,
         error_b=error_b,
+        debug_a=_failure_debug(tool_a) if body.debug else None,
+        debug_b=_failure_debug(tool_b) if body.debug else None,
     )

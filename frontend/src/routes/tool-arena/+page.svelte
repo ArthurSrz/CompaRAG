@@ -34,12 +34,17 @@
   import SeoHead from '$components/SEOHead.svelte'
   import { m } from '$lib/i18n/messages'
 
+  type ToolFailureDebug = { tool_id: string; error: string }
+
   type CompareResponse = {
     session_hash: string
     result_a: string | null
     result_b: string | null
     error_a: string | null
     error_b: string | null
+    // Only sent back for a side that failed, and only when ?debug=1 asked.
+    debug_a?: ToolFailureDebug | null
+    debug_b?: ToolFailureDebug | null
   }
 
   type ToolRevealInfo = {
@@ -63,6 +68,12 @@
   let errorA = $state<string | null>(null)
   let errorB = $state<string | null>(null)
   let revealData = $state<ToolRevealResponse | null>(null)
+  // Operator debug: which tool was behind a failed side, and why it failed.
+  // A failed duel offers no vote, so the reveal screen stays out of reach and
+  // this is the only way to name the culprit from the interface.
+  let debugA = $state<ToolFailureDebug | null>(null)
+  let debugB = $state<ToolFailureDebug | null>(null)
+  let debugOpen = $state(false)
   let compareError = $state<string | null>(null)
   let voteError = $state<string | null>(null)
   let voting = $state(false)
@@ -129,6 +140,10 @@
   const streamingEnabled = $derived(
     browser && new URLSearchParams(window.location.search).get('stream') === '1'
   )
+  // Opt-in via `?debug=1`, same pattern as streaming above.
+  const debugEnabled = $derived(
+    browser && new URLSearchParams(window.location.search).get('debug') === '1'
+  )
 
   async function handleCompare(
     task: string,
@@ -163,7 +178,8 @@
       taskType: (taskType ?? 'summary') as 'summary' | 'qa',
       expectedAnswer: expectedAnswerInput,
       haystack,
-      evaluationQueryId: evaluationQueryId || undefined
+      evaluationQueryId: evaluationQueryId || undefined,
+      debug: debugEnabled
     })
 
     if (streamingEnabled) {
@@ -246,6 +262,8 @@
       resultB = data.result_b
       errorA = data.error_a
       errorB = data.error_b
+      debugA = data.debug_a ?? null
+      debugB = data.debug_b ?? null
       phase = 'results'
     } catch (err) {
       compareError = (err as Error).message || m['toolArena.errorFallback']()
@@ -387,6 +405,9 @@
     errorA = null
     errorB = null
     revealData = null
+    debugA = null
+    debugB = null
+    debugOpen = false
     compareError = null
     voteError = null
     voting = false
@@ -569,6 +590,34 @@
         <ToolResultCard label="A" result={resultA} error={errorA} />
         <ToolResultCard label="B" result={resultB} error={errorB} />
       </div>
+
+      {#if debugEnabled && (debugA || debugB)}
+        <div class="text-center mb-4">
+          <button
+            type="button"
+            class="cursor-pointer border-none bg-transparent text-xl"
+            data-testid="tool-arena-debug-toggle"
+            aria-expanded={debugOpen}
+            title="debug"
+            onclick={() => (debugOpen = !debugOpen)}
+          >
+            🔨
+          </button>
+        </div>
+        {#if debugOpen}
+          <div class="cg-border bg-white p-4 mb-6" data-testid="tool-arena-debug-panel">
+            {#each [{ label: 'A', info: debugA }, { label: 'B', info: debugB }] as side (side.label)}
+              {#if side.info}
+                <p class="fr-text--sm mb-1!">
+                  <span class="font-bold">Outil {side.label} · {side.info.tool_id}</span>
+                </p>
+                <pre class="fr-text--sm whitespace-pre-wrap break-words mb-3!">{side.info.error}</pre>
+              {/if}
+            {/each}
+            <p class="fr-hint-text mb-0!">session {sessionHash}</p>
+          </div>
+        {/if}
+      {/if}
 
       {#if eitherFailed}
         <div class="text-center py-7">
