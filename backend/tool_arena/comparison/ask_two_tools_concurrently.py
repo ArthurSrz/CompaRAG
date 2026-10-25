@@ -26,6 +26,7 @@ import os
 
 from backend.tool_arena.rag_tool.ask_one_tool import single_mcp_call
 from backend.tool_arena.config import MCPServerConfig
+from backend.tool_arena.comparison.describe_failure import describe_failure
 from backend.tool_arena.models import MCPToolCall
 from backend.tool_arena.answer.wrap_answer_in_standard_envelope import normalize_output
 from backend.tool_arena.rag_tool.readiness import get_readiness_registry
@@ -191,10 +192,9 @@ class MCPDispatcher:
         for server, result in zip(servers, raw_results):
             if isinstance(result, Exception):
                 logger.error(
-                    "MCP call to %s failed: %s: %s",
+                    "MCP call to %s failed: %s",
                     server.id,
-                    type(result).__name__,
-                    result,
+                    describe_failure(result),
                 )
                 tool_calls.append(
                     MCPToolCall(
@@ -206,7 +206,7 @@ class MCPDispatcher:
                         raw_result="",
                         mediated_result="",
                         duration_ms=0,
-                        error=f"{type(result).__name__}: {result}",
+                        error=describe_failure(result),
                     )
                 )
             else:
