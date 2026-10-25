@@ -5,11 +5,13 @@
   import SeoHead from '$components/SEOHead.svelte'
   import { m } from '$lib/i18n/messages'
 
+  // elo and its bounds are null for a tool that has never completed a duel:
+  // it is listed, because it exists, but it has no score to show.
   type ToolRanking = {
     tool_id: string
-    elo: number
-    score_p2_5: number
-    score_p97_5: number
+    elo: number | null
+    score_p2_5: number | null
+    score_p97_5: number | null
     n_match: number
     win_rate: number
     provisional: boolean
@@ -28,6 +30,14 @@
     { key: 'knowledge_capture', label: m['toolArena.leaderboard.poolKnowledgeCapture']() },
   ]
 
+  /** Scored tools by Elo, then the unscored ones in registry order. */
+  function sortTools(tools: ToolRanking[]): ToolRanking[] {
+    const rated = tools.filter((t) => t.elo !== null)
+    const unrated = tools.filter((t) => t.elo === null)
+    rated.sort((a, b) => (b.elo as number) - (a.elo as number))
+    return [...rated, ...unrated]
+  }
+
   let loading = $state(true)
   let error = $state<string | null>(null)
   // by_task_type from API; null means old backend (no per-pool data yet)
@@ -41,13 +51,10 @@
   onMount(async () => {
     try {
       const data = await api.request<LeaderboardResponse>('/tool-arena/leaderboard')
-      allTools = [...data.tools].sort((a, b) => b.elo - a.elo)
+      allTools = sortTools(data.tools)
       if (data.by_task_type) {
         byTaskType = Object.fromEntries(
-          Object.entries(data.by_task_type).map(([pool, tools]) => [
-            pool,
-            [...tools].sort((a, b) => b.elo - a.elo),
-          ])
+          Object.entries(data.by_task_type).map(([pool, tools]) => [pool, sortTools(tools)])
         )
         // Auto-select first pool that has data
         const firstPoolWithData = POOLS.find(p => (byTaskType![p.key]?.length ?? 0) > 0)
@@ -68,17 +75,19 @@
   )
 
   // Shared scale for the interval bars of the current tab.
+  const scoredTools = $derived(displayedTools.filter((t) => t.elo !== null))
   const scale = $derived.by(() => {
-    if (displayedTools.length === 0) return { min: 0, max: 1 }
-    const min = Math.min(...displayedTools.map((t) => t.score_p2_5))
-    const max = Math.max(...displayedTools.map((t) => t.score_p97_5))
+    if (scoredTools.length === 0) return { min: 0, max: 1 }
+    const min = Math.min(...scoredTools.map((t) => t.score_p2_5 as number))
+    const max = Math.max(...scoredTools.map((t) => t.score_p97_5 as number))
     return { min, max: max > min ? max : min + 1 }
   })
   const pct = (v: number) => ((v - scale.min) / (scale.max - scale.min)) * 100
 
   // A tool whose interval reaches the leader's is not distinguishable from it.
-  const leaderLow = $derived(displayedTools[0]?.score_p2_5 ?? Infinity)
-  const tiedWithLeader = (tool: ToolRanking, i: number) => i > 0 && tool.score_p97_5 >= leaderLow
+  const leaderLow = $derived(scoredTools[0]?.score_p2_5 ?? Infinity)
+  const tiedWithLeader = (tool: ToolRanking, i: number) =>
+    i > 0 && tool.score_p97_5 !== null && tool.score_p97_5 >= leaderLow
 
   // Pools that actually have data (for tab visibility)
   const activePools = $derived(
@@ -160,7 +169,9 @@
           <tbody>
             {#each displayedTools as tool, i (tool.tool_id)}
               <tr class="border-b border-grey-100 last:border-0 hover:bg-very-light-grey transition-colors">
-                <td class="px-4 py-3 font-semibold text-grey">{i + 1}</td>
+                <td class="px-4 py-3 font-semibold text-grey">
+                  {tool.elo === null ? '—' : i + 1}
+                </td>
                 <td class="px-4 py-3">
                   <div class="flex items-center gap-2 flex-wrap">
                     <span class="font-medium">{tool.tool_id}</span>
@@ -169,7 +180,7 @@
                         {m['toolArena.leaderboard.tiedWithLeader']()}
                       </span>
                     {/if}
-                    {#if tool.provisional}
+                    {#if tool.provisional && tool.n_match > 0}
                       <span
                         class="fr-text--xs px-1.5 py-0.5 rounded"
                         style="background-color: #f5f5fe; color: #6b7280; border: 1px solid #e5e7eb;"
@@ -180,31 +191,37 @@
                   </div>
                 </td>
                 <td class="px-4 py-3 text-right font-mono tabular-nums">
-                  {Math.round(tool.elo)}
+                  {tool.elo === null ? '—' : Math.round(tool.elo)}
                 </td>
                 <td class="px-4 py-3 hidden md:table-cell">
+                  {#if tool.elo === null}
+                    <span class="fr-text--xs text-grey">
+                      {m['toolArena.leaderboard.noDuelYet']()}
+                    </span>
+                  {:else}
                   <div
                     class="ci"
                     role="img"
                     aria-label={m['toolArena.leaderboard.intervalAria']({
-                      low: String(Math.round(tool.score_p2_5)),
-                      high: String(Math.round(tool.score_p97_5))
+                      low: String(Math.round(tool.score_p2_5 as number)),
+                      high: String(Math.round(tool.score_p97_5 as number))
                     })}
                     title="{Math.round(tool.score_p2_5)} – {Math.round(tool.score_p97_5)}"
                   >
                     <span
                       class="ci-range"
-                      style="left: {pct(tool.score_p2_5)}%; width: {pct(tool.score_p97_5) - pct(tool.score_p2_5)}%"
+                      style="left: {pct(tool.score_p2_5 as number)}%; width: {pct(tool.score_p97_5 as number) - pct(tool.score_p2_5 as number)}%"
                     ></span>
-                    <span class="ci-point" style="left: {pct(tool.elo)}%"></span>
+                    <span class="ci-point" style="left: {pct(tool.elo as number)}%"></span>
                   </div>
                   <div class="flex justify-between fr-text--xs text-grey font-mono tabular-nums mb-0! mt-1">
-                    <span>{Math.round(tool.score_p2_5)}</span><span>{Math.round(tool.score_p97_5)}</span>
+                    <span>{Math.round(tool.score_p2_5 as number)}</span><span>{Math.round(tool.score_p97_5 as number)}</span>
                   </div>
+                  {/if}
                 </td>
                 <td class="px-4 py-3 text-right text-grey">{tool.n_match}</td>
                 <td class="px-4 py-3 text-right text-grey hidden sm:table-cell">
-                  {Math.round(tool.win_rate * 100)} %
+                  {tool.n_match === 0 ? '—' : `${Math.round(tool.win_rate * 100)} %`}
                 </td>
               </tr>
             {/each}

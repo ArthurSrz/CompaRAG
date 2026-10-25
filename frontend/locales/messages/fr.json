@@ -2323,5 +2323,6 @@
   "toolArena.form.exampleQuestion": "Question",
   "toolArena.form.exampleAnswer": "Réponse attendue",
   "toolArena.form.exampleApply": "Utiliser cet exemple",
-  "toolArena.form.exampleApplied": "Question et réponse attendue pré-remplies à partir de ce document — modifiez-les librement."
+  "toolArena.form.exampleApplied": "Question et réponse attendue pré-remplies à partir de ce document — modifiez-les librement.",
+  "toolArena.leaderboard.noDuelYet": "Aucun duel pour l'instant"
 }

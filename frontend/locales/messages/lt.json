@@ -416,5 +416,6 @@
   "toolArena.form.exampleQuestion": "Question",
   "toolArena.form.exampleAnswer": "Expected answer",
   "toolArena.form.exampleApply": "Use this example",
-  "toolArena.form.exampleApplied": "Question and expected answer prefilled from this document — edit them freely."
+  "toolArena.form.exampleApplied": "Question and expected answer prefilled from this document — edit them freely.",
+  "toolArena.leaderboard.noDuelYet": "No duel yet"
 }
