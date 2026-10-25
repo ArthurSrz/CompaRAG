@@ -39,8 +39,9 @@ TARGET_PATH = ROOT / "mcp_servers.json"
 # diff churn when pills are added.
 TASK_TYPE_ORDER = ("summary", "qa", "extraction")
 
-# Default rag_pill server endpoint. Per-id override is still honored at runtime
-# via the MCP_<ID>_URL env var (see backend/tool_arena/config.py:147-155).
+# Default rag_pill server endpoint — a development address. A deployment
+# redirects every entry at once with RAG_PILL_URL, or one at a time with the
+# per-id MCP_<ID>_URL (see backend/tool_arena/config.py).
 RAG_PILL_ENDPOINT = "http://localhost:8012/mcp"
 
 

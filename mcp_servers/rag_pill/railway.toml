@@ -1,3 +1,13 @@
+# rag_pill MCP server — Railway service config.
+#
+# After the first deploy, copy this service's public URL and set it on the
+# BACKEND service as:
+#
+#   RAG_PILL_URL=https://<service>.up.railway.app/mcp
+#
+# One variable covers every (pill, engine) entry of mcp_servers.json, so a new
+# engine needs no new variable. MCP_<ID>_URL still overrides a single entry.
+
 [build]
 builder = "DOCKERFILE"
 dockerfilePath = "mcp_servers/rag_pill/Dockerfile"

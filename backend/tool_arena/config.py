@@ -135,6 +135,16 @@ class MCPServerConfig(BaseModel):
         return self.auth_key or self.id
 
 
+# The tool name, not the endpoint: it identifies the rag_pill service whatever
+# address the registry was generated with.
+RAG_PILL_TOOL = "rag_pill_query"
+
+
+def _is_rag_pill(entry: dict) -> bool:
+    """True for an entry served by the rag_pill server."""
+    return RAG_PILL_TOOL in (entry.get("tools") or [])
+
+
 def load_mcp_servers(path: Path | None = None) -> list[MCPServerConfig]:
     """
     Load and validate MCP server configurations from a JSON file.
@@ -161,15 +171,28 @@ def load_mcp_servers(path: Path | None = None) -> list[MCPServerConfig]:
     with open(path) as f:
         raw = json.load(f)  # raises json.JSONDecodeError on malformed JSON
 
+    # One address for the whole rag_pill service. Every (pill, engine) pair is
+    # a separate entry here but a single deployed server, so the per-id
+    # override below needed one env var per entry — and adding an engine
+    # silently left its new entries pointing at the localhost default, where
+    # nothing listens in production. That is how bm25 and hybrid shipped in
+    # 2194cb9 and failed every duel with ConnectionRefusedError: six variables
+    # nobody knew to create. RAG_PILL_URL covers them all at once.
+    rag_pill_url = os.getenv("RAG_PILL_URL")
+
     # D-03: Convention-based URL override — derived from server id.
     # e.g. id="clarifeye" -> env var "MCP_CLARIFEYE_URL"
     # Backward compatible: "langchain_rag" -> MCP_LANGCHAIN_RAG_URL (same as before)
+    # It stays the last word: a single entry can always be pointed elsewhere,
+    # at a canary build of one engine for instance.
     for entry in raw:
         server_id = entry.get("id", "")
         env_var = f"MCP_{server_id.upper()}_URL"
         override_url = os.getenv(env_var)
         if override_url:
             entry["endpoint"] = override_url
+        elif rag_pill_url and _is_rag_pill(entry):
+            entry["endpoint"] = rag_pill_url
 
     servers = [MCPServerConfig(**entry) for entry in raw]  # raises ValidationError on invalid fields
 

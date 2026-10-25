@@ -250,3 +250,72 @@ def test_server_with_oauth2_in_json(tmp_path, monkeypatch):
     assert clarifeye.auth.type == "oauth2"
     assert clarifeye.sanitize is not None
     assert clarifeye.sanitize.extra_terms == ["Clarifeye"]
+
+
+# --------------------------------------------------------------------------- #
+# RAG_PILL_URL — one address for every (pill, engine) entry
+# --------------------------------------------------------------------------- #
+
+def _rag_pill_entry(entry_id: str) -> dict:
+    return {
+        "id": entry_id,
+        "name": entry_id,
+        "description": "rag_pill instance",
+        "endpoint": "http://localhost:8012/mcp",
+        "transport": "streamablehttp",
+        "tools": ["rag_pill_query"],
+    }
+
+
+def test_rag_pill_url_covers_every_pill_engine_entry(tmp_path, monkeypatch):
+    """The failure this exists for: an engine added to the registry brought
+    new ids, nobody created their MCP_<ID>_URL, and every duel on them died
+    on localhost with ConnectionRefusedError."""
+    config_path = _write_mcp_servers_json(
+        tmp_path,
+        extra_entries=[_rag_pill_entry("qa_broad__bm25"), _rag_pill_entry("qa_precise__hybrid")],
+    )
+    monkeypatch.setenv("RAG_PILL_URL", "https://rag-pill.example.app/mcp")
+    servers = {s.id: str(s.endpoint) for s in load_mcp_servers(path=config_path)}
+    assert servers["qa_broad__bm25"] == "https://rag-pill.example.app/mcp"
+    assert servers["qa_precise__hybrid"] == "https://rag-pill.example.app/mcp"
+
+
+def test_rag_pill_url_leaves_other_servers_alone(tmp_path, monkeypatch):
+    """A standalone server has its own deployment and its own address."""
+    config_path = _write_mcp_servers_json(
+        tmp_path,
+        extra_entries=[
+            {
+                "id": "pageindex",
+                "name": "PageIndex",
+                "description": "standalone",
+                "endpoint": "http://localhost:8013/mcp",
+                "transport": "streamablehttp",
+                "tools": ["rag_query"],
+            }
+        ],
+    )
+    monkeypatch.setenv("RAG_PILL_URL", "https://rag-pill.example.app/mcp")
+    servers = {s.id: str(s.endpoint) for s in load_mcp_servers(path=config_path)}
+    assert servers["pageindex"] == "http://localhost:8013/mcp"
+
+
+def test_per_id_override_still_wins(tmp_path, monkeypatch):
+    """So one engine can be pointed at a canary without moving the rest."""
+    config_path = _write_mcp_servers_json(
+        tmp_path, extra_entries=[_rag_pill_entry("qa_broad__bm25")]
+    )
+    monkeypatch.setenv("RAG_PILL_URL", "https://rag-pill.example.app/mcp")
+    monkeypatch.setenv("MCP_QA_BROAD__BM25_URL", "https://canary.example.app/mcp")
+    servers = {s.id: str(s.endpoint) for s in load_mcp_servers(path=config_path)}
+    assert servers["qa_broad__bm25"] == "https://canary.example.app/mcp"
+
+
+def test_without_the_variable_nothing_changes(tmp_path, monkeypatch):
+    config_path = _write_mcp_servers_json(
+        tmp_path, extra_entries=[_rag_pill_entry("qa_broad__bm25")]
+    )
+    monkeypatch.delenv("RAG_PILL_URL", raising=False)
+    servers = {s.id: str(s.endpoint) for s in load_mcp_servers(path=config_path)}
+    assert servers["qa_broad__bm25"] == "http://localhost:8012/mcp"
