@@ -22,12 +22,23 @@ DOCUMENTS_INDEX_PATH = ROOT_DIR / "documents_index.json"
 
 
 class DocumentConfig(BaseModel):
-    """Internal registry entry — includes loaded content."""
+    """Internal registry entry — includes loaded content.
+
+    `suggested_question` / `expected_answer` are the example pair shipped with
+    the document: a question this document actually answers, and the answer a
+    reader would give. Optional — a manifest entry without them simply offers
+    no example. Unlike the benchmark catalogue, this ground truth is sent to
+    the client on purpose: it is never used to score anything, only displayed
+    next to the two anonymous answers so a first-time voter has something to
+    compare them against.
+    """
 
     id: str
     title: str
     description: str
     content: str
+    suggested_question: str | None = None
+    expected_answer: str | None = None
 
 
 class DocumentSummary(BaseModel):
@@ -36,6 +47,8 @@ class DocumentSummary(BaseModel):
     id: str
     title: str
     description: str
+    suggested_question: str | None = None
+    expected_answer: str | None = None
 
 
 class DocumentDetail(BaseModel):
@@ -45,6 +58,8 @@ class DocumentDetail(BaseModel):
     title: str
     description: str
     content: str
+    suggested_question: str | None = None
+    expected_answer: str | None = None
 
 
 def load_documents(
@@ -91,6 +106,8 @@ def load_documents(
                 title=entry["title"],
                 description=entry["description"],
                 content=content,
+                suggested_question=entry.get("suggested_question"),
+                expected_answer=entry.get("expected_answer"),
             )
         )
     return docs

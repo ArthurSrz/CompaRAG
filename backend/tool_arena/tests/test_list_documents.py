@@ -89,3 +89,32 @@ def test_registry_len():
         DocumentConfig(id="c", title="C", description="d", content="c"),
     ]
     assert len(DocumentRegistry(docs)) == 3
+
+
+def test_load_documents_reads_the_example_pair(tmp_path):
+    (tmp_path / "d.txt").write_text("Le palier arrière porte la référence PAL-3300-B.", encoding="utf-8")
+    manifest_path = _write_manifest(tmp_path, [
+        {
+            "id": "d",
+            "title": "D",
+            "description": "desc",
+            "file": "d.txt",
+            "suggested_question": "Quelle est la référence du palier arrière ?",
+            "expected_answer": "PAL-3300-B",
+        }
+    ])
+    docs = load_documents(path=manifest_path, root_dir=tmp_path)
+    assert docs[0].suggested_question == "Quelle est la référence du palier arrière ?"
+    assert docs[0].expected_answer == "PAL-3300-B"
+
+
+def test_load_documents_without_an_example_pair_still_loads(tmp_path):
+    """The pair is optional: an entry written before this field existed must
+    keep loading, with the example simply absent."""
+    (tmp_path / "d.txt").write_text("texte", encoding="utf-8")
+    manifest_path = _write_manifest(tmp_path, [
+        {"id": "d", "title": "D", "description": "desc", "file": "d.txt"}
+    ])
+    docs = load_documents(path=manifest_path, root_dir=tmp_path)
+    assert docs[0].suggested_question is None
+    assert docs[0].expected_answer is None

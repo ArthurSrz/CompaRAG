@@ -51,7 +51,13 @@ async def list_documents(response: Response):
     """
     response.headers["Cache-Control"] = _DOCUMENTS_CACHE_CONTROL
     return [
-        DocumentSummary(id=d.id, title=d.title, description=d.description)
+        DocumentSummary(
+            id=d.id,
+            title=d.title,
+            description=d.description,
+            suggested_question=d.suggested_question,
+            expected_answer=d.expected_answer,
+        )
         for d in document_registry.list_all()
     ]
 
@@ -71,6 +77,8 @@ async def get_document(doc_id: str, response: Response):
         title=doc.title,
         description=doc.description,
         content=doc.content,
+        suggested_question=doc.suggested_question,
+        expected_answer=doc.expected_answer,
     )
 
 

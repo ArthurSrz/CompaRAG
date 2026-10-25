@@ -3,24 +3,32 @@
     "id": "rag_overview",
     "title": "RAG Overview",
     "description": "Introduction to Retrieval-Augmented Generation: what it is, why it matters, and how it differs from fine-tuning.",
-    "file": "documents/rag_overview.txt"
+    "file": "documents/rag_overview.txt",
+    "suggested_question": "What are the four core components of a RAG system?",
+    "expected_answer": "The embedder, the vector store, the retriever, and the generator LLM."
   },
   {
     "id": "langchain_concepts",
     "title": "LangChain Core Concepts",
     "description": "Overview of LangChain primitives: chains, agents, memory, tools, and retrievers for RAG pipelines.",
-    "file": "documents/langchain_concepts.txt"
+    "file": "documents/langchain_concepts.txt",
+    "suggested_question": "Which LangChain memory type keeps only the most recent exchanges?",
+    "expected_answer": "ConversationBufferWindowMemory, which retains only the most recent k exchanges."
   },
   {
     "id": "llamaindex_concepts",
     "title": "LlamaIndex Core Concepts",
     "description": "Overview of LlamaIndex primitives: documents, nodes, indexes, query engines, and retrievers for RAG pipelines.",
-    "file": "documents/llamaindex_concepts.txt"
+    "file": "documents/llamaindex_concepts.txt",
+    "suggested_question": "Which LlamaIndex index keeps every Node in a flat list and reads them all at query time?",
+    "expected_answer": "SummaryIndex (formerly ListIndex) — it suits summarisation, where recalling all the content matters more than precision."
   },
   {
     "id": "manuel_station_pompage",
     "title": "Manuel de maintenance — Station de pompage",
     "description": "Manuel technique fictif : références de pièces, codes défaut, seuils et procédures. Conçu pour faire ressortir l'écart entre recherche lexicale et recherche par sens — voir test/documents/README.md pour la fiche de questions.",
-    "file": "documents/manuel_station_pompage.md"
+    "file": "documents/manuel_station_pompage.md",
+    "suggested_question": "À quelle fréquence faut-il lubrifier les roulements ?",
+    "expected_answer": "Tous les trimestres : le manuel parle du « graissage des paliers de turbine », en fréquence trimestrielle."
   }
 ]

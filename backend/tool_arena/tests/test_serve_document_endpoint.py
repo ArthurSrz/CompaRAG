@@ -30,7 +30,13 @@ def test_list_documents_returns_200_with_all_ids(client):
     ids = {item["id"] for item in body}
     assert _EXPECTED_IDS.issubset(ids), f"missing ids: {_EXPECTED_IDS - ids}"
     for item in body:
-        assert set(item.keys()) == {"id", "title", "description"}
+        assert set(item.keys()) == {
+            "id",
+            "title",
+            "description",
+            "suggested_question",
+            "expected_answer",
+        }
 
 
 def test_list_documents_has_no_content_field(client):
@@ -49,7 +55,14 @@ def test_get_document_returns_200_with_content(client):
     resp = client.get("/tool-arena/documents/rag_overview")
     assert resp.status_code == 200
     body = resp.json()
-    assert set(body.keys()) == {"id", "title", "description", "content"}
+    assert set(body.keys()) == {
+        "id",
+        "title",
+        "description",
+        "content",
+        "suggested_question",
+        "expected_answer",
+    }
     assert body["id"] == "rag_overview"
     assert isinstance(body["content"], str)
     assert len(body["content"]) > 0
@@ -73,3 +86,24 @@ def test_endpoints_require_no_auth(client):
     detail_resp = client.get("/tool-arena/documents/rag_overview")
     assert list_resp.status_code == 200
     assert detail_resp.status_code == 200
+
+
+def test_every_library_document_ships_an_example_pair(client):
+    """A ready-made document without an example is a document a first-time
+    voter cannot judge: they get two anonymous answers and nothing to compare
+    them against. The manifest is small and curated, so this is enforceable.
+    """
+    for item in client.get("/tool-arena/documents").json():
+        assert item["suggested_question"], f"{item['id']} has no suggested question"
+        assert item["expected_answer"], f"{item['id']} has no expected answer"
+
+
+def test_detail_serves_the_same_example_as_the_listing(client):
+    """The form prefills from the detail call; the listing is what decides
+    whether to advertise an example at all. They must not disagree.
+    """
+    listed = {d["id"]: d for d in client.get("/tool-arena/documents").json()}
+    for doc_id, summary in listed.items():
+        detail = client.get(f"/tool-arena/documents/{doc_id}").json()
+        assert detail["suggested_question"] == summary["suggested_question"]
+        assert detail["expected_answer"] == summary["expected_answer"]
