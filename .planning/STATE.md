@@ -163,6 +163,33 @@ réseau, donc le module de traduction généré localement ne contient aucune cl
     visiteur venu voter sur son propre document n'a sans doute rien à faire
     d'un corpus de maintenance de station de pompage.
 
+**Ajout du 2026-10-25 — aperçu du document et exemple fourni avec lui.**
+Un document prêt à l'emploi n'était qu'un titre dans une liste : on le
+choisissait, on recevait deux réponses anonymes, et on n'avait aucun moyen de
+dire laquelle était juste puisqu'on n'avait jamais lu le document. Deux
+corrections, même formulaire :
+
+- **Aperçu** — le début du document (700 caractères, dépliable jusqu'à 20 000)
+  s'affiche sous le sélecteur, avec sa description et son nombre de caractères.
+  Vaut aussi pour un téléversement : c'est la preuve que l'extraction d'un
+  `.pdf` ou d'un `.docx` a produit du texte lisible.
+- **Exemple livré avec le document** — `documents_index.json` porte désormais
+  `suggested_question` / `expected_answer` par entrée, servis par les deux
+  endpoints. Choisir un document bascule le formulaire en Question/Réponse et
+  pré-remplit la question et la réponse attendue, sauf si l'utilisateur a déjà
+  tapé sa propre question : dans ce cas l'exemple reste proposé derrière un
+  bouton. La paire du manuel de pompage est volontairement celle qui ne partage
+  aucun mot avec le texte (lubrifier/graissage, roulements/paliers) — le premier
+  duel montre donc d'emblée l'écart entre recherche lexicale et recherche par
+  sens.
+
+**À vérifier à l'écran, en plus de la liste ci-dessus :** que l'aperçu ne
+pousse pas la zone de question hors écran sur mobile, que le dépliage d'un
+document long reste fluide, et que la bascule automatique vers
+Question/Réponse ne surprenne pas quelqu'un venu faire un résumé. Mêmes
+limites qu'au-dessus : jamais vu tourner ici, pour la même raison (CDN
+paraglide refusé par la politique réseau).
+
 **Contexte qui rend ce test nécessaire :** la CI ne construit jamais le
 frontend. `build-deploy-dev.yml` et `deploy-prd.yml` se déclenchent sur les
 branches `dev` et `prd`, qui n'existent pas dans ce fork — ce sont des restes du

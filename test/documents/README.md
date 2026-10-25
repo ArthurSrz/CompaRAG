@@ -9,12 +9,15 @@ le backend le sert via `GET /tool-arena/documents`.
 
 ## Comment s'en servir
 
-1. Ouvrir la Tool Arena, choisir la tâche **Question / Réponse**.
-2. Déposer `documents/manuel_station_pompage.md` (le format `.md` est
-   accepté, comme `.txt`, `.pdf` et `.docx`).
-3. Poser une des questions ci-dessous et coller la réponse attendue dans le
-   champ prévu : elle s'affiche à côté des deux réponses anonymes, ce qui
-   permet de juger qui a réellement trouvé.
+1. Ouvrir la Tool Arena et choisir ce manuel dans « Ou choisir un document
+   déjà disponible » — ou déposer `documents/manuel_station_pompage.md` (le
+   format `.md` est accepté, comme `.txt`, `.pdf` et `.docx`).
+2. Choisi dans la liste, il arrive avec son aperçu et avec la question sur la
+   lubrification des roulements — et sa réponse attendue — déjà écrites dans
+   le formulaire : rien d'autre à faire que lancer la comparaison.
+3. Pour les autres lignes du tableau : poser la question et coller la réponse
+   attendue dans le champ prévu. Elle s'affiche à côté des deux réponses
+   anonymes, ce qui permet de juger qui a réellement trouvé.
 
 ## Questions, et ce qu'elles mettent à l'épreuve
 
