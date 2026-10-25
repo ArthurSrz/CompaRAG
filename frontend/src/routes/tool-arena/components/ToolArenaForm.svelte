@@ -9,10 +9,12 @@
     type BenchmarkQuestion
   } from '../lib/benchmark-questions'
   import {
-    fetchLibraryDocumentContent,
+    exampleOf,
+    fetchLibraryDocument,
     fetchLibraryDocuments,
     type LibraryDocument
   } from '../lib/document-library'
+  import { buildDocumentPreview, canExpand } from '../lib/document-preview'
 
   // Same resolution as +page.svelte:65-69 — keeps extract calls on the
   // same origin as POST /tool-arena/compare.
@@ -100,6 +102,15 @@
   // addition to the upload field, never a replacement for it.
   let libraryDocs = $state<LibraryDocument[]>([])
   let selectedLibraryId = $state('')
+  // The example pair that came with the selected library document (question +
+  // expected answer). Null for an upload, and for a document that ships none.
+  let documentExample = $state<{ question: string; answer: string } | null>(null)
+  // True once the pair has been written into the form, so the hint says
+  // "prefilled" instead of offering a button that would change nothing.
+  let exampleApplied = $state(false)
+  // The preview is collapsed by default: it sits above the question box, and
+  // a document unrolled to 20 000 characters would bury the rest of the form.
+  let previewExpanded = $state(false)
   // Benchmark mode: questions whose answer the backend already knows, so it
   // scores both tools automatically alongside the human vote. Empty until
   // loaded, and empty for good if no corpus is mounted — the option then
@@ -115,6 +126,10 @@
   // needle. Only shown for QA. Whitespace-only submissions are dropped at
   // the wire-format layer (see buildToolArenaRequest).
   let expectedAnswer = $state('')
+  // Whether the question box holds something the user wrote (or picked from
+  // the suggestion chips). A ready-made document's example may overwrite the
+  // type's canned default; it must never overwrite the user's own question.
+  let taskDirty = $state(false)
 
   // QA in sandbox mode also requires document_content (backend validator
   // enforces non-empty doc for haystack='sandbox'). Benchmark mode (no doc,
@@ -133,6 +148,21 @@
   )
   const isCapture = $derived(selectedTaskType === 'knowledge_capture')
   const isQa = $derived(selectedTaskType === 'qa')
+
+  // The catalogue entry behind the current selection — its description is
+  // what the dropdown could only offer as a hover tooltip.
+  const selectedLibraryDoc = $derived(
+    libraryDocs.find((d) => d.id === selectedLibraryId) ?? null
+  )
+  // Preview of whatever document is loaded, from either source. For an
+  // upload it doubles as proof that .pdf/.docx extraction produced readable
+  // text; for a library document it is the only way to know what is in it,
+  // and therefore the only way to judge which of the two answers is right.
+  const preview = $derived(buildDocumentPreview(documentContent, previewExpanded))
+  const previewExpandable = $derived(canExpand(documentContent))
+  const showPreview = $derived(
+    requiresDocument && !extracting && !fileError && documentContent.trim().length > 0
+  )
 
   // First unmet condition, shown under the button so a disabled button
   // always says why. null = ready to submit.
@@ -174,7 +204,40 @@
     if (selected) {
       task = selected.prompt
       goal = selected.goalText
+      // The canned prompt is not the user's question, so the loaded
+      // document's example may still claim the field.
+      taskDirty = false
+      exampleApplied = false
     }
+    if (selectedTaskType === 'qa') applyExampleIfPristine()
+  }
+
+  /**
+   * Write the document's example pair into the form. Question/answer go
+   * together: an expected answer that belongs to another question would make
+   * both tools look wrong.
+   *
+   * Only QA has a question and an expected answer, so the pair pulls the task
+   * type along with it — otherwise the answer would be prefilled into a field
+   * the summary view never shows.
+   */
+  function applyExample() {
+    if (!documentExample) return
+    selectedTaskType = 'qa'
+    const qa = taskTypes.find((t) => t.value === 'qa')
+    if (qa) goal = qa.goalText
+    task = documentExample.question
+    expectedAnswer = documentExample.answer
+    exampleApplied = true
+    // The example is a starting point, not the user's own question: picking
+    // another document replaces it.
+    taskDirty = false
+  }
+
+  /** Apply the example unless the user has typed a question of their own. */
+  function applyExampleIfPristine() {
+    if (!documentExample || taskDirty || isCapture) return
+    applyExample()
   }
 
   onMount(async () => {
@@ -193,12 +256,19 @@
     // The two sources are mutually exclusive: clearing one must not leave
     // the other's selection showing as if it were still loaded.
     selectedLibraryId = ''
+    // The example belongs to the document that just went away.
+    documentExample = null
+    exampleApplied = false
+    previewExpanded = false
   }
 
   async function handleLibraryChange() {
     const id = selectedLibraryId
     const token = ++fileToken
     fileError = ''
+    documentExample = null
+    exampleApplied = false
+    previewExpanded = false
     if (!id) {
       clearFile()
       return
@@ -209,9 +279,14 @@
     fileName = libraryDocs.find((d) => d.id === id)?.title ?? id
     extracting = true
     try {
-      const text = await fetchLibraryDocumentContent(backendBase(), id)
+      const doc = await fetchLibraryDocument(backendBase(), id)
       if (token !== fileToken) return
-      documentContent = text
+      documentContent = doc.content
+      // A ready-made document with no question to ask it is a document a
+      // first-time user cannot judge, so the pair ships with it and lands
+      // in the form straight away.
+      documentExample = exampleOf(doc)
+      applyExampleIfPristine()
     } catch {
       if (token === fileToken) clearFile(m['toolArena.form.libraryFailed']())
     } finally {
@@ -240,6 +315,9 @@
     }
     documentContent = ''
     selectedLibraryId = ''
+    documentExample = null
+    exampleApplied = false
+    previewExpanded = false
     fileName = file.name
     extracting = true
     let text = ''
@@ -415,6 +493,66 @@
           <p class="fr-valid-text">{m['toolArena.form.fileLoaded']({ name: fileName })}</p>
         {/if}
       </div>
+
+      {#if showPreview}
+        <div class="document-preview cg-border bg-white p-4 mt-3" data-testid="tool-arena-document-preview">
+          <p class="fr-text--sm font-bold mb-1!">
+            {m['toolArena.form.previewTitle']()}
+            <span class="fr-hint-text font-normal ml-1">
+              {m['toolArena.form.previewChars']({ count: String(preview.charCount) })}
+            </span>
+          </p>
+          {#if selectedLibraryDoc?.description}
+            <p class="fr-text--sm text-grey mb-2!">{selectedLibraryDoc.description}</p>
+          {/if}
+          <pre
+            class="document-preview__text fr-text--sm mb-0!"
+            class:document-preview__text--expanded={previewExpanded}>{preview.text}</pre>
+          {#if preview.truncated}
+            <p class="fr-hint-text mt-1! mb-0!">{m['toolArena.form.previewTruncated']()}</p>
+          {/if}
+          {#if previewExpandable}
+            <button
+              type="button"
+              class="fr-link fr-text--sm mt-2 cursor-pointer"
+              data-testid="tool-arena-preview-toggle"
+              aria-expanded={previewExpanded}
+              onclick={() => (previewExpanded = !previewExpanded)}
+            >
+              {previewExpanded
+                ? m['toolArena.form.previewCollapse']()
+                : m['toolArena.form.previewExpand']()}
+            </button>
+          {/if}
+        </div>
+      {/if}
+
+      {#if documentExample && !extracting && !fileError}
+        <div class="document-example cg-border bg-white p-4 mt-3" data-testid="tool-arena-document-example">
+          <p class="fr-text--sm font-bold mb-2!">{m['toolArena.form.exampleTitle']()}</p>
+          <p class="fr-text--sm mb-1!">
+            <span class="font-bold block">{m['toolArena.form.exampleQuestion']()}</span>
+            {documentExample.question}
+          </p>
+          <p class="fr-text--sm mb-2!">
+            <span class="font-bold block">{m['toolArena.form.exampleAnswer']()}</span>
+            {documentExample.answer}
+          </p>
+          {#if exampleApplied}
+            <p class="fr-valid-text mb-0!">{m['toolArena.form.exampleApplied']()}</p>
+          {:else}
+            <button
+              type="button"
+              class="fr-link fr-text--sm cursor-pointer"
+              data-testid="tool-arena-example-apply"
+              onclick={applyExample}
+              {disabled}
+            >
+              {m['toolArena.form.exampleApply']()}
+            </button>
+          {/if}
+        </div>
+      {/if}
     </div>
   {/if}
 
@@ -429,6 +567,9 @@
           onclick={(e) => {
             e.preventDefault()
             task = suggestion.text
+            // A chip the user clicked outranks a document's example.
+            taskDirty = true
+            exampleApplied = false
           }}
           {disabled}
         >
@@ -446,6 +587,7 @@
       class="fr-input cg-border rounded-t-md! bg-white! rounded-b-none! border-solid!"
       rows="4"
       bind:value={task}
+      oninput={() => (taskDirty = true)}
       placeholder={isQa
         ? m['toolArena.form.qaPlaceholder']()
         : isCapture
@@ -514,6 +656,27 @@
 <style lang="postcss">
   .fr-input {
     --border-plain-grey: var(--blue-france-main-525);
+  }
+
+  .document-preview,
+  .document-example {
+    border-left: 4px solid var(--blue-france-main-525, #3558a2);
+    border-radius: 4px;
+  }
+
+  /* The excerpt keeps the document's own line breaks — a maintenance table
+     read as one long paragraph tells you nothing about what is in it. */
+  .document-preview__text {
+    white-space: pre-wrap;
+    word-break: break-word;
+    font-family: inherit;
+    max-height: 9rem;
+    overflow-y: auto;
+    margin: 0;
+  }
+
+  .document-preview__text--expanded {
+    max-height: 24rem;
   }
 
   .file-input-hidden {

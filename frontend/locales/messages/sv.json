@@ -1597,5 +1597,15 @@
   "toolArena.form.benchmarkQuestionLabel": "Reference question",
   "toolArena.form.benchmarkQuestionHint": "The right answer is known: both tools are scored automatically, on top of your vote.",
   "toolArena.form.benchmarkQuestionPlaceholder": "Choose a question…",
-  "toolArena.form.needBenchmarkQuestion": "Choose a reference question"
+  "toolArena.form.needBenchmarkQuestion": "Choose a reference question",
+  "toolArena.form.previewTitle": "Document preview",
+  "toolArena.form.previewChars": "{count} characters",
+  "toolArena.form.previewExpand": "Show more of the document",
+  "toolArena.form.previewCollapse": "Collapse the preview",
+  "toolArena.form.previewTruncated": "Partial preview: only the start of the document is shown.",
+  "toolArena.form.exampleTitle": "Example shipped with this document",
+  "toolArena.form.exampleQuestion": "Question",
+  "toolArena.form.exampleAnswer": "Expected answer",
+  "toolArena.form.exampleApply": "Use this example",
+  "toolArena.form.exampleApplied": "Question and expected answer prefilled from this document — edit them freely."
 }

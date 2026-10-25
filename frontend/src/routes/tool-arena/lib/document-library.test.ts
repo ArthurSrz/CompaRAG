@@ -10,7 +10,8 @@
 import { describe, expect, it, vi } from 'vitest'
 import {
   LibraryDocumentError,
-  fetchLibraryDocumentContent,
+  exampleOf,
+  fetchLibraryDocument,
   fetchLibraryDocuments
 } from './document-library'
 
@@ -63,29 +64,55 @@ describe('fetchLibraryDocuments', () => {
   })
 })
 
-describe('fetchLibraryDocumentContent', () => {
+describe('fetchLibraryDocument', () => {
   it('returns the document text', async () => {
     const fetchImpl = vi.fn(async () => jsonResponse({ id: 'a', content: 'texte' }))
-    expect(await fetchLibraryDocumentContent(BASE, 'a', fetchImpl as never)).toBe('texte')
+    const doc = await fetchLibraryDocument(BASE, 'a', fetchImpl as never)
+    expect(doc.content).toBe('texte')
+  })
+
+  it('returns the example pair shipped with the document', async () => {
+    const fetchImpl = vi.fn(async () =>
+      jsonResponse({
+        id: 'a',
+        title: 'A',
+        description: 'da',
+        content: 'texte',
+        suggested_question: 'Quelle pression ?',
+        expected_answer: 'Entre 1,0 et 1,5 bar'
+      })
+    )
+    const doc = await fetchLibraryDocument(BASE, 'a', fetchImpl as never)
+    expect(exampleOf(doc)).toEqual({
+      question: 'Quelle pression ?',
+      answer: 'Entre 1,0 et 1,5 bar'
+    })
+  })
+
+  it('loads a document that ships no example, with nothing to prefill', async () => {
+    const fetchImpl = vi.fn(async () => jsonResponse({ id: 'a', content: 'texte' }))
+    const doc = await fetchLibraryDocument(BASE, 'a', fetchImpl as never)
+    expect(doc.content).toBe('texte')
+    expect(exampleOf(doc)).toBeNull()
   })
 
   it('url-encodes the id', async () => {
     const fetchImpl = vi.fn(async () => jsonResponse({ content: 'x' }))
-    await fetchLibraryDocumentContent(BASE, 'a b/c', fetchImpl as never)
+    await fetchLibraryDocument(BASE, 'a b/c', fetchImpl as never)
     expect(fetchImpl).toHaveBeenCalledWith(`${BASE}/tool-arena/documents/a%20b%2Fc`)
   })
 
   it('throws with the status when the document is missing', async () => {
     const fetchImpl = vi.fn(async () => jsonResponse(null, false, 404))
     await expect(
-      fetchLibraryDocumentContent(BASE, 'ghost', fetchImpl as never)
+      fetchLibraryDocument(BASE, 'ghost', fetchImpl as never)
     ).rejects.toThrow(LibraryDocumentError)
   })
 
   it('throws rather than loading an empty document', async () => {
     const fetchImpl = vi.fn(async () => jsonResponse({ content: '   ' }))
     await expect(
-      fetchLibraryDocumentContent(BASE, 'a', fetchImpl as never)
+      fetchLibraryDocument(BASE, 'a', fetchImpl as never)
     ).rejects.toThrow('empty')
   })
 
@@ -94,7 +121,19 @@ describe('fetchLibraryDocumentContent', () => {
       throw new Error('offline')
     })
     await expect(
-      fetchLibraryDocumentContent(BASE, 'a', fetchImpl as never)
+      fetchLibraryDocument(BASE, 'a', fetchImpl as never)
     ).rejects.toThrow('network')
+  })
+})
+
+describe('exampleOf', () => {
+  it('rejects a half-pair rather than prefilling a question with no answer', () => {
+    expect(exampleOf({ suggested_question: 'Q', expected_answer: null })).toBeNull()
+    expect(exampleOf({ suggested_question: '  ', expected_answer: 'A' })).toBeNull()
+  })
+
+  it('is null for a document that has neither', () => {
+    expect(exampleOf(null)).toBeNull()
+    expect(exampleOf({})).toBeNull()
   })
 })

@@ -2313,5 +2313,15 @@
   "toolArena.form.benchmarkQuestionLabel": "Question de référence",
   "toolArena.form.benchmarkQuestionHint": "La bonne réponse est connue : les deux outils seront notés automatiquement, en plus de votre vote.",
   "toolArena.form.benchmarkQuestionPlaceholder": "Choisir une question…",
-  "toolArena.form.needBenchmarkQuestion": "Choisissez une question de référence"
+  "toolArena.form.needBenchmarkQuestion": "Choisissez une question de référence",
+  "toolArena.form.previewTitle": "Aperçu du document",
+  "toolArena.form.previewChars": "{count} caractères",
+  "toolArena.form.previewExpand": "Voir plus du document",
+  "toolArena.form.previewCollapse": "Réduire l'aperçu",
+  "toolArena.form.previewTruncated": "Aperçu partiel : seul le début du document est affiché.",
+  "toolArena.form.exampleTitle": "Exemple fourni avec ce document",
+  "toolArena.form.exampleQuestion": "Question",
+  "toolArena.form.exampleAnswer": "Réponse attendue",
+  "toolArena.form.exampleApply": "Utiliser cet exemple",
+  "toolArena.form.exampleApplied": "Question et réponse attendue pré-remplies à partir de ce document — modifiez-les librement."
 }
