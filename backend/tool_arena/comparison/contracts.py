@@ -28,10 +28,6 @@ class CompareRequest(BaseModel):
     # the canned task/goal from the catalog.
     haystack: Literal["benchmark", "sandbox"] = "sandbox"
     evaluation_query_id: str | None = None
-    # Operator debug. Asks the response to name the tool behind a side that
-    # FAILED, and to carry its real exception. Opt-in, because the blind
-    # comparison is a product invariant and nothing should weaken it silently.
-    debug: bool = False
 
     @model_validator(mode="after")
     def _validate_haystack_mode(self) -> "CompareRequest":
@@ -49,11 +45,11 @@ class CompareRequest(BaseModel):
 class ToolFailureDebug(BaseModel):
     """Operator-only detail about a side whose call failed.
 
-    Served only when the client asked for it (``CompareRequest.debug``) and
-    only for a side that errored. A failed side has no answer to judge and the
-    UI offers no vote on a failed duel, so naming it cannot bias a vote that
-    cannot happen — while without it, such a duel can never be diagnosed from
-    the interface: the reveal screen requires a vote.
+    Served for a side that errored, and only for that side. A failed side has
+    no answer to judge and the UI offers no vote on a failed duel, so naming
+    it cannot bias a vote that cannot happen — while without it, such a duel
+    can never be diagnosed from the interface: the reveal screen requires a
+    vote that the failure itself makes impossible.
     """
 
     tool_id: str
@@ -75,7 +71,7 @@ class CompareResponse(BaseModel):
     result_b: str | None = Field(description="canonical: answer_b")
     error_a: str | None    # "Tool encountered an error" or None
     error_b: str | None
-    # Only ever non-null for a failed side, and only on an explicit debug ask.
+    # Only ever non-null for a side that failed.
     debug_a: ToolFailureDebug | None = None
     debug_b: ToolFailureDebug | None = None
 

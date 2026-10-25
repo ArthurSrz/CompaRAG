@@ -104,30 +104,3 @@ describe('buildToolArenaRequest — benchmark mode', () => {
   })
 })
 
-describe('debug flag', () => {
-  it('asks for it in sandbox mode only when enabled', () => {
-    const base = {
-      task: 'q',
-      goal: 'g',
-      documentContent: 'doc',
-      taskType: 'qa' as const,
-      expectedAnswer: ''
-    }
-    expect(buildToolArenaRequest(base).debug).toBeUndefined()
-    expect(buildToolArenaRequest({ ...base, debug: true }).debug).toBe(true)
-  })
-
-  it('carries over to benchmark mode, where tools fail too', () => {
-    const req = buildToolArenaRequest({
-      task: '',
-      goal: '',
-      documentContent: '',
-      taskType: 'qa',
-      expectedAnswer: '',
-      haystack: 'benchmark',
-      evaluationQueryId: 'q01',
-      debug: true
-    })
-    expect(req.debug).toBe(true)
-  })
-})

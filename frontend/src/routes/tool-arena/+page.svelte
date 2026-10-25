@@ -65,9 +65,10 @@
   let errorA = $state<string | null>(null)
   let errorB = $state<string | null>(null)
   let revealData = $state<ToolRevealResponse | null>(null)
-  // Operator debug: which tool was behind a failed side, and why it failed.
-  // A failed duel offers no vote, so the reveal screen stays out of reach and
-  // this is the only way to name the culprit from the interface.
+  // Which tool was behind a failed side, and why it failed. A failed duel
+  // offers no vote, so the reveal screen stays out of reach and this is the
+  // only way to name the culprit from the interface — hence always, not
+  // behind a flag nobody remembers to type when a duel breaks.
   let debugA = $state<ToolFailureDebug | null>(null)
   let debugB = $state<ToolFailureDebug | null>(null)
   let debugOpen = $state(false)
@@ -140,10 +141,6 @@
   const streamingEnabled = $derived(
     browser && new URLSearchParams(window.location.search).get('stream') === '1'
   )
-  // Opt-in via `?debug=1`, same pattern as streaming above.
-  const debugEnabled = $derived(
-    browser && new URLSearchParams(window.location.search).get('debug') === '1'
-  )
 
   async function handleCompare(
     task: string,
@@ -181,8 +178,7 @@
       taskType: (taskType ?? 'summary') as 'summary' | 'qa',
       expectedAnswer: expectedAnswerInput,
       haystack,
-      evaluationQueryId: evaluationQueryId || undefined,
-      debug: debugEnabled
+      evaluationQueryId: evaluationQueryId || undefined
     })
 
     if (streamingEnabled) {
@@ -593,7 +589,7 @@
         <ToolResultCard label="B" result={resultB} error={errorB} />
       </div>
 
-      {#if debugEnabled && (debugA || debugB)}
+      {#if debugA || debugB}
         <div class="text-center mb-4">
           <button
             type="button"

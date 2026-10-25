@@ -2,9 +2,8 @@
 
 A duel where one tool errors offers no vote, and the reveal screen requires
 one, so the failing tool could never be identified from the interface: the
-user could only retry. `CompareRequest.debug` opens exactly that door, and
-no wider — a side that answered stays anonymous, because that one is still
-being judged.
+user could only retry. The response now names it, and nothing wider — a side
+that answered stays anonymous, because that one is still being judged.
 
 Minimal-app pattern from test_router_compare_benchmark.py.
 """
@@ -68,9 +67,9 @@ def _post(body: dict, tool_a, tool_b):
         return client.post("/tool-arena/compare", json=body)
 
 
-def test_debug_names_the_failed_side_and_its_real_exception():
+def test_the_failed_side_is_named_with_its_real_exception():
     resp = _post(
-        {**_BODY, "debug": True},
+        _BODY,
         _fake_tool_call("srv-a"),
         _fake_tool_call("srv-b", error="ValueError: No embedding data received"),
     )
@@ -86,21 +85,9 @@ def test_debug_names_the_failed_side_and_its_real_exception():
     assert body["error_b"] == "Tool encountered an error"
 
 
-def test_without_the_debug_flag_nothing_is_named():
+def test_a_duel_where_both_answered_names_neither():
     resp = _post(
         _BODY,
-        _fake_tool_call("srv-a"),
-        _fake_tool_call("srv-b", error="ValueError: boom"),
-    )
-    assert resp.status_code == 200, resp.text
-    body = resp.json()
-    assert body["debug_a"] is None
-    assert body["debug_b"] is None
-
-
-def test_debug_on_a_duel_where_both_answered_names_neither():
-    resp = _post(
-        {**_BODY, "debug": True},
         _fake_tool_call("srv-a"),
         _fake_tool_call("srv-b"),
     )

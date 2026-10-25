@@ -267,6 +267,6 @@ async def _compare_sync(body: CompareRequest):
         result_b=result_b,
         error_a=error_a,
         error_b=error_b,
-        debug_a=_failure_debug(tool_a) if body.debug else None,
-        debug_b=_failure_debug(tool_b) if body.debug else None,
+        debug_a=_failure_debug(tool_a),
+        debug_b=_failure_debug(tool_b),
     )
