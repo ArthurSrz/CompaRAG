@@ -12,9 +12,6 @@
  * The `expected_answer` field is purely client-side ground-truth display —
  * the backend ignores it. We send it anyway so future analytics can pick it
  * up server-side without another deploy.
- *
- * shouldShowExpectedAnswerBanner — decides whether to render the
- * "Réponse attendue" banner during the blind comparison step.
  */
 
 export type ArenaPhase = 'input' | 'loading' | 'results' | 'revealed' | 'unavailable'
@@ -82,13 +79,4 @@ export function buildToolArenaRequest(input: BuildRequestInput): ToolArenaReques
   }
   if (input.debug) base.debug = true
   return base
-}
-
-export function shouldShowExpectedAnswerBanner(
-  phase: ArenaPhase,
-  expectedAnswer: string | null
-): boolean {
-  if (phase !== 'results') return false
-  if (!expectedAnswer) return false
-  return expectedAnswer.trim().length > 0
 }

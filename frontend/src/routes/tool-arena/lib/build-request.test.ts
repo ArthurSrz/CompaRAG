@@ -1,18 +1,10 @@
 /**
- * buildToolArenaRequest + shouldShowExpectedAnswerBanner —
- * pure-TS helpers for the QA ground-truth field UX (Phase 13 / Wave 7+).
+ * buildToolArenaRequest — pure-TS payload builder for the arena duel.
  *
  * Vitest server workspace (no jsdom — see project_vitest4_jsdom_broken memory).
- *
- * Slice 1: payload builder
- * Slice 2: banner visibility state machine
  */
 import { describe, expect, it } from 'vitest'
-import {
-  BenchmarkRequestError,
-  buildToolArenaRequest,
-  shouldShowExpectedAnswerBanner
-} from './build-request'
+import { BenchmarkRequestError, buildToolArenaRequest } from './build-request'
 
 describe('buildToolArenaRequest', () => {
   it('summary mode omits expected_answer (slice 1.1)', () => {
@@ -68,25 +60,6 @@ describe('buildToolArenaRequest', () => {
   })
 })
 
-describe('shouldShowExpectedAnswerBanner', () => {
-  it('false during input phase even if expectedAnswer set (slice 2.1)', () => {
-    expect(shouldShowExpectedAnswerBanner('input', 'Paris')).toBe(false)
-  })
-
-  it('true during results phase when expectedAnswer non-empty (slice 2.2)', () => {
-    expect(shouldShowExpectedAnswerBanner('results', 'Paris')).toBe(true)
-  })
-
-  it('false during results phase when expectedAnswer empty/whitespace (slice 2.3)', () => {
-    expect(shouldShowExpectedAnswerBanner('results', '')).toBe(false)
-    expect(shouldShowExpectedAnswerBanner('results', null)).toBe(false)
-    expect(shouldShowExpectedAnswerBanner('results', '   ')).toBe(false)
-  })
-
-  it('false during revealed phase (slice 2.4)', () => {
-    expect(shouldShowExpectedAnswerBanner('revealed', 'Paris')).toBe(false)
-  })
-})
 
 describe('buildToolArenaRequest — benchmark mode', () => {
   const input = {

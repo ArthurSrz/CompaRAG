@@ -25,10 +25,7 @@
     type ArmState
   } from './lib/interview-client'
   import { streamCompare, type SSEEvent } from './lib/sse-client'
-  import {
-    buildToolArenaRequest,
-    shouldShowExpectedAnswerBanner
-  } from './lib/build-request'
+  import { buildToolArenaRequest } from './lib/build-request'
   import { Button } from '$components/dsfr'
   import Header from '$components/header/Header.svelte'
   import SeoHead from '$components/SEOHead.svelte'
@@ -87,6 +84,9 @@
   // Pure display — backend ignores it; we show it next to the blind A/B
   // results so the user can judge whether either engine found the needle.
   let expectedAnswer = $state<string | null>(null)
+  // The question itself, kept for the results screen: the form is gone by
+  // then, and the vote asks which answer is better without showing to what.
+  let askedQuestion = $state<string | null>(null)
 
   // Knowledge-capture interview state. Each arm is fully independent (the
   // ontology's Interview variant): its own message list, its own busy flag —
@@ -167,6 +167,9 @@
     // own guess alongside it would be noise.
     expectedAnswer =
       haystack === 'benchmark' || trimmedExpected.length === 0 ? null : trimmedExpected
+    // Benchmark mode asks the server's own question, which the body leaves
+    // empty — nothing to show there.
+    askedQuestion = haystack === 'benchmark' ? null : task
 
     // One payload for both transports. They used to build the body inline,
     // twice, which is how `haystack` stayed hardcoded to sandbox in two
@@ -414,6 +417,7 @@
     progressEventA = null
     progressEventB = null
     expectedAnswer = null
+    askedQuestion = null
     interviewArmA = emptyArm()
     interviewArmB = emptyArm()
     interviewMaxTurns = 10
@@ -583,9 +587,7 @@
 
   {:else if phase === 'results'}
     <div class="fr-container py-8 md:py-12">
-      {#if shouldShowExpectedAnswerBanner('results', expectedAnswer)}
-        <ExpectedAnswerBanner {expectedAnswer} />
-      {/if}
+      <ExpectedAnswerBanner question={askedQuestion} {expectedAnswer} />
       <div class="gap-10 md:grid-cols-2 md:gap-6 grid mb-8">
         <ToolResultCard label="A" result={resultA} error={errorA} />
         <ToolResultCard label="B" result={resultB} error={errorB} />
@@ -658,9 +660,7 @@
       <!-- Les réponses restent lisibles après la révélation, cette fois avec
            le nom de chaque outil : on peut relire en sachant qui a écrit quoi. -->
       <h3 class="fr-h6 text-center mt-12 mb-6!">{m['toolArena.reveal.answersTitle']()}</h3>
-      {#if shouldShowExpectedAnswerBanner('results', expectedAnswer)}
-        <ExpectedAnswerBanner {expectedAnswer} />
-      {/if}
+      <ExpectedAnswerBanner question={askedQuestion} {expectedAnswer} />
       <div class="gap-10 md:grid-cols-2 md:gap-6 grid mb-8">
         <ToolResultCard label="A" toolName={revealData!.tool_a.name} result={resultA} error={errorA} />
         <ToolResultCard label="B" toolName={revealData!.tool_b.name} result={resultB} error={errorB} />
